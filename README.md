@@ -2,6 +2,14 @@
 
 ``mkpl`` is a _command line tool_ for create playlist file (**M3U format**).
 
+## Installation
+
+To install ``mkpl``, see here:
+
+```console
+$ pip install mkpl
+```
+
 ## Command arguments
 
 ``mkpl`` have many command line arguments. They are explained in this table:
