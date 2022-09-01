@@ -22,3 +22,8 @@
 
 """mkpl module. This is command line utility for playlist creation."""
 
+# region globals
+FILE_FORMAT = {'mp1', 'mp2', 'mp3', 'mp4', 'aac', 'ogg', 'wav', 'wma',
+               'avi', 'xvid', 'divx', 'mpeg', 'mpg', 'mov', 'wmv'}
+
+# endregion
