@@ -24,6 +24,8 @@
 
 # region imports
 import argparse
+from filecmp import cmp
+from os.path import join
 
 # endregion
 
@@ -81,4 +83,15 @@ def get_args():
         FILE_FORMAT = {args.format.strip('*').strip('.')}
 
     return args
+
+
+def file_in_playlist(playlist, file, root=None):
+    """Check if file is in the playlist"""
+    for f in playlist:
+        # Check if absolute path in playlist
+        if root:
+            f = join(root, f)
+        # Compare two files
+        if cmp(f, file):
+            return True
 # endregion
