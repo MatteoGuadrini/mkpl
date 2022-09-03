@@ -24,8 +24,10 @@
 
 # region imports
 import argparse
+from re import findall
 from filecmp import cmp
 from os.path import join
+from pathlib import Path
 
 # endregion
 
@@ -94,4 +96,38 @@ def file_in_playlist(playlist, file, root=None):
         # Compare two files
         if cmp(f, file):
             return True
+
+
+def main():
+    """Make a playlist"""
+
+    args = get_args()
+    multimedia_files = list()
+
+    # Walk to directories
+    for directory in args.directories:
+        # Build a Path object
+        path = Path(directory)
+        root = path.parent
+        for fmt in FILE_FORMAT:
+            # Check recursive
+            folder = '**/*' if args.recursive else '*'
+            for file in path.glob(folder + f'.{fmt}'):
+                # Check if in exclude dirs
+                if any([e_path in str(file) for e_path in args.exclude_dirs]):
+                    continue
+                # Check if file is in playlist
+                if args.unique:
+                    if file_in_playlist(multimedia_files,
+                                        str(file),
+                                        root=root if not args.absolute else None):
+                        continue
+                # Check absolute file names
+                size = file.stat().st_size
+                file = str(file) if args.absolute else str(file.relative_to(path.parent))
+                # Check re pattern
+                if findall(args.pattern, file):
+                    # Check file size
+                    if size >= args.size:
+                        multimedia_files.append(file)
 # endregion
