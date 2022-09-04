@@ -28,6 +28,7 @@ from re import findall
 from filecmp import cmp
 from os.path import join
 from pathlib import Path
+from random import shuffle
 
 # endregion
 
@@ -130,4 +131,15 @@ def main():
                     # Check file size
                     if size >= args.size:
                         multimedia_files.append(file)
+
+    # Build a playlist
+    if multimedia_files:
+        # Check shuffle
+        if args.shuffle:
+            shuffle(multimedia_files)
+        with args.playlist as playlist:
+            playlist.writelines('\n'.join(multimedia_files[:args.max_tracks]))
+    else:
+        print(f'warning: No multimedia files found here: {",".join(args.directories)}')
+
 # endregion
