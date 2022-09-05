@@ -142,4 +142,11 @@ def main():
     else:
         print(f'warning: No multimedia files found here: {",".join(args.directories)}')
 
+
+# endregion
+
+# region main
+if __name__ == "__main__":
+    main()
+
 # endregion
