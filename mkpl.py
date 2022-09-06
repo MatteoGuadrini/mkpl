@@ -35,6 +35,7 @@ from random import shuffle
 # region globals
 FILE_FORMAT = {'mp1', 'mp2', 'mp3', 'mp4', 'aac', 'ogg', 'wav', 'wma',
                'avi', 'xvid', 'divx', 'mpeg', 'mpg', 'mov', 'wmv'}
+__version__ = '1.0.0'
 
 
 # endregion
@@ -52,6 +53,7 @@ def get_args():
     )
 
     parser.add_argument("playlist", help="Playlist file", type=str)
+    parser.add_argument("-v", "--version", help="Print version", action='version', version=__version__)
     parser.add_argument("-d", "--directories", help="Directories that contains multimedia file",
                         nargs=argparse.ONE_OR_MORE, default=['.'])
     parser.add_argument("-e", "--exclude-dirs", help="Exclude directory paths", nargs=argparse.ONE_OR_MORE, default=[])
