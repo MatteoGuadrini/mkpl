@@ -50,7 +50,7 @@ setup(
         ],
     entry_points={
         'console_scripts': [
-            'dinosay = mkpl:main'
+            'mkpl = mkpl:main'
         ]
     },
     python_requires='>=3.5'
