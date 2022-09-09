@@ -27,7 +27,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(
-    name='mkpl',
+    name='make_playlist',
     version=__info__.__version__,
     url=__info__.__homepage__,
     project_urls={
@@ -50,7 +50,8 @@ setup(
         ],
     entry_points={
         'console_scripts': [
-            'mkpl = mkpl:main'
+            'mkpl = mkpl:main',
+            'make_playlist = mkpl:main',
         ]
     },
     python_requires='>=3.5'
