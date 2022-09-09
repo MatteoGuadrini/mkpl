@@ -7,7 +7,7 @@
 To install ``mkpl``, see here:
 
 ```console
-$ pip install mkpl               # for python enviroment
+$ pip install make_playlist               # for python enviroment
 
 $ dnf copr enable matteoguadrini/mkpl
 $ dnf install python-mkpl -y     # for Red Hat, CentOS, Mageia and fedora
