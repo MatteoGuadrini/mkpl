@@ -10,10 +10,10 @@ To install ``mkpl``, see here:
 $ pip install make_playlist               # for python enviroment
 
 $ dnf copr enable matteoguadrini/mkpl
-$ dnf install python-mkpl -y     # for Red Hat, CentOS, Mageia and fedora
+$ dnf install python-make_playlist -y     # for Red Hat, CentOS, Mageia and fedora
 
 $ git clone https://github.com/MatteoGuadrini/mkpl.git && cd mkpl
-$ python setup.py install        # for others
+$ python setup.py install                 # for others
 ```
 
 ## Command arguments
