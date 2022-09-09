@@ -7,7 +7,13 @@
 To install ``mkpl``, see here:
 
 ```console
-$ pip install mkpl
+$ pip install mkpl               # for python enviroment
+
+$ dnf copr enable matteoguadrini/mkpl
+$ dnf install python-mkpl -y     # for Red Hat, CentOS, Mageia and fedora
+
+$ git clone https://github.com/MatteoGuadrini/mkpl.git && cd mkpl
+$ python setup.py install        # for others
 ```
 
 ## Command arguments
