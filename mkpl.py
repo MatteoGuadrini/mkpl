@@ -63,6 +63,7 @@ def get_args():
     parser.add_argument("-f", "--format", help="Select only a file format", type=str, choices=FILE_FORMAT)
     parser.add_argument("-z", "--size", help="Start size in bytes", type=int, default=1, metavar='BYTES')
     parser.add_argument("-m", "--max-tracks", help="Maximum number of tracks", type=int, default=None, metavar='NUMBER')
+    parser.add_argument("-t", "--title", help="Playlist title", default=None)
     parser.add_argument("-r", "--recursive", help="Recursive search", action='store_true')
     parser.add_argument("-a", "--absolute", help="Absolute file name", action='store_true')
     parser.add_argument("-s", "--shuffle", help="Casual order", action='store_true')
@@ -93,6 +94,9 @@ def get_args():
 def file_in_playlist(playlist, file, root=None):
     """Check if file is in the playlist"""
     for f in playlist:
+        # Skip extended tags
+        if f.startswith('#'):
+            continue
         # Check if absolute path in playlist
         if root:
             f = join(root, f)
@@ -106,6 +110,13 @@ def main():
 
     args = get_args()
     multimedia_files = list()
+
+    # Check if playlist is an extended M3U
+    if args.title:
+        multimedia_files.insert(0, '#EXTM3U')
+
+        # Set title
+        multimedia_files.insert(1, f'#PLAYLIST:{args.title}')
 
     # Walk to directories
     for directory in args.directories:
