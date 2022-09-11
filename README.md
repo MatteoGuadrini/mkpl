@@ -29,6 +29,7 @@ $ python setup.py install                 # for others
 | -f    | --format       | Select only a file format                     | Format of file. ex. mp3   |
 | -s    | --size         | Start size in bytes                           | Bytes number              |
 | -m    | --max-tracks   | Maximum number of tracks                      | Number                    |
+| -t    | --title        | Playlist title                                | Title string              |
 | -r    | --recursive    | Recursive search                              |                           |
 | -a    | --absolute     | Absolute file name                            |                           |
 | -s    | --shuffle      | Casual order                                  |                           |
@@ -84,6 +85,13 @@ $ python setup.py install                 # for others
 
     ```bash
     mkpl -d "my_mp3_collection" -r -p "^[12]|[012]{2}" "my music.m3u"
+    ```
+
+9. Create a playlist for one music album and set the title:
+
+    ```bash
+    cd myalbum
+    mkpl myalbum.m3u -t "My Album"
     ```
    
 ## Open source
