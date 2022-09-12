@@ -116,7 +116,7 @@ def main():
         multimedia_files.insert(0, '#EXTM3U')
 
         # Set title
-        multimedia_files.insert(1, f'#PLAYLIST:{args.title}')
+        multimedia_files.insert(1, f'#PLAYLIST:{args.title.capitalize()}')
 
     # Walk to directories
     for directory in args.directories:
