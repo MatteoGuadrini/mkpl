@@ -69,7 +69,7 @@ $ python setup.py install                 # for others
     mkpl -d "my_series/GOT" -m 15 "got_first_15.m3u"
     ```
    
-6. Add into _my_music_ playlist new songs and don't add same file
+6. Add into _my music_ playlist new songs and don't add same file
 
     ```bash
     mkpl -d "new_collection" -rsu "my music.m3u" -a
@@ -92,6 +92,12 @@ $ python setup.py install                 # for others
     ```bash
     cd myalbum
     mkpl myalbum.m3u -t "My Album"
+    ```
+   
+10. Add into _my music_ playlist new songs and add _UTF-8_ encoding
+
+    ```bash
+    mkpl -d "new_collection" -r "my music.m3u" -g "UTF-8"
     ```
    
 ## Open source

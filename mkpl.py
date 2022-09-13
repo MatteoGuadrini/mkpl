@@ -64,6 +64,7 @@ def get_args():
     parser.add_argument("-z", "--size", help="Start size in bytes", type=int, default=1, metavar='BYTES')
     parser.add_argument("-m", "--max-tracks", help="Maximum number of tracks", type=int, default=None, metavar='NUMBER')
     parser.add_argument("-t", "--title", help="Playlist title", default=None)
+    parser.add_argument("-g", "--encoding", help="Text encoding", choices=('UTF-8', 'ASCII', 'UNICODE'), default=None)
     parser.add_argument("-r", "--recursive", help="Recursive search", action='store_true')
     parser.add_argument("-a", "--absolute", help="Absolute file name", action='store_true')
     parser.add_argument("-s", "--shuffle", help="Casual order", action='store_true')
@@ -112,11 +113,16 @@ def main():
     multimedia_files = list()
 
     # Check if playlist is an extended M3U
-    if args.title:
+    if args.title or args.encoding:
         multimedia_files.insert(0, '#EXTM3U')
 
+        # Set encoding
+        if args.encoding:
+            multimedia_files.insert(1, f'#EXTENC: {args.encoding}')
+
         # Set title
-        multimedia_files.insert(1, f'#PLAYLIST:{args.title.capitalize()}')
+        if args.title:
+            multimedia_files.append(f'#PLAYLIST: {args.title.capitalize()}')
 
     # Walk to directories
     for directory in args.directories:
