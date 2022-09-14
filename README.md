@@ -30,6 +30,8 @@ $ python setup.py install                 # for others
 | -s    | --size         | Start size in bytes                           | Bytes number              |
 | -m    | --max-tracks   | Maximum number of tracks                      | Number                    |
 | -t    | --title        | Playlist title                                | Title string              |
+| -g    | --encoding     | Text encoding                                 | UTF-8,ASCII,UNICODE       |
+| -I    | --image        | Playlist image                                | Image path                |
 | -r    | --recursive    | Recursive search                              |                           |
 | -a    | --absolute     | Absolute file name                            |                           |
 | -s    | --shuffle      | Casual order                                  |                           |
@@ -98,6 +100,12 @@ $ python setup.py install                 # for others
 
     ```bash
     mkpl -d "new_collection" -r "my music.m3u" -g "UTF-8"
+    ```
+
+11. Add into _my music_ playlist new songs and add _UTF-8_ encoding
+
+    ```bash
+    mkpl -d "new_collection" -r "my music.m3u" -I "new_collection/playlist_cover.jpg"
     ```
    
 ## Open source
