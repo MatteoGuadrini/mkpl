@@ -66,6 +66,7 @@ def get_args():
     parser.add_argument("-t", "--title", help="Playlist title", default=None)
     parser.add_argument("-g", "--encoding", help="Text encoding", choices=('UTF-8', 'ASCII', 'UNICODE'), default=None)
     parser.add_argument("-I", "--image", help="Playlist image", default=None)
+    parser.add_argument("-l", "--link", help="Add remote playlist link", nargs=argparse.ONE_OR_MORE, default=[])
     parser.add_argument("-r", "--recursive", help="Recursive search", action='store_true')
     parser.add_argument("-a", "--absolute", help="Absolute file name", action='store_true')
     parser.add_argument("-s", "--shuffle", help="Casual order", action='store_true')
@@ -130,6 +131,9 @@ def main():
             multimedia_files.append(f'#PLAYLIST: {args.title.capitalize()}')
             if args.max_tracks:
                 args.max_tracks += 1
+
+    # Add link
+    multimedia_files.extend(args.link)
 
     # Walk to directories
     for directory in args.directories:
