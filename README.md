@@ -29,6 +29,10 @@ $ python setup.py install                 # for others
 | -f    | --format       | Select only a file format                     | Format of file. ex. mp3   |
 | -s    | --size         | Start size in bytes                           | Bytes number              |
 | -m    | --max-tracks   | Maximum number of tracks                      | Number                    |
+| -t    | --title        | Playlist title                                | Title string              |
+| -g    | --encoding     | Text encoding                                 | UTF-8,ASCII,UNICODE       |
+| -I    | --image        | Playlist image                                | Image path                |
+| -l    | --link         | Add remote file links                         | Links                     |
 | -r    | --recursive    | Recursive search                              |                           |
 | -a    | --absolute     | Absolute file name                            |                           |
 | -s    | --shuffle      | Casual order                                  |                           |
@@ -68,7 +72,7 @@ $ python setup.py install                 # for others
     mkpl -d "my_series/GOT" -m 15 "got_first_15.m3u"
     ```
    
-6. Add into _my_music_ playlist new songs and don't add same file
+6. Add into _my music_ playlist new songs and don't add same file
 
     ```bash
     mkpl -d "new_collection" -rsu "my music.m3u" -a
@@ -85,6 +89,30 @@ $ python setup.py install                 # for others
     ```bash
     mkpl -d "my_mp3_collection" -r -p "^[12]|[012]{2}" "my music.m3u"
     ```
+
+9. Create a playlist for one music album and set the title:
+
+    ```bash
+    cd myalbum
+    mkpl myalbum.m3u -t "My Album"
+    ```
+   
+10. Create a playlist and add _UTF-8_ encoding
+
+    ```bash
+    mkpl -d "new_collection" -r "my music.m3u" -g "UTF-8"
+    ```
+
+11. Create a playlist and set image
+
+    ```bash
+    mkpl -d "new_collection" -r "my music.m3u" -I "new_collection/playlist_cover.jpg"
+    ```
+
+12. Create a playlist and add remote file links
+
+    ```bash
+    mkpl -d "new_collection" -r "my music.m3u" -l http://192.168.1.123/mp3/song1.mp3, http://192.168.1.123/mp3/song2.mp4
    
 ## Open source
 _mkpl_ is an open source project. Any contribute, It's welcome.
