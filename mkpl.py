@@ -24,7 +24,7 @@
 
 # region imports
 import argparse
-from re import findall
+from re import findall, sub
 from filecmp import cmp
 from os.path import join
 from pathlib import Path
@@ -161,7 +161,9 @@ def main():
                 if findall(args.pattern, file):
                     # Check file size
                     if size >= args.size:
-                        multimedia_files.append(file)
+                        multimedia_files.append(
+                            sub('/', r"\\", file) if args.windows else file
+                        )
 
     # Build a playlist
     if multimedia_files:
