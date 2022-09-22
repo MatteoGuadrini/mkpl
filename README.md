@@ -113,6 +113,13 @@ $ python setup.py install                 # for others
 
     ```bash
     mkpl -d "new_collection" -r "my music.m3u" -l http://192.168.1.123/mp3/song1.mp3, http://192.168.1.123/mp3/song2.mp4
+    ```
+    
+13. Create a playlist and set Windows backslash (\) folder separator (for Windows OS)
+
+    ```bash
+    mkpl -d "new_collection" -r "my music.m3u" -w
+    ```
    
 ## Open source
 _mkpl_ is an open source project. Any contribute, It's welcome.
