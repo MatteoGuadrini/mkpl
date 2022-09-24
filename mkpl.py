@@ -78,7 +78,10 @@ def get_args():
 
     # Check extension of playlist file
     if not args.playlist.endswith('.m3u'):
-        args.playlist += '.m3u'
+        if args.encoding == 'UNICODE':
+            args.playlist += '.m3u8'
+        else:
+            args.playlist += '.m3u'
 
     # Open playlist file
     mode = 'at' if args.append else 'wt'
