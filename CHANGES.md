@@ -1,5 +1,11 @@
 # Release notes
 
+## 1.2.0
+Sep 19, 2022
+
+- Add _windows_ argument
+- Fix file extension with UNICODE encode
+
 ## 1.1.0
 Sep 19, 2022
 

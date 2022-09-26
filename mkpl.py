@@ -35,7 +35,7 @@ from random import shuffle
 # region globals
 FILE_FORMAT = {'mp1', 'mp2', 'mp3', 'mp4', 'aac', 'ogg', 'wav', 'wma',
                'avi', 'xvid', 'divx', 'mpeg', 'mpg', 'mov', 'wmv'}
-__version__ = '1.1.0'
+__version__ = '1.2.0'
 
 
 # endregion
