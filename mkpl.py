@@ -24,7 +24,7 @@
 
 # region imports
 import argparse
-from re import findall
+from re import findall, sub
 from filecmp import cmp
 from os.path import join
 from pathlib import Path
@@ -35,7 +35,7 @@ from random import shuffle
 # region globals
 FILE_FORMAT = {'mp1', 'mp2', 'mp3', 'mp4', 'aac', 'ogg', 'wav', 'wma',
                'avi', 'xvid', 'divx', 'mpeg', 'mpg', 'mov', 'wmv'}
-__version__ = '1.1.0'
+__version__ = '1.2.0'
 
 
 # endregion
@@ -72,12 +72,16 @@ def get_args():
     parser.add_argument("-s", "--shuffle", help="Casual order", action='store_true')
     parser.add_argument("-u", "--unique", help="The same files are not placed in the playlist", action='store_true')
     parser.add_argument("-c", "--append", help="Continue playlist instead of override it", action='store_true')
+    parser.add_argument("-w", "--windows", help="Windows style folder separator", action='store_true')
 
     args = parser.parse_args()
 
     # Check extension of playlist file
     if not args.playlist.endswith('.m3u'):
-        args.playlist += '.m3u'
+        if args.encoding == 'UNICODE':
+            args.playlist += '.m3u8'
+        else:
+            args.playlist += '.m3u'
 
     # Open playlist file
     mode = 'at' if args.append else 'wt'
@@ -160,7 +164,9 @@ def main():
                 if findall(args.pattern, file):
                     # Check file size
                     if size >= args.size:
-                        multimedia_files.append(file)
+                        multimedia_files.append(
+                            sub('/', r"\\", file) if args.windows else file
+                        )
 
     # Build a playlist
     if multimedia_files:
