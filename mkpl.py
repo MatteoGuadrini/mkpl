@@ -118,24 +118,6 @@ def main():
     args = get_args()
     multimedia_files = list()
 
-    # Check if playlist is an extended M3U
-    if args.title or args.encoding or args.image:
-        multimedia_files.insert(0, '#EXTM3U')
-        if args.max_tracks:
-            args.max_tracks += 1
-
-        # Set encoding
-        if args.encoding:
-            multimedia_files.insert(1, f'#EXTENC: {args.encoding}')
-            if args.max_tracks:
-                args.max_tracks += 1
-
-        # Set title
-        if args.title:
-            multimedia_files.append(f'#PLAYLIST: {args.title.capitalize()}')
-            if args.max_tracks:
-                args.max_tracks += 1
-
     # Add link
     multimedia_files.extend(args.link)
 
@@ -173,6 +155,25 @@ def main():
         # Check shuffle
         if args.shuffle:
             shuffle(multimedia_files)
+
+        # Check if playlist is an extended M3U
+        if args.title or args.encoding or args.image:
+            multimedia_files.insert(0, '#EXTM3U')
+            if args.max_tracks:
+                args.max_tracks += 1
+
+            # Set title
+            if args.title:
+                multimedia_files.insert(1, f'#PLAYLIST: {args.title.capitalize()}')
+                if args.max_tracks:
+                    args.max_tracks += 1
+
+            # Set encoding
+            if args.encoding:
+                multimedia_files.insert(1, f'#EXTENC: {args.encoding}')
+                if args.max_tracks:
+                    args.max_tracks += 1
+
         with args.playlist as playlist:
             joined_string = f'\n#EXTIMG: {args.image}\n' if args.image else '\n'
             playlist.writelines(f'{joined_string}'.join(multimedia_files[:args.max_tracks]))
