@@ -113,6 +113,12 @@ def file_in_playlist(playlist, file, root=None):
             return True
 
 
+def vprint(verbose, *messages):
+    """Verbose print"""
+    if verbose:
+        print(*messages)
+
+
 def main():
     """Make a playlist"""
 
