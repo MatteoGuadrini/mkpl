@@ -53,7 +53,8 @@ def get_args():
     )
 
     parser.add_argument("playlist", help="Playlist file", type=str)
-    parser.add_argument("-v", "--version", help="Print version", action='version', version=__version__)
+    parser.add_argument("-v", "--verbose", help="Enable verbosity", action="store_true")
+    parser.add_argument("-V", "--version", help="Print version", action='version', version=__version__)
     parser.add_argument("-d", "--directories", help="Directories that contains multimedia file",
                         nargs=argparse.ONE_OR_MORE, default=['.'])
     parser.add_argument("-e", "--exclude-dirs", help="Exclude directory paths", nargs=argparse.ONE_OR_MORE, default=[])
