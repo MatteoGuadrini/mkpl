@@ -116,7 +116,7 @@ def file_in_playlist(playlist, file, root=None):
 def vprint(verbose, *messages):
     """Verbose print"""
     if verbose:
-        print(*messages)
+        print('DEBUG: ', *messages)
 
 
 def main():
@@ -128,11 +128,14 @@ def main():
     # Add link
     multimedia_files.extend(args.link)
 
+    vprint(args.verbose, f"formats={FILE_FORMAT}, recursive={args.recursive}, pattern={args.pattern}")
+
     # Walk to directories
     for directory in args.directories:
         # Build a Path object
         path = Path(directory)
         root = path.parent
+        vprint(args.verbose, f"current directory={path}, root={root}")
         for fmt in FILE_FORMAT:
             # Check recursive
             folder = '**/*' if args.recursive else '*'
@@ -153,6 +156,7 @@ def main():
                 if findall(args.pattern, file):
                     # Check file size
                     if size >= args.size:
+                        vprint(args.verbose, f"add multimedia file {file}")
                         multimedia_files.append(
                             sub('/', r"\\", file) if args.windows else file
                         )
@@ -183,7 +187,7 @@ def main():
 
         with args.playlist as playlist:
             joined_string = f'\n#EXTIMG: {args.image}\n' if args.image else '\n'
-            playlist.writelines(f'{joined_string}'.join(multimedia_files[:args.max_tracks]))
+            playlist.writelines(joined_string.join(multimedia_files[:args.max_tracks]))
     else:
         print(f'warning: No multimedia files found here: {",".join(args.directories)}')
 
