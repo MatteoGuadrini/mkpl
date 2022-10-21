@@ -116,7 +116,7 @@ def file_in_playlist(playlist, file, root=None):
 def vprint(verbose, *messages):
     """Verbose print"""
     if verbose:
-        print('DEBUG: ', *messages)
+        print('DEBUG:', *messages)
 
 
 def main():
@@ -163,6 +163,7 @@ def main():
 
     # Build a playlist
     if multimedia_files:
+        ext_part = 0
         # Check shuffle
         if args.shuffle:
             shuffle(multimedia_files)
@@ -170,26 +171,33 @@ def main():
         # Check if playlist is an extended M3U
         if args.title or args.encoding or args.image:
             multimedia_files.insert(0, '#EXTM3U')
+            ext_part += 1
             if args.max_tracks:
                 args.max_tracks += 1
 
             # Set title
             if args.title:
                 multimedia_files.insert(1, f'#PLAYLIST: {args.title.capitalize()}')
+                ext_part += 1
                 if args.max_tracks:
                     args.max_tracks += 1
 
             # Set encoding
             if args.encoding:
                 multimedia_files.insert(1, f'#EXTENC: {args.encoding}')
+                ext_part += 1
                 if args.max_tracks:
                     args.max_tracks += 1
 
         with args.playlist as playlist:
             joined_string = f'\n#EXTIMG: {args.image}\n' if args.image else '\n'
-            playlist.writelines(joined_string.join(multimedia_files[:args.max_tracks]))
+            # Write extensions if exists
+            if ext_part:
+                playlist.write('\n'.join(multimedia_files[:ext_part]) + joined_string)
+            # Write all multimedia files
+            playlist.write(joined_string.join(multimedia_files[ext_part:args.max_tracks]))
     else:
-        print(f'warning: No multimedia files found here: {",".join(args.directories)}')
+        print(f'WARNING: No multimedia files are found here: {",".join(args.directories)}')
 
 
 # endregion
