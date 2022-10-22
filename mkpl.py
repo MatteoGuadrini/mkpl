@@ -49,7 +49,7 @@ def get_args():
     parser = argparse.ArgumentParser(
         description="Make music playlist",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        epilog='Playlist format is m3u'
+        epilog='Playlist file is M3U format'
     )
 
     parser.add_argument("playlist", help="Playlist file", type=str)
