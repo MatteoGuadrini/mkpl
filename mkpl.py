@@ -35,7 +35,7 @@ from random import shuffle
 # region globals
 FILE_FORMAT = {'mp1', 'mp2', 'mp3', 'mp4', 'aac', 'ogg', 'wav', 'wma',
                'avi', 'xvid', 'divx', 'mpeg', 'mpg', 'mov', 'wmv'}
-__version__ = '1.2.0'
+__version__ = '1.3.0'
 
 
 # endregion
@@ -195,7 +195,7 @@ def main():
             if ext_part:
                 playlist.write('\n'.join(multimedia_files[:ext_part]) + joined_string)
             # Write all multimedia files
-            playlist.write(joined_string.join(multimedia_files[ext_part:args.max_tracks]))
+            playlist.write(joined_string.join(multimedia_files[ext_part:args.max_tracks]) + '\n')
     else:
         print(f'WARNING: No multimedia files are found here: {",".join(args.directories)}')
 
