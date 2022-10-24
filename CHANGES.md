@@ -1,7 +1,7 @@
 # Release notes
 
 ## 1.3.0
-Sep 19, 2022
+Oct 24, 2022
 
 - Add _verbose_ argument
 - Add _vprint_ function
@@ -11,7 +11,7 @@ Sep 19, 2022
 - Fix join with extension tags
 
 ## 1.2.0
-Sep 19, 2022
+Sep 28, 2022
 
 - Add _windows_ argument
 - Fix file extension with UNICODE encode
