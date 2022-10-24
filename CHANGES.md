@@ -1,7 +1,17 @@
 # Release notes
 
+## 1.3.0
+Oct 24, 2022
+
+- Add _verbose_ argument
+- Add _vprint_ function
+- Fix shuffle and extension issue #1
+- Fix new line in the append mode
+- Fix epilog message
+- Fix join with extension tags
+
 ## 1.2.0
-Sep 19, 2022
+Sep 28, 2022
 
 - Add _windows_ argument
 - Fix file extension with UNICODE encode

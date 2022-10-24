@@ -39,6 +39,7 @@ $ python setup.py install                 # for others
 | -u    | --unique       | The same files are not placed in the playlist |                           |
 | -c    | --append       | Continue playlist instead of override it      |                           |
 | -w    | --windows      | Windows style folder separator                |                           |
+| -v    | --verbose      | Enable verbosity (debug mode)                 |                           |
 
 ## Examples
 

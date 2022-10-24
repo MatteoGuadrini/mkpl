@@ -35,7 +35,7 @@ from random import shuffle
 # region globals
 FILE_FORMAT = {'mp1', 'mp2', 'mp3', 'mp4', 'aac', 'ogg', 'wav', 'wma',
                'avi', 'xvid', 'divx', 'mpeg', 'mpg', 'mov', 'wmv'}
-__version__ = '1.2.0'
+__version__ = '1.3.0'
 
 
 # endregion
@@ -49,11 +49,12 @@ def get_args():
     parser = argparse.ArgumentParser(
         description="Make music playlist",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        epilog='Playlist format is m3u'
+        epilog='Playlist file is M3U format'
     )
 
     parser.add_argument("playlist", help="Playlist file", type=str)
-    parser.add_argument("-v", "--version", help="Print version", action='version', version=__version__)
+    parser.add_argument("-v", "--verbose", help="Enable verbosity", action="store_true")
+    parser.add_argument("-V", "--version", help="Print version", action='version', version=__version__)
     parser.add_argument("-d", "--directories", help="Directories that contains multimedia file",
                         nargs=argparse.ONE_OR_MORE, default=['.'])
     parser.add_argument("-e", "--exclude-dirs", help="Exclude directory paths", nargs=argparse.ONE_OR_MORE, default=[])
@@ -112,38 +113,29 @@ def file_in_playlist(playlist, file, root=None):
             return True
 
 
+def vprint(verbose, *messages):
+    """Verbose print"""
+    if verbose:
+        print('DEBUG:', *messages)
+
+
 def main():
     """Make a playlist"""
 
     args = get_args()
     multimedia_files = list()
 
-    # Check if playlist is an extended M3U
-    if args.title or args.encoding or args.image:
-        multimedia_files.insert(0, '#EXTM3U')
-        if args.max_tracks:
-            args.max_tracks += 1
-
-        # Set encoding
-        if args.encoding:
-            multimedia_files.insert(1, f'#EXTENC: {args.encoding}')
-            if args.max_tracks:
-                args.max_tracks += 1
-
-        # Set title
-        if args.title:
-            multimedia_files.append(f'#PLAYLIST: {args.title.capitalize()}')
-            if args.max_tracks:
-                args.max_tracks += 1
-
     # Add link
     multimedia_files.extend(args.link)
+
+    vprint(args.verbose, f"formats={FILE_FORMAT}, recursive={args.recursive}, pattern={args.pattern}")
 
     # Walk to directories
     for directory in args.directories:
         # Build a Path object
         path = Path(directory)
         root = path.parent
+        vprint(args.verbose, f"current directory={path}, root={root}")
         for fmt in FILE_FORMAT:
             # Check recursive
             folder = '**/*' if args.recursive else '*'
@@ -164,20 +156,48 @@ def main():
                 if findall(args.pattern, file):
                     # Check file size
                     if size >= args.size:
+                        vprint(args.verbose, f"add multimedia file {file}")
                         multimedia_files.append(
                             sub('/', r"\\", file) if args.windows else file
                         )
 
     # Build a playlist
     if multimedia_files:
+        ext_part = 0
         # Check shuffle
         if args.shuffle:
             shuffle(multimedia_files)
+
+        # Check if playlist is an extended M3U
+        if args.title or args.encoding or args.image:
+            multimedia_files.insert(0, '#EXTM3U')
+            ext_part += 1
+            if args.max_tracks:
+                args.max_tracks += 1
+
+            # Set title
+            if args.title:
+                multimedia_files.insert(1, f'#PLAYLIST: {args.title.capitalize()}')
+                ext_part += 1
+                if args.max_tracks:
+                    args.max_tracks += 1
+
+            # Set encoding
+            if args.encoding:
+                multimedia_files.insert(1, f'#EXTENC: {args.encoding}')
+                ext_part += 1
+                if args.max_tracks:
+                    args.max_tracks += 1
+
         with args.playlist as playlist:
             joined_string = f'\n#EXTIMG: {args.image}\n' if args.image else '\n'
-            playlist.writelines(f'{joined_string}'.join(multimedia_files[:args.max_tracks]))
+            # Write extensions if exists
+            if ext_part:
+                playlist.write('\n'.join(multimedia_files[:ext_part]) + joined_string)
+            # Write all multimedia files
+            playlist.write(joined_string.join(multimedia_files[ext_part:args.max_tracks]) + '\n')
     else:
-        print(f'warning: No multimedia files found here: {",".join(args.directories)}')
+        print(f'WARNING: No multimedia files are found here: {",".join(args.directories)}')
 
 
 # endregion
