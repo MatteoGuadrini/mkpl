@@ -116,7 +116,7 @@ def file_in_playlist(playlist, file, root=None):
 def vprint(verbose, *messages):
     """Verbose print"""
     if verbose:
-        print('DEBUG:', *messages)
+        print('debug:', *messages)
 
 
 def main():
@@ -197,7 +197,7 @@ def main():
             # Write all multimedia files
             playlist.write(joined_string.join(multimedia_files[ext_part:args.max_tracks]) + '\n')
     else:
-        print(f'WARNING: No multimedia files are found here: {",".join(args.directories)}')
+        print(f'warning: No multimedia files are found here: {",".join(args.directories)}')
 
 
 # endregion
