@@ -24,6 +24,7 @@
 
 # region imports
 import argparse
+from string import capwords
 from re import findall, sub
 from filecmp import cmp
 from os.path import join
@@ -177,7 +178,7 @@ def main():
 
             # Set title
             if args.title:
-                multimedia_files.insert(1, f'#PLAYLIST: {args.title.capitalize()}')
+                multimedia_files.insert(1, f'#PLAYLIST: {capwords(args.title)}')
                 ext_part += 1
                 if args.max_tracks:
                     args.max_tracks += 1
