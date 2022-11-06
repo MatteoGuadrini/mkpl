@@ -86,8 +86,20 @@ def get_args():
             args.playlist += '.m3u'
 
     # Open playlist file
-    mode = 'at' if args.append else 'wt'
+    mode = 'at+' if args.append else 'wt'
     args.playlist = open(args.playlist, mode=mode)
+    # Verify extension attribute in append mode
+    if args.append:
+        args.playlist.seek(0)
+        first_three_lines = args.playlist.readlines(100)
+        for line in first_three_lines:
+            if '#EXTM3U' in line:
+                args.enabled_extensions = True
+            if '#PLAYLIST' in line:
+                args.enabled_title = True
+            if '#EXTENC' in line:
+                args.enabled_encoding = True
+        _ = args.playlist.read()
 
     # Extend files format
     if args.include:
