@@ -88,6 +88,9 @@ def get_args():
     # Open playlist file
     mode = 'at+' if args.append else 'wt'
     args.playlist = open(args.playlist, mode=mode)
+    args.enabled_extensions = False
+    args.enabled_title = False
+    args.enabled_encoding = False
     # Verify extension attribute in append mode
     if args.append:
         args.playlist.seek(0)
@@ -99,7 +102,7 @@ def get_args():
                 args.enabled_title = True
             if '#EXTENC' in line:
                 args.enabled_encoding = True
-        _ = args.playlist.read()
+        args.playlist.read()
 
     # Extend files format
     if args.include:
@@ -183,24 +186,27 @@ def main():
 
         # Check if playlist is an extended M3U
         if args.title or args.encoding or args.image:
-            multimedia_files.insert(0, '#EXTM3U')
-            ext_part += 1
-            if args.max_tracks:
-                args.max_tracks += 1
+            if not args.enabled_extensions:
+                multimedia_files.insert(0, '#EXTM3U')
+                ext_part += 1
+                if args.max_tracks:
+                    args.max_tracks += 1
 
             # Set title
             if args.title:
-                multimedia_files.insert(1, f'#PLAYLIST: {capwords(args.title)}')
-                ext_part += 1
-                if args.max_tracks:
-                    args.max_tracks += 1
+                if not args.enabled_title:
+                    multimedia_files.insert(1, f'#PLAYLIST: {capwords(args.title)}')
+                    ext_part += 1
+                    if args.max_tracks:
+                        args.max_tracks += 1
 
             # Set encoding
             if args.encoding:
-                multimedia_files.insert(1, f'#EXTENC: {args.encoding}')
-                ext_part += 1
-                if args.max_tracks:
-                    args.max_tracks += 1
+                if not args.enabled_extensions:
+                    multimedia_files.insert(1, f'#EXTENC: {args.encoding}')
+                    ext_part += 1
+                    if args.max_tracks:
+                        args.max_tracks += 1
 
         with args.playlist as playlist:
             joined_string = f'\n#EXTIMG: {args.image}\n' if args.image else '\n'
