@@ -209,6 +209,7 @@ def main():
                         args.max_tracks += 1
 
         with args.playlist as playlist:
+            vprint(args.verbose, f"write playlist {playlist.name}")
             joined_string = f'\n#EXTIMG: {args.image}\n' if args.image else '\n'
             # Write extensions if exists
             if ext_part:
