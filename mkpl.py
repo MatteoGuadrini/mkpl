@@ -188,6 +188,7 @@ def main():
         if args.title or args.encoding or args.image:
             if not args.enabled_extensions:
                 multimedia_files.insert(0, '#EXTM3U')
+                args.enabled_extensions = True
                 ext_part += 1
                 if args.max_tracks:
                     args.max_tracks += 1
@@ -199,6 +200,8 @@ def main():
                     ext_part += 1
                     if args.max_tracks:
                         args.max_tracks += 1
+                else:
+                    print("warning: title is already configured")
 
             # Set encoding
             if args.encoding:
@@ -207,17 +210,20 @@ def main():
                     ext_part += 1
                     if args.max_tracks:
                         args.max_tracks += 1
+                else:
+                    print("warning: encoding is already configured")
 
         with args.playlist as playlist:
             vprint(args.verbose, f"write playlist {playlist.name}")
-            joined_string = f'\n#EXTIMG: {args.image}\n' if args.image else '\n'
+            joined_string = f'\n#EXTIMG: {args.image}\n' if args.image and args.enabled_extensions else '\n'
+            end_file_string = '\n'
             # Write extensions if exists
             if ext_part:
                 playlist.write('\n'.join(multimedia_files[:ext_part]) + joined_string)
             # Write all multimedia files
-            playlist.write(joined_string.join(multimedia_files[ext_part:args.max_tracks]) + '\n')
+            playlist.write(joined_string.join(multimedia_files[ext_part:args.max_tracks]) + end_file_string)
     else:
-        print(f'warning: No multimedia files are found here: {",".join(args.directories)}')
+        print(f'warning: no multimedia files are found here: {",".join(args.directories)}')
 
 
 # endregion
