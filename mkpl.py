@@ -27,7 +27,7 @@ import argparse
 from string import capwords
 from re import findall, sub
 from filecmp import cmp
-from os.path import join
+from os.path import join, exists
 from pathlib import Path
 from random import shuffle
 
@@ -103,6 +103,15 @@ def get_args():
             if '#EXTENC' in line:
                 args.enabled_encoding = True
         args.playlist.read()
+        # Check if extensions are disabled and image is specified
+        if not args.enabled_extensions and args.image:
+            args.image = None
+            print(f'warning: image {args.image} has not been set because the extensions are not present in the file')
+
+    # Check if image file exists
+    if args.image:
+        if not exists(args.image):
+            parser.error(f'image file {args.image} does not exist')
 
     # Extend files format
     if args.include:
