@@ -24,9 +24,10 @@
 
 # region imports
 import argparse
+from string import capwords
 from re import findall, sub
 from filecmp import cmp
-from os.path import join
+from os.path import join, exists
 from pathlib import Path
 from random import shuffle
 
@@ -35,7 +36,7 @@ from random import shuffle
 # region globals
 FILE_FORMAT = {'mp1', 'mp2', 'mp3', 'mp4', 'aac', 'ogg', 'wav', 'wma',
                'avi', 'xvid', 'divx', 'mpeg', 'mpg', 'mov', 'wmv'}
-__version__ = '1.3.0'
+__version__ = '1.4.0'
 
 
 # endregion
@@ -85,8 +86,32 @@ def get_args():
             args.playlist += '.m3u'
 
     # Open playlist file
-    mode = 'at' if args.append else 'wt'
+    mode = 'at+' if args.append else 'wt'
     args.playlist = open(args.playlist, mode=mode)
+    args.enabled_extensions = False
+    args.enabled_title = False
+    args.enabled_encoding = False
+    # Verify extension attribute in append mode
+    if args.append:
+        args.playlist.seek(0)
+        first_three_lines = args.playlist.readlines(100)
+        for line in first_three_lines:
+            if '#EXTM3U' in line:
+                args.enabled_extensions = True
+            if '#PLAYLIST' in line:
+                args.enabled_title = True
+            if '#EXTENC' in line:
+                args.enabled_encoding = True
+        args.playlist.read()
+        # Check if extensions are disabled and image is specified
+        if not args.enabled_extensions and args.image:
+            args.image = None
+            print(f'warning: image {args.image} has not been set because the extensions are not present in the file')
+
+    # Check if image file exists
+    if args.image:
+        if not exists(args.image):
+            parser.error(f'image file {args.image} does not exist')
 
     # Extend files format
     if args.include:
@@ -116,7 +141,7 @@ def file_in_playlist(playlist, file, root=None):
 def vprint(verbose, *messages):
     """Verbose print"""
     if verbose:
-        print('DEBUG:', *messages)
+        print('debug:', *messages)
 
 
 def main():
@@ -170,34 +195,44 @@ def main():
 
         # Check if playlist is an extended M3U
         if args.title or args.encoding or args.image:
-            multimedia_files.insert(0, '#EXTM3U')
-            ext_part += 1
-            if args.max_tracks:
-                args.max_tracks += 1
+            if not args.enabled_extensions:
+                multimedia_files.insert(0, '#EXTM3U')
+                args.enabled_extensions = True
+                ext_part += 1
+                if args.max_tracks:
+                    args.max_tracks += 1
 
             # Set title
             if args.title:
-                multimedia_files.insert(1, f'#PLAYLIST: {args.title.capitalize()}')
-                ext_part += 1
-                if args.max_tracks:
-                    args.max_tracks += 1
+                if not args.enabled_title:
+                    multimedia_files.insert(1, f'#PLAYLIST: {capwords(args.title)}')
+                    ext_part += 1
+                    if args.max_tracks:
+                        args.max_tracks += 1
+                else:
+                    print("warning: title is already configured")
 
             # Set encoding
             if args.encoding:
-                multimedia_files.insert(1, f'#EXTENC: {args.encoding}')
-                ext_part += 1
-                if args.max_tracks:
-                    args.max_tracks += 1
+                if not args.enabled_extensions:
+                    multimedia_files.insert(1, f'#EXTENC: {args.encoding}')
+                    ext_part += 1
+                    if args.max_tracks:
+                        args.max_tracks += 1
+                else:
+                    print("warning: encoding is already configured")
 
         with args.playlist as playlist:
-            joined_string = f'\n#EXTIMG: {args.image}\n' if args.image else '\n'
+            vprint(args.verbose, f"write playlist {playlist.name}")
+            joined_string = f'\n#EXTIMG: {args.image}\n' if args.image and args.enabled_extensions else '\n'
+            end_file_string = '\n'
             # Write extensions if exists
             if ext_part:
                 playlist.write('\n'.join(multimedia_files[:ext_part]) + joined_string)
             # Write all multimedia files
-            playlist.write(joined_string.join(multimedia_files[ext_part:args.max_tracks]) + '\n')
+            playlist.write(joined_string.join(multimedia_files[ext_part:args.max_tracks]) + end_file_string)
     else:
-        print(f'WARNING: No multimedia files are found here: {",".join(args.directories)}')
+        print(f'warning: no multimedia files are found here: {",".join(args.directories)}')
 
 
 # endregion
