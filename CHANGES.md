@@ -1,5 +1,13 @@
 # Release notes
 
+## 1.4.0
+Nov 10, 2022
+
+- Add _capwords_ function for title of playlist
+- Add checks for extension attribute in append mode
+- Add warnings for extensions enabled
+- Add checks for image file
+
 ## 1.3.0
 Oct 24, 2022
 
