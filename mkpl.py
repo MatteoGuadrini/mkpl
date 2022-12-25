@@ -227,7 +227,7 @@ def main():
 
             # Set encoding
             if args.encoding:
-                if not args.enabled_extensions:
+                if not args.enabled_encoding:
                     multimedia_files.insert(1, f'#EXTENC: {args.encoding}')
                     ext_part += 1
                     if args.max_tracks:
