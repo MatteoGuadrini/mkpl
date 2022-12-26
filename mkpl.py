@@ -27,7 +27,7 @@ import argparse
 from string import capwords
 from re import findall, sub
 from filecmp import cmp
-from os.path import join, exists
+from os.path import join, exists, isdir
 from pathlib import Path
 from random import shuffle
 
@@ -84,6 +84,10 @@ def get_args():
             args.playlist += '.m3u8'
         else:
             args.playlist += '.m3u'
+
+    # Check if playlist is not a directory
+    if isdir(args.playlist):
+        parser.error(f'{args.playlist} is a directory')
 
     # Open playlist file
     mode = 'at+' if args.append else 'wt'
