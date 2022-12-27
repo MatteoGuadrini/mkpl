@@ -161,47 +161,60 @@ def write_playlist(playlist, files, **extensions):
         pl.write(joined_string.join(files[extensions['ext_part']:extensions['max_tracks']]) + end_file_string)
 
 
-def main():
-    """Make a playlist"""
-
-    args = get_args()
-    multimedia_files = list()
-
-    # Add link
-    multimedia_files.extend(args.link)
-
-    vprint(args.verbose, f"formats={FILE_FORMAT}, recursive={args.recursive}, pattern={args.pattern}")
-
+def make_playlist(directories, **kwargs):
+    """Make playlist list"""
+    filelist = list()
     # Walk to directories
-    for directory in args.directories:
+    for directory in directories:
         # Build a Path object
         path = Path(directory)
         root = path.parent
-        vprint(args.verbose, f"current directory={path}, root={root}")
+        vprint(kwargs["verbose"], f"current directory={path}, root={root}")
         for fmt in FILE_FORMAT:
             # Check recursive
-            folder = '**/*' if args.recursive else '*'
+            folder = '**/*' if kwargs["recursive"] else '*'
             for file in path.glob(folder + f'.{fmt}'):
                 # Check if in exclude dirs
-                if any([e_path in str(file) for e_path in args.exclude_dirs]):
+                if any([e_path in str(file) for e_path in kwargs["exclude_dirs"]]):
                     continue
                 # Check if file is in playlist
-                if args.unique:
-                    if file_in_playlist(multimedia_files,
+                if kwargs["unique"]:
+                    if file_in_playlist(filelist,
                                         str(file),
-                                        root=root if not args.absolute else None):
+                                        root=root if not kwargs["absolute"] else None):
                         continue
                 # Check absolute file names
                 size = file.stat().st_size
-                file = str(file) if args.absolute else str(file.relative_to(path.parent))
+                file = str(file) if kwargs["absolute"] else str(file.relative_to(path.parent))
                 # Check re pattern
-                if findall(args.pattern, file):
+                if findall(kwargs["pattern"], file):
                     # Check file size
-                    if size >= args.size:
-                        vprint(args.verbose, f"add multimedia file {file}")
-                        multimedia_files.append(
-                            sub('/', r"\\", file) if args.windows else file
+                    if size >= kwargs["size"]:
+                        vprint(kwargs["verbose"], f"add multimedia file {file}")
+                        filelist.append(
+                            sub('/', r"\\", file) if kwargs["windows"] else file
                         )
+    return filelist
+
+def main():
+    """Make a playlist file"""
+
+    args = get_args()
+    vprint(args.verbose, f"formats={FILE_FORMAT}, recursive={args.recursive}, pattern={args.pattern}")
+
+    # Make multimedia list
+    multimedia_files = make_playlist(args.directories,
+                                     recursive=args.recursive,
+                                     exclude_dirs=args.exclude_dirs,
+                                     unique=args.unique,
+                                     absolute=args.absolute,
+                                     pattern=args.pattern,
+                                     size=args.size,
+                                     windows=args.windows,
+                                     verbose=args.verbose)
+
+    # Add link
+    multimedia_files.extend(args.link)
 
     # Build a playlist
     if multimedia_files:
