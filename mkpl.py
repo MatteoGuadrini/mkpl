@@ -144,6 +144,19 @@ def vprint(verbose, *messages):
         print('debug:', *messages)
 
 
+def write_playlist(playlist, files, **extensions):
+    """Write playlist into file"""
+    with playlist as pl:
+        vprint(extensions['verbose'], f"write playlist {pl.name}")
+        joined_string = f"\n#EXTIMG: {extensions['image']}\n" if extensions['image'] and extensions['enabled_extensions'] else '\n'
+        end_file_string = '\n'
+        # Write extensions if exists
+        if extensions['ext_part']:
+            pl.write('\n'.join(files[:extensions['ext_part']]) + joined_string)
+        # Write all multimedia files
+        pl.write(joined_string.join(files[extensions['ext_part']:extensions['max_tracks']]) + end_file_string)
+
+
 def main():
     """Make a playlist"""
 
@@ -222,15 +235,14 @@ def main():
                 else:
                     print("warning: encoding is already configured")
 
-        with args.playlist as playlist:
-            vprint(args.verbose, f"write playlist {playlist.name}")
-            joined_string = f'\n#EXTIMG: {args.image}\n' if args.image and args.enabled_extensions else '\n'
-            end_file_string = '\n'
-            # Write extensions if exists
-            if ext_part:
-                playlist.write('\n'.join(multimedia_files[:ext_part]) + joined_string)
-            # Write all multimedia files
-            playlist.write(joined_string.join(multimedia_files[ext_part:args.max_tracks]) + end_file_string)
+        # Write playlist to file
+        write_playlist(args.playlist, 
+                       multimedia_files, 
+                       enabled_extensions=args.enabled_extensions,
+                       image=args.image,
+                       ext_part=ext_part,
+                       max_tracks=args.max_tracks,
+                       verbose=args.verbose)
     else:
         print(f'warning: no multimedia files are found here: {",".join(args.directories)}')
 
