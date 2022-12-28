@@ -48,9 +48,9 @@ def get_args():
     global FILE_FORMAT
 
     parser = argparse.ArgumentParser(
-        description="Make music playlist",
+        description="Command line tool to create media playlists in M3U format.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        epilog='Playlist file is M3U format'
+        epilog='See latest release from https://github.com/MatteoGuadrini/mkpl'
     )
 
     parser.add_argument("playlist", help="Playlist file", type=str)
