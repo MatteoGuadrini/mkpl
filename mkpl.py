@@ -152,7 +152,10 @@ def write_playlist(playlist, files, **extensions):
     """Write playlist into file"""
     with playlist as pl:
         vprint(extensions['verbose'], f"write playlist {pl.name}")
-        joined_string = f"\n#EXTIMG: {extensions['image']}\n" if extensions['image'] and extensions['enabled_extensions'] else '\n'
+        if extensions['image'] and extensions['enabled_extensions']:
+            joined_string = f"\n#EXTIMG: {extensions['image']}\n"
+        else:
+            joined_string = '\n'
         end_file_string = '\n'
         # Write extensions if exists
         if extensions['ext_part']:
@@ -195,6 +198,7 @@ def make_playlist(directories, **kwargs):
                             sub('/', r"\\", file) if kwargs["windows"] else file
                         )
     return filelist
+
 
 def main():
     """Make a playlist file"""
@@ -253,8 +257,8 @@ def main():
                     print("warning: encoding is already configured")
 
         # Write playlist to file
-        write_playlist(args.playlist, 
-                       multimedia_files, 
+        write_playlist(args.playlist,
+                       multimedia_files,
                        enabled_extensions=args.enabled_extensions,
                        image=args.image,
                        ext_part=ext_part,
