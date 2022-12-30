@@ -27,7 +27,7 @@ import argparse
 from string import capwords
 from re import findall, sub
 from filecmp import cmp
-from os.path import join, exists, isdir
+from os.path import join, exists, isdir, getsize
 from pathlib import Path
 from random import shuffle
 
@@ -200,6 +200,42 @@ def make_playlist(directories, **kwargs):
     return filelist
 
 
+def add_extension(filelist, cli_args):
+    """Add extension to playlist list"""
+    if not isinstance(filelist, list):
+        raise ValueError(f'{filelist} is not a list object')
+
+    # Check if playlist is an extended M3U
+    cli_args.ext_part = 0
+    if cli_args.title or cli_args.encoding or cli_args.image:
+        if not cli_args.enabled_extensions:
+            filelist.insert(0, '#EXTM3U')
+            cli_args.enabled_extensions = True
+            cli_args.ext_part += 1
+            if cli_args.max_tracks:
+                cli_args.max_tracks += 1
+
+        # Set title
+        if cli_args.title:
+            if not cli_args.enabled_title:
+                filelist.insert(1, f'#PLAYLIST: {capwords(cli_args.title)}')
+                cli_args.ext_part += 1
+                if cli_args.max_tracks:
+                    cli_args.max_tracks += 1
+            else:
+                print("warning: title is already configured")
+
+        # Set encoding
+        if cli_args.encoding:
+            if not cli_args.enabled_encoding:
+                filelist.insert(1, f'#EXTENC: {cli_args.encoding}')
+                cli_args.ext_part += 1
+                if cli_args.max_tracks:
+                    cli_args.max_tracks += 1
+            else:
+                print("warning: encoding is already configured")
+
+
 def main():
     """Make a playlist file"""
 
@@ -222,46 +258,20 @@ def main():
 
     # Build a playlist
     if multimedia_files:
-        ext_part = 0
+
         # Check shuffle
         if args.shuffle:
             shuffle(multimedia_files)
 
-        # Check if playlist is an extended M3U
-        if args.title or args.encoding or args.image:
-            if not args.enabled_extensions:
-                multimedia_files.insert(0, '#EXTM3U')
-                args.enabled_extensions = True
-                ext_part += 1
-                if args.max_tracks:
-                    args.max_tracks += 1
-
-            # Set title
-            if args.title:
-                if not args.enabled_title:
-                    multimedia_files.insert(1, f'#PLAYLIST: {capwords(args.title)}')
-                    ext_part += 1
-                    if args.max_tracks:
-                        args.max_tracks += 1
-                else:
-                    print("warning: title is already configured")
-
-            # Set encoding
-            if args.encoding:
-                if not args.enabled_encoding:
-                    multimedia_files.insert(1, f'#EXTENC: {args.encoding}')
-                    ext_part += 1
-                    if args.max_tracks:
-                        args.max_tracks += 1
-                else:
-                    print("warning: encoding is already configured")
+        # Add extension to playlist
+        add_extension(multimedia_files, args)
 
         # Write playlist to file
         write_playlist(args.playlist,
                        multimedia_files,
                        enabled_extensions=args.enabled_extensions,
                        image=args.image,
-                       ext_part=ext_part,
+                       ext_part=args.ext_part,
                        max_tracks=args.max_tracks,
                        verbose=args.verbose)
     else:
