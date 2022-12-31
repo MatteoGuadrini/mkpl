@@ -108,9 +108,11 @@ def get_args():
                 args.enabled_encoding = True
         args.playlist.read()
         # Check if extensions are disabled and image is specified
-        if not args.enabled_extensions and args.image:
-            args.image = None
-            print(f'warning: image {args.image} has not been set because the extensions are not present in the file')
+        if getsize(args.playlist.name) > 0:
+            if not args.enabled_extensions and args.image:
+                print(f'warning: image {args.image} has not been set because the extension flag'
+                    ' is not present in the playlist')
+                args.image = None
 
     # Check if image file exists
     if args.image:
