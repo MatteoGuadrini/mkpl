@@ -91,14 +91,14 @@ def get_args():
 
     # Open playlist file
     mode = 'at+' if args.append else 'wt'
-    args.playlist = open(args.playlist, mode=mode)
+    args.opened_playlist = open(args.playlist, mode=mode)
     args.enabled_extensions = False
     args.enabled_title = False
     args.enabled_encoding = False
     # Verify extension attribute in append mode
     if args.append:
-        args.playlist.seek(0)
-        first_three_lines = args.playlist.readlines(100)
+        args.opened_playlist.seek(0)
+        first_three_lines = args.opened_playlist.readlines(100)
         for line in first_three_lines:
             if '#EXTM3U' in line:
                 args.enabled_extensions = True
@@ -106,12 +106,12 @@ def get_args():
                 args.enabled_title = True
             if '#EXTENC' in line:
                 args.enabled_encoding = True
-        args.playlist.read()
+        args.opened_playlist.read()
         # Check if extensions are disabled and image is specified
-        if getsize(args.playlist.name) > 0:
+        if getsize(args.opened_playlist.name) > 0:
             if not args.enabled_extensions and args.image:
                 print(f'warning: image {args.image} has not been set because the extension flag'
-                    ' is not present in the playlist')
+                      ' is not present in the playlist')
                 args.image = None
 
     # Check if image file exists
@@ -277,7 +277,7 @@ def main():
         add_extension(multimedia_files, args)
 
         # Write playlist to file
-        write_playlist(args.playlist,
+        write_playlist(args.opened_playlist,
                        multimedia_files,
                        enabled_extensions=args.enabled_extensions,
                        image=args.image,
