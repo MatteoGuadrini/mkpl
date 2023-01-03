@@ -150,20 +150,26 @@ def vprint(verbose, *messages):
         print('debug:', *messages)
 
 
-def write_playlist(playlist, files, **extensions):
+def write_playlist(playlist,
+                   files,
+                   enabled_extensions=False,
+                   image=None,
+                   ext_part=None,
+                   max_tracks=None,
+                   verbose=False):
     """Write playlist into file"""
     with playlist as pl:
-        vprint(extensions['verbose'], f"write playlist {pl.name}")
-        if extensions['image'] and extensions['enabled_extensions']:
-            joined_string = f"\n#EXTIMG: {extensions['image']}\n"
+        vprint(verbose, f"write playlist {pl.name}")
+        if image and enabled_extensions:
+            joined_string = f"\n#EXTIMG: {image}\n"
         else:
             joined_string = '\n'
         end_file_string = '\n'
         # Write extensions if exists
-        if extensions['ext_part']:
-            pl.write('\n'.join(files[:extensions['ext_part']]) + joined_string)
+        if ext_part:
+            pl.write('\n'.join(files[:ext_part]) + joined_string)
         # Write all multimedia files
-        pl.write(joined_string.join(files[extensions['ext_part']:extensions['max_tracks']]) + end_file_string)
+        pl.write(joined_string.join(files[ext_part:max_tracks]) + end_file_string)
 
 
 def make_playlist(directories,
