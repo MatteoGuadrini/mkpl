@@ -283,7 +283,7 @@ def main():
         add_extension(multimedia_files, args)
 
         # Write playlist to file
-        write_playlist(args.opened_playlist,
+        write_playlist(args.playlist,
                        args.open_mode,
                        multimedia_files,
                        enabled_extensions=args.enabled_extensions,
