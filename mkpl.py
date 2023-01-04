@@ -90,29 +90,28 @@ def get_args():
         parser.error(f'{args.playlist} is a directory')
 
     # Open playlist file
-    mode = 'at+' if args.append else 'wt'
-    args.opened_playlist = open(args.playlist, mode=mode)
+    args.open_mode = 'at+' if args.append else 'wt'
     args.enabled_extensions = False
     args.enabled_title = False
     args.enabled_encoding = False
     # Verify extension attribute in append mode
     if args.append:
-        args.opened_playlist.seek(0)
-        first_three_lines = args.opened_playlist.readlines(100)
-        for line in first_three_lines:
-            if '#EXTM3U' in line:
-                args.enabled_extensions = True
-            if '#PLAYLIST' in line:
-                args.enabled_title = True
-            if '#EXTENC' in line:
-                args.enabled_encoding = True
-        args.opened_playlist.read()
-        # Check if extensions are disabled and image is specified
-        if getsize(args.opened_playlist.name) > 0:
-            if not args.enabled_extensions and args.image:
-                print(f'warning: image {args.image} has not been set because the extension flag'
-                      ' is not present in the playlist')
-                args.image = None
+        with open(args.playlist, mode=args.open_mode) as opened_playlist:
+            opened_playlist.seek(0)
+            first_three_lines = opened_playlist.readlines(100)
+            for line in first_three_lines:
+                if '#EXTM3U' in line:
+                    args.enabled_extensions = True
+                if '#PLAYLIST' in line:
+                    args.enabled_title = True
+                if '#EXTENC' in line:
+                    args.enabled_encoding = True
+            # Check if extensions are disabled and image is specified
+            if getsize(args.playlist) > 0:
+                if not args.enabled_extensions and args.image:
+                    print(f'warning: image {args.image} has not been set because the extension flag'
+                          ' is not present in the playlist')
+                    args.image = None
 
     # Check if image file exists
     if args.image:
@@ -151,6 +150,7 @@ def vprint(verbose, *messages):
 
 
 def write_playlist(playlist,
+                   open_mode,
                    files,
                    enabled_extensions=False,
                    image=None,
@@ -158,7 +158,7 @@ def write_playlist(playlist,
                    max_tracks=None,
                    verbose=False):
     """Write playlist into file"""
-    with playlist as pl:
+    with open(playlist, mode=open_mode) as pl:
         vprint(verbose, f"write playlist {pl.name}")
         if image and enabled_extensions:
             joined_string = f"\n#EXTIMG: {image}\n"
@@ -284,6 +284,7 @@ def main():
 
         # Write playlist to file
         write_playlist(args.opened_playlist,
+                       args.open_mode,
                        multimedia_files,
                        enabled_extensions=args.enabled_extensions,
                        image=args.image,
