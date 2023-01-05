@@ -174,6 +174,7 @@ def write_playlist(playlist,
 
 def make_playlist(directories,
                   pattern,
+                  file_formats,
                   recursive=False,
                   exclude_dirs=None,
                   unique=False,
@@ -189,7 +190,7 @@ def make_playlist(directories,
         path = Path(directory)
         root = path.parent
         vprint(verbose, f"current directory={path}, root={root}")
-        for fmt in FILE_FORMAT:
+        for fmt in file_formats:
             # Check recursive
             folder = '**/*' if recursive else '*'
             for file in path.glob(folder + f'.{fmt}'):
@@ -261,6 +262,7 @@ def main():
     # Make multimedia list
     multimedia_files = make_playlist(args.directories,
                                      args.pattern,
+                                     FILE_FORMAT,
                                      recursive=args.recursive,
                                      exclude_dirs=args.exclude_dirs,
                                      unique=args.unique,
