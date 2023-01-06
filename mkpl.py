@@ -186,6 +186,10 @@ def make_playlist(directories,
     filelist = list()
     # Walk to directories
     for directory in directories:
+        # Check if directory exists
+        if not exists(directory):
+            print(f'warning: {directory} does not exists')
+            continue
         # Build a Path object
         path = Path(directory)
         root = path.parent
