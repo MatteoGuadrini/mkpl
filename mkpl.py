@@ -190,6 +190,10 @@ def make_playlist(directories,
         if not exists(directory):
             print(f'warning: {directory} does not exists')
             continue
+        # Check if is a directory
+        if not isdir(directory):
+            print(f'warning: {directory} is not a directory')
+            continue
         # Build a Path object
         path = Path(directory)
         root = path.parent
