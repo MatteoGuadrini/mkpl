@@ -159,8 +159,8 @@ def write_playlist(playlist,
                    verbose=False):
     """Write playlist into file"""
     with open(playlist, mode=open_mode) as pl:
-        vprint(verbose, f"write playlist {pl.name}")
         if image and enabled_extensions:
+            vprint(verbose, f"set image {image}")
             joined_string = f"\n#EXTIMG: {image}\n"
         else:
             joined_string = '\n'
@@ -169,6 +169,7 @@ def write_playlist(playlist,
         if ext_part:
             pl.write('\n'.join(files[:ext_part]) + joined_string)
         # Write all multimedia files
+        vprint(verbose, f"write playlist {pl.name}")
         pl.write(joined_string.join(files[ext_part:max_tracks]) + end_file_string)
 
 
@@ -223,7 +224,7 @@ def make_playlist(directory,
     return filelist
 
 
-def add_extension(filelist, cli_args):
+def add_extension(filelist, cli_args, verbose=False):
     """Add extension to playlist list"""
     if not isinstance(filelist, list):
         raise ValueError(f'{filelist} is not a list object')
@@ -233,6 +234,7 @@ def add_extension(filelist, cli_args):
     if cli_args.title or cli_args.encoding or cli_args.image:
         if not cli_args.enabled_extensions:
             filelist.insert(0, '#EXTM3U')
+            vprint(verbose, "enable extension flag")
             cli_args.enabled_extensions = True
             cli_args.ext_part += 1
             if cli_args.max_tracks:
@@ -241,7 +243,9 @@ def add_extension(filelist, cli_args):
         # Set title
         if cli_args.title:
             if not cli_args.enabled_title:
-                filelist.insert(1, f'#PLAYLIST: {capwords(cli_args.title)}')
+                title = capwords(cli_args.title)
+                filelist.insert(1, f'#PLAYLIST: {title}')
+                vprint(verbose, f"set title {title}")
                 cli_args.ext_part += 1
                 if cli_args.max_tracks:
                     cli_args.max_tracks += 1
@@ -252,6 +256,7 @@ def add_extension(filelist, cli_args):
         if cli_args.encoding:
             if not cli_args.enabled_encoding:
                 filelist.insert(1, f'#EXTENC: {cli_args.encoding}')
+                vprint(verbose, f"set encoding {cli_args.encoding}")
                 cli_args.ext_part += 1
                 if cli_args.max_tracks:
                     cli_args.max_tracks += 1
@@ -291,7 +296,7 @@ def main():
             shuffle(multimedia_files)
 
         # Add extension to playlist
-        add_extension(multimedia_files, args)
+        add_extension(multimedia_files, args, verbose=args.verbose)
 
         # Write playlist to file
         write_playlist(args.playlist,
