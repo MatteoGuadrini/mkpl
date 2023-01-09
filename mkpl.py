@@ -172,7 +172,7 @@ def write_playlist(playlist,
         pl.write(joined_string.join(files[ext_part:max_tracks]) + end_file_string)
 
 
-def make_playlist(directories,
+def make_playlist(directory,
                   pattern,
                   file_formats,
                   recursive=False,
@@ -184,44 +184,42 @@ def make_playlist(directories,
                   verbose=False):
     """Make playlist list"""
     filelist = list()
-    # Walk to directories
-    for directory in directories:
-        # Check if directory exists
-        if not exists(directory):
-            print(f'warning: {directory} does not exists')
-            continue
-        # Check if is a directory
-        if not isdir(directory):
-            print(f'warning: {directory} is not a directory')
-            continue
-        # Build a Path object
-        path = Path(directory)
-        root = path.parent
-        vprint(verbose, f"current directory={path}, root={root}")
-        for fmt in file_formats:
-            # Check recursive
-            folder = '**/*' if recursive else '*'
-            for file in path.glob(folder + f'.{fmt}'):
-                # Check if in exclude dirs
-                if any([e_path in str(file) for e_path in exclude_dirs]):
+    # Check if directory exists
+    if not exists(directory):
+        print(f'warning: {directory} does not exists')
+        return filelist
+    # Check if is a directory
+    if not isdir(directory):
+        print(f'warning: {directory} is not a directory')
+        return filelist
+    # Build a Path object
+    path = Path(directory)
+    root = path.parent
+    vprint(verbose, f"current directory={path}, root={root}")
+    for fmt in file_formats:
+        # Check recursive
+        folder = '**/*' if recursive else '*'
+        for file in path.glob(folder + f'.{fmt}'):
+            # Check if in exclude dirs
+            if any([e_path in str(file) for e_path in exclude_dirs]):
+                continue
+            # Check if file is in playlist
+            if unique:
+                if file_in_playlist(filelist,
+                                    str(file),
+                                    root=root if not absolute else None):
                     continue
-                # Check if file is in playlist
-                if unique:
-                    if file_in_playlist(filelist,
-                                        str(file),
-                                        root=root if not absolute else None):
-                        continue
-                # Check absolute file names
-                size = file.stat().st_size
-                file = str(file) if absolute else str(file.relative_to(path.parent))
-                # Check re pattern
-                if findall(pattern, file):
-                    # Check file size
-                    if size >= min_size:
-                        vprint(verbose, f"add multimedia file {file}")
-                        filelist.append(
-                            sub('/', r"\\", file) if windows else file
-                        )
+            # Check absolute file names
+            size = file.stat().st_size
+            file = str(file) if absolute else str(file.relative_to(path.parent))
+            # Check re pattern
+            if findall(pattern, file):
+                # Check file size
+                if size >= min_size:
+                    vprint(verbose, f"add multimedia file {file}")
+                    filelist.append(
+                        sub('/', r"\\", file) if windows else file
+                    )
     return filelist
 
 
@@ -265,19 +263,22 @@ def main():
     """Make a playlist file"""
 
     args = get_args()
+    multimedia_files = list()
     vprint(args.verbose, f"formats={FILE_FORMAT}, recursive={args.recursive}, pattern={args.pattern}")
 
     # Make multimedia list
-    multimedia_files = make_playlist(args.directories,
-                                     args.pattern,
-                                     FILE_FORMAT,
-                                     recursive=args.recursive,
-                                     exclude_dirs=args.exclude_dirs,
-                                     unique=args.unique,
-                                     absolute=args.absolute,
-                                     min_size=args.size,
-                                     windows=args.windows,
-                                     verbose=args.verbose)
+    for directory in args.directories:
+        multimedia_files.extend(make_playlist(directory,
+                                              args.pattern,
+                                              FILE_FORMAT,
+                                              recursive=args.recursive,
+                                              exclude_dirs=args.exclude_dirs,
+                                              unique=args.unique,
+                                              absolute=args.absolute,
+                                              min_size=args.size,
+                                              windows=args.windows,
+                                              verbose=args.verbose)
+                                )
 
     # Add link
     multimedia_files.extend(args.link)
