@@ -75,6 +75,7 @@ def get_args():
     parser.add_argument("-u", "--unique", help="The same files are not placed in the playlist", action='store_true')
     parser.add_argument("-c", "--append", help="Continue playlist instead of override it", action='store_true')
     parser.add_argument("-w", "--windows", help="Windows style folder separator", action='store_true')
+    parser.add_argument("-S", "--split", help="Split playlist by directories", action='store_true')
 
     args = parser.parse_args()
 
