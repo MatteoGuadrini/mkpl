@@ -265,6 +265,35 @@ def add_extension(filelist, cli_args, verbose=False):
                 print("warning: encoding is already configured")
 
 
+def _process_playlist(files, cli_args):
+    """Private function cli only for process arguments and make playlist"""
+
+    # Add link
+    files.extend(cli_args.link)
+
+    # Build a playlist
+    if files:
+
+        # Check shuffle
+        if cli_args.shuffle:
+            shuffle(files)
+
+        # Add extension to playlist
+        add_extension(files, cli_args, verbose=cli_args.verbose)
+
+        # Write playlist to file
+        write_playlist(cli_args.playlist,
+                       cli_args.open_mode,
+                       files,
+                       enabled_extensions=cli_args.enabled_extensions,
+                       image=cli_args.image,
+                       ext_part=cli_args.ext_part,
+                       max_tracks=cli_args.max_tracks,
+                       verbose=cli_args.verbose)
+    else:
+        print(f'warning: no multimedia files are found here: {",".join(cli_args.directories)}')
+
+
 def main():
     """Make a playlist file"""
 
@@ -286,30 +315,7 @@ def main():
                                               verbose=args.verbose)
                                 )
 
-    # Add link
-    multimedia_files.extend(args.link)
-
-    # Build a playlist
-    if multimedia_files:
-
-        # Check shuffle
-        if args.shuffle:
-            shuffle(multimedia_files)
-
-        # Add extension to playlist
-        add_extension(multimedia_files, args, verbose=args.verbose)
-
-        # Write playlist to file
-        write_playlist(args.playlist,
-                       args.open_mode,
-                       multimedia_files,
-                       enabled_extensions=args.enabled_extensions,
-                       image=args.image,
-                       ext_part=args.ext_part,
-                       max_tracks=args.max_tracks,
-                       verbose=args.verbose)
-    else:
-        print(f'warning: no multimedia files are found here: {",".join(args.directories)}')
+    _process_playlist(multimedia_files, args)
 
 
 # endregion
