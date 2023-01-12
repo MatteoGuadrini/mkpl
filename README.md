@@ -10,7 +10,7 @@ To install ``mkpl``, see here:
 $ pip install make_playlist               # for python enviroment
 
 $ dnf copr enable matteoguadrini/mkpl
-$ dnf install python-make_playlist -y     # for Red Hat, CentOS, Mageia and fedora
+$ dnf install python-make_playlist -y     # for Red Hat and fedora
 
 $ git clone https://github.com/MatteoGuadrini/mkpl.git && cd mkpl
 $ python setup.py install                 # for others
@@ -40,6 +40,7 @@ $ python setup.py install                 # for others
 | -c    | --append       | Continue playlist instead of override it      |                           |
 | -w    | --windows      | Windows style folder separator                |                           |
 | -v    | --verbose      | Enable verbosity (debug mode)                 |                           |
+| -S    | --split        | Split playlist by directories                 |                           |
 
 ## Examples
 
@@ -86,7 +87,7 @@ $ python setup.py install                 # for others
     mkpl -d "my_files" -r -z 10485760 "multimedia.m3u"
     ```
    
-8. Create playlist with only number one and two tracks wit regular expression
+8. Create playlist with only number one and two tracks with regular expression
 
     ```bash
     mkpl -d "my_mp3_collection" -r -p "^[12]|[012]{2}" "my music.m3u"
@@ -117,10 +118,25 @@ $ python setup.py install                 # for others
     mkpl -d "new_collection" -r "my music.m3u" -l http://192.168.1.123/mp3/song1.mp3, http://192.168.1.123/mp3/song2.mp4
     ```
     
-13. Create a playlist and set Windows backslash (\) folder separator (for Windows OS)
+13. Create a playlist and set Windows backslash (\\) folder separator (for Windows OS)
 
     ```bash
     mkpl -d "new_collection" -r "my music.m3u" -w
+    ```
+
+14. Split playlist into _N_ playlists fon _N_ directories
+
+    ```bash
+    mkpl -d "folder1" "folder2" "folder3" -r "my_music.m3u" -S
+    ```
+    Result:
+    ```console
+    $> ls
+    my_music.m3u
+    folder1.m3u
+    folder2.m3u
+    folder3.m3u
+    ...
     ```
    
 ## Open source

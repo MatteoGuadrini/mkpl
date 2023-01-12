@@ -27,9 +27,9 @@ import argparse
 from string import capwords
 from re import findall, sub
 from filecmp import cmp
-from os.path import join, exists, isdir, getsize
 from pathlib import Path
 from random import shuffle
+from os.path import join, exists, isdir, getsize, normpath, basename, dirname
 
 # endregion
 
@@ -265,7 +265,7 @@ def add_extension(filelist, cli_args, verbose=False):
                 print("warning: encoding is already configured")
 
 
-def _process_playlist(files, cli_args):
+def _process_playlist(files, cli_args, other_playlist=None):
     """Private function cli only for process arguments and make playlist"""
 
     # Add link
@@ -282,7 +282,7 @@ def _process_playlist(files, cli_args):
         add_extension(files, cli_args, verbose=cli_args.verbose)
 
         # Write playlist to file
-        write_playlist(cli_args.playlist,
+        write_playlist(other_playlist if other_playlist else cli_args.playlist,
                        cli_args.open_mode,
                        files,
                        enabled_extensions=cli_args.enabled_extensions,
@@ -299,21 +299,30 @@ def main():
 
     args = get_args()
     multimedia_files = list()
-    vprint(args.verbose, f"formats={FILE_FORMAT}, recursive={args.recursive}, pattern={args.pattern}")
+    vprint(args.verbose, f"formats={FILE_FORMAT}, recursive={args.recursive}, "
+                         f"pattern={args.pattern}, split={args.split}")
 
     # Make multimedia list
     for directory in args.directories:
-        multimedia_files.extend(make_playlist(directory,
-                                              args.pattern,
-                                              FILE_FORMAT,
-                                              recursive=args.recursive,
-                                              exclude_dirs=args.exclude_dirs,
-                                              unique=args.unique,
-                                              absolute=args.absolute,
-                                              min_size=args.size,
-                                              windows=args.windows,
-                                              verbose=args.verbose)
-                                )
+        directory_files = make_playlist(directory,
+                                        args.pattern,
+                                        FILE_FORMAT,
+                                        recursive=args.recursive,
+                                        exclude_dirs=args.exclude_dirs,
+                                        unique=args.unique,
+                                        absolute=args.absolute,
+                                        min_size=args.size,
+                                        windows=args.windows,
+                                        verbose=args.verbose)
+
+        multimedia_files.extend(directory_files)
+
+        # Check if you must split into directory playlist
+        if args.split:
+            playlist_name = basename(normpath(directory))
+            playlist_ext = '.m3u8' if args.encoding == 'UNICODE' else '.m3u'
+            playlist_path = join(dirname(args.playlist), playlist_name + playlist_ext)
+            _process_playlist(directory_files, args, playlist_path)
 
     _process_playlist(multimedia_files, args)
 
