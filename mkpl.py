@@ -36,7 +36,7 @@ from os.path import join, exists, isdir, getsize, normpath, basename, dirname
 # region globals
 FILE_FORMAT = {'mp1', 'mp2', 'mp3', 'mp4', 'aac', 'ogg', 'wav', 'wma', 'm4a', 'aiff',
                'avi', 'xvid', 'divx', 'mpeg', 'mpg', 'mov', 'wmv', 'flac', 'alac'}
-__version__ = '1.4.0'
+__version__ = '1.5.0'
 
 
 # endregion
