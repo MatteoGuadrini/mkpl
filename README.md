@@ -1,4 +1,4 @@
-# ``mkpl``: Make playlist
+# ``make_playlist``: Make playlist command line tool
 
 ``mkpl`` is a _command line tool_ for create playlist file (**M3U format**).
 
@@ -138,6 +138,24 @@ $ python setup.py install                 # for others
     folder3.m3u
     ...
     ```
+
+## Use it like Python module
+
+`mkpl` can also be used as a Python module to customize your scripts.
+
+```python
+from make_playlist import *
+
+# Prepare playlist list: find multimedia files with name starts between a and f
+playlist = make_playlist('/Music/collections',
+                         '^[a-f].*',
+                         ('mp3', 'mp4', 'aac'),
+                         recursive=True,
+                         unique=True)
+
+# Write playlist to file
+write_playlist('/Music/AtoF.m3u', 'wt', playlist)
+```
    
 ## Open source
 _mkpl_ is an open source project. Any contribute, It's welcome.
@@ -181,4 +199,4 @@ Thanks to Dane Hillard for writing the _Practices of the Python Pro_ books.
 Special thanks go to my wife, who understood the hours of absence for this development. 
 Thanks to my children, for the daily inspiration they give me and to make me realize, that life must be simple.
 
-Thanks Python!
+Thanks, Python!
