@@ -1,5 +1,13 @@
 # Release notes
 
+## 1.5.0
+Jan 13, 2023
+
+- _Refactor module_; all business logic into functions: **make_playlist**, **write_playlist** and **add_extension**
+- Add `-S` or `--split` cli argument: see issue #2
+- Fix check image and append mode
+- Fix _enabled_encoding_ when is just enabled
+
 ## 1.4.0
 Nov 10, 2022
 
