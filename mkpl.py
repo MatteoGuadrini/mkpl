@@ -5,7 +5,7 @@
 # created by: matteo.guadrini
 # mkpl -- mkpl
 #
-#     Copyright (C) 2022 Matteo Guadrini <matteo.guadrini@hotmail.it>
+#     Copyright (C) 2023 Matteo Guadrini <matteo.guadrini@hotmail.it>
 #
 #     This program is free software: you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
@@ -29,7 +29,8 @@ from re import findall, sub
 from filecmp import cmp
 from pathlib import Path
 from random import shuffle
-from os.path import (join, exists, isdir, getsize, normpath, basename, dirname)
+from os.path import (join, exists, isdir, getsize, 
+                     normpath, basename, dirname, getctime)
 
 # endregion
 
@@ -77,6 +78,7 @@ def get_args():
     parser.add_argument("-w", "--windows", help="Windows style folder separator", action='store_true')
     parser.add_argument("-S", "--split", help="Split playlist by directories", action='store_true')
     parser.add_argument("-o", "--orderby-name", help="Order playlist files by name", action='store_true')
+    parser.add_argument("-O", "--orderby-date", help="Order playlist files by date", action='store_true')
 
     args = parser.parse_args()
 
@@ -179,6 +181,7 @@ def make_playlist(directory,
                   pattern,
                   file_formats,
                   sortby_name=False,
+                  sortby_date=False,
                   recursive=False,
                   exclude_dirs=None,
                   unique=False,
@@ -207,6 +210,8 @@ def make_playlist(directory,
         # Check sort
         if sortby_name:
             files = sorted(files)
+        if sortby_date:
+            files = sorted(files, key=getctime)
         for file in files:
             # Check if in exclude dirs
             if any([e_path in str(file) for e_path in exclude_dirs]):
@@ -314,6 +319,7 @@ def main():
                                         args.pattern,
                                         FILE_FORMAT,
                                         sortby_name=args.orderby_name,
+                                        sortby_date=args.orderby_date,
                                         recursive=args.recursive,
                                         exclude_dirs=args.exclude_dirs,
                                         unique=args.unique,
