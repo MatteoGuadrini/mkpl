@@ -29,7 +29,7 @@ from re import findall, sub
 from filecmp import cmp
 from pathlib import Path
 from random import shuffle
-from os.path import join, exists, isdir, getsize, normpath, basename, dirname
+from os.path import (join, exists, isdir, getsize, normpath, basename, dirname)
 
 # endregion
 
@@ -76,6 +76,7 @@ def get_args():
     parser.add_argument("-c", "--append", help="Continue playlist instead of override it", action='store_true')
     parser.add_argument("-w", "--windows", help="Windows style folder separator", action='store_true')
     parser.add_argument("-S", "--split", help="Split playlist by directories", action='store_true')
+    parser.add_argument("-o", "--orderby-name", help="Order playlist files by name", action='store_true')
 
     args = parser.parse_args()
 
@@ -177,6 +178,7 @@ def write_playlist(playlist,
 def make_playlist(directory,
                   pattern,
                   file_formats,
+                  sortby_name=False,
                   recursive=False,
                   exclude_dirs=None,
                   unique=False,
@@ -201,7 +203,11 @@ def make_playlist(directory,
     for fmt in file_formats:
         # Check recursive
         folder = '**/*' if recursive else '*'
-        for file in path.glob(folder + f'.{fmt}'):
+        files = path.glob(folder + f'.{fmt}')
+        # Check sort
+        if sortby_name:
+            files = sorted(files)
+        for file in files:
             # Check if in exclude dirs
             if any([e_path in str(file) for e_path in exclude_dirs]):
                 continue
@@ -307,6 +313,7 @@ def main():
         directory_files = make_playlist(directory,
                                         args.pattern,
                                         FILE_FORMAT,
+                                        sortby_name=args.orderby_name,
                                         recursive=args.recursive,
                                         exclude_dirs=args.exclude_dirs,
                                         unique=args.unique,
