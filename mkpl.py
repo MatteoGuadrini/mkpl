@@ -36,7 +36,7 @@ from os.path import (join, exists, isdir, getsize,
 
 # region globals
 FILE_FORMAT = {'mp1', 'mp2', 'mp3', 'mp4', 'aac', 'ogg', 'wav', 'wma', 'm4a', 'aiff',
-               'avi', 'xvid', 'divx', 'mpeg', 'mpg', 'mov', 'wmv', 'flac', 'alac'}
+               'avi', 'xvid', 'divx', 'mpeg', 'mpg', 'mov', 'wmv', 'flac', 'alac', 'opus'}
 __version__ = '1.5.0'
 
 
@@ -62,10 +62,13 @@ def get_args():
     parser.add_argument("-e", "--exclude-dirs", help="Exclude directory paths", nargs=argparse.ONE_OR_MORE, default=[])
     parser.add_argument("-i", "--include", help="Include other file format", nargs=argparse.ONE_OR_MORE,
                         metavar='FORMAT')
-    parser.add_argument("-p", "--pattern", help="Regular expression inclusion pattern", default='.*')
+    parser.add_argument("-p", "--pattern", 
+                        help="Regular expression inclusion pattern", default='.*')
     parser.add_argument("-f", "--format", help="Select only a file format", type=str, choices=FILE_FORMAT)
-    parser.add_argument("-z", "--size", help="Start size in bytes", type=int, default=1, metavar='BYTES')
-    parser.add_argument("-m", "--max-tracks", help="Maximum number of tracks", type=int, default=None, metavar='NUMBER')
+    parser.add_argument("-z", "--size", help="Start size in bytes", type=int, 
+                        default=1, metavar='BYTES')
+    parser.add_argument("-m", "--max-tracks", help="Maximum number of tracks", 
+                        type=int, default=None, metavar='NUMBER')
     parser.add_argument("-t", "--title", help="Playlist title", default=None)
     parser.add_argument("-g", "--encoding", help="Text encoding", choices=('UTF-8', 'ASCII', 'UNICODE'), default=None)
     parser.add_argument("-I", "--image", help="Playlist image", default=None)
@@ -75,7 +78,8 @@ def get_args():
     parser.add_argument("-s", "--shuffle", help="Casual order", action='store_true')
     parser.add_argument("-u", "--unique", help="The same files are not placed in the playlist", action='store_true')
     parser.add_argument("-c", "--append", help="Continue playlist instead of override it", action='store_true')
-    parser.add_argument("-w", "--windows", help="Windows style folder separator", action='store_true')
+    parser.add_argument("-w", "--windows", help="Windows style folder separator", 
+                        action='store_true')
     parser.add_argument("-S", "--split", help="Split playlist by directories", action='store_true')
     parser.add_argument("-o", "--orderby-name", help="Order playlist files by name", action='store_true')
     parser.add_argument("-O", "--orderby-date", help="Order playlist files by date", action='store_true')
