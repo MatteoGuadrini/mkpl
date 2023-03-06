@@ -129,7 +129,7 @@ def get_args():
 
     # Extend files format
     if args.include:
-        FILE_FORMAT.update(set(args.include))
+        FILE_FORMAT.update(set([fmt.strip('*').strip('.') for fmt in args.include]))
 
     # Select only one format
     if args.format:
