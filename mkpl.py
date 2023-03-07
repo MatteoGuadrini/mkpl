@@ -5,7 +5,7 @@
 # created by: matteo.guadrini
 # mkpl -- mkpl
 #
-#     Copyright (C) 2022 Matteo Guadrini <matteo.guadrini@hotmail.it>
+#     Copyright (C) 2023 Matteo Guadrini <matteo.guadrini@hotmail.it>
 #
 #     This program is free software: you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
@@ -29,14 +29,15 @@ from re import findall, sub
 from filecmp import cmp
 from pathlib import Path
 from random import shuffle
-from os.path import join, exists, isdir, getsize, normpath, basename, dirname
+from os.path import (join, exists, isdir, getsize, 
+                     normpath, basename, dirname, getctime)
 
 # endregion
 
 # region globals
 FILE_FORMAT = {'mp1', 'mp2', 'mp3', 'mp4', 'aac', 'ogg', 'wav', 'wma', 'm4a', 'aiff',
-               'avi', 'xvid', 'divx', 'mpeg', 'mpg', 'mov', 'wmv', 'flac', 'alac'}
-__version__ = '1.5.0'
+               'avi', 'xvid', 'divx', 'mpeg', 'mpg', 'mov', 'wmv', 'flac', 'alac', 'opus'}
+__version__ = '1.6.0'
 
 
 # endregion
@@ -61,10 +62,13 @@ def get_args():
     parser.add_argument("-e", "--exclude-dirs", help="Exclude directory paths", nargs=argparse.ONE_OR_MORE, default=[])
     parser.add_argument("-i", "--include", help="Include other file format", nargs=argparse.ONE_OR_MORE,
                         metavar='FORMAT')
-    parser.add_argument("-p", "--pattern", help="Regular expression inclusion pattern", default='.*')
+    parser.add_argument("-p", "--pattern", 
+                        help="Regular expression inclusion pattern", default='.*')
     parser.add_argument("-f", "--format", help="Select only a file format", type=str, choices=FILE_FORMAT)
-    parser.add_argument("-z", "--size", help="Start size in bytes", type=int, default=1, metavar='BYTES')
-    parser.add_argument("-m", "--max-tracks", help="Maximum number of tracks", type=int, default=None, metavar='NUMBER')
+    parser.add_argument("-z", "--size", help="Start size in bytes", type=int, 
+                        default=1, metavar='BYTES')
+    parser.add_argument("-m", "--max-tracks", help="Maximum number of tracks", 
+                        type=int, default=None, metavar='NUMBER')
     parser.add_argument("-t", "--title", help="Playlist title", default=None)
     parser.add_argument("-g", "--encoding", help="Text encoding", choices=('UTF-8', 'ASCII', 'UNICODE'), default=None)
     parser.add_argument("-I", "--image", help="Playlist image", default=None)
@@ -74,15 +78,19 @@ def get_args():
     parser.add_argument("-s", "--shuffle", help="Casual order", action='store_true')
     parser.add_argument("-u", "--unique", help="The same files are not placed in the playlist", action='store_true')
     parser.add_argument("-c", "--append", help="Continue playlist instead of override it", action='store_true')
-    parser.add_argument("-w", "--windows", help="Windows style folder separator", action='store_true')
+    parser.add_argument("-w", "--windows", help="Windows style folder separator", 
+                        action='store_true')
     parser.add_argument("-S", "--split", help="Split playlist by directories", action='store_true')
+    parser.add_argument("-o", "--orderby-name", help="Order playlist files by name", action='store_true')
+    parser.add_argument("-O", "--orderby-date", help="Order playlist files by date", action='store_true')
 
     args = parser.parse_args()
 
     # Check extension of playlist file
     if not args.playlist.endswith('.m3u'):
         if args.encoding == 'UNICODE':
-            args.playlist += '.m3u8'
+            if not args.playlist.endswith('.m3u8'):
+                args.playlist += '.m3u8'
         else:
             args.playlist += '.m3u'
 
@@ -121,7 +129,7 @@ def get_args():
 
     # Extend files format
     if args.include:
-        FILE_FORMAT.update(set(args.include))
+        FILE_FORMAT.update(set([fmt.strip('*').strip('.') for fmt in args.include]))
 
     # Select only one format
     if args.format:
@@ -177,6 +185,8 @@ def write_playlist(playlist,
 def make_playlist(directory,
                   pattern,
                   file_formats,
+                  sortby_name=False,
+                  sortby_date=False,
                   recursive=False,
                   exclude_dirs=None,
                   unique=False,
@@ -201,7 +211,13 @@ def make_playlist(directory,
     for fmt in file_formats:
         # Check recursive
         folder = '**/*' if recursive else '*'
-        for file in path.glob(folder + f'.{fmt}'):
+        files = path.glob(folder + f'.{fmt}')
+        # Check sort
+        if sortby_name:
+            files = sorted(files)
+        if sortby_date:
+            files = sorted(files, key=getctime)
+        for file in files:
             # Check if in exclude dirs
             if any([e_path in str(file) for e_path in exclude_dirs]):
                 continue
@@ -307,6 +323,8 @@ def main():
         directory_files = make_playlist(directory,
                                         args.pattern,
                                         FILE_FORMAT,
+                                        sortby_name=args.orderby_name,
+                                        sortby_date=args.orderby_date,
                                         recursive=args.recursive,
                                         exclude_dirs=args.exclude_dirs,
                                         unique=args.unique,

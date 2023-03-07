@@ -41,6 +41,8 @@ $ python setup.py install                 # for others
 | -w    | --windows      | Windows style folder separator                |                           |
 | -v    | --verbose      | Enable verbosity (debug mode)                 |                           |
 | -S    | --split        | Split playlist by directories                 |                           |
+| -o    | --orderby-name | Order playlist files by name                  |                           |
+| -O    | --orderby-date | Order playlist files by creation date         |                           |
 
 ## Examples
 
@@ -137,6 +139,13 @@ $ python setup.py install                 # for others
     folder2.m3u
     folder3.m3u
     ...
+    ```
+
+15. Sort playlist files by name (`-o`) or by creation date (`-O`):
+
+    ```bash
+    mkpl -d "new_collection" -r "my music.m3u" -o
+    mkpl -d "new_collection" -r "my music.m3u" -O
     ```
 
 ## Use it like Python module
