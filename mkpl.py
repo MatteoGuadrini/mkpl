@@ -37,7 +37,7 @@ from os.path import (join, exists, isdir, getsize,
 # region globals
 FILE_FORMAT = {'mp1', 'mp2', 'mp3', 'mp4', 'aac', 'ogg', 'wav', 'wma', 'm4a', 'aiff',
                'avi', 'xvid', 'divx', 'mpeg', 'mpg', 'mov', 'wmv', 'flac', 'alac', 'opus'}
-__version__ = '1.5.0'
+__version__ = '1.6.0'
 
 
 # endregion

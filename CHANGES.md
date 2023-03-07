@@ -1,5 +1,14 @@
 # Release notes
 
+## 1.6.0
+Mar 07, 2023
+
+- Add `-o` or `--orderby-name` cli argument: see issue #4
+- Add `-O` or `--orderby-date` cli argument: see issue #4
+- Add support for _'opus'_ file format: see issue #5
+- Fix check playlist extension for _m3u8_ format
+- Fix asterisk and dot char into include argument
+
 ## 1.5.0
 Jan 13, 2023
 
