@@ -35,8 +35,10 @@ from os.path import (join, exists, isdir, getsize,
 # endregion
 
 # region globals
-FILE_FORMAT = {'mp1', 'mp2', 'mp3', 'mp4', 'aac', 'ogg', 'wav', 'wma', 'm4a', 'aiff',
-               'avi', 'xvid', 'divx', 'mpeg', 'mpg', 'mov', 'wmv', 'flac', 'alac', 'opus'}
+AUDIO_FORMAT = {'mp1', 'mp2', 'mp3', 'aac', 'ogg', 'wav', 'wma', 'm4a', 'aiff',
+                'flac', 'alac', 'opus'}
+VIDEO_FORMAT = {'mp4', 'avi', 'xvid', 'divx', 'mpeg', 'mpg', 'mov', 'wmv'}
+FILE_FORMAT = AUDIO_FORMAT.union(VIDEO_FORMAT)
 __version__ = '1.6.0'
 
 
@@ -56,33 +58,50 @@ def get_args():
 
     parser.add_argument("playlist", help="Playlist file", type=str)
     parser.add_argument("-v", "--verbose", help="Enable verbosity", action="store_true")
-    parser.add_argument("-V", "--version", help="Print version", action='version', version=__version__)
-    parser.add_argument("-d", "--directories", help="Directories that contains multimedia file",
+    parser.add_argument("-V", "--version", help="Print version", action='version', 
+                        version=__version__)
+    parser.add_argument("-d", "--directories", 
+                        help="Directories that contains multimedia file",
                         nargs=argparse.ONE_OR_MORE, default=['.'])
-    parser.add_argument("-e", "--exclude-dirs", help="Exclude directory paths", nargs=argparse.ONE_OR_MORE, default=[])
-    parser.add_argument("-i", "--include", help="Include other file format", nargs=argparse.ONE_OR_MORE,
+    parser.add_argument("-e", "--exclude-dirs", help="Exclude directory paths", 
+                        nargs=argparse.ONE_OR_MORE, default=[])
+    parser.add_argument("-i", "--include", help="Include other file format", 
+                        nargs=argparse.ONE_OR_MORE,
                         metavar='FORMAT')
     parser.add_argument("-p", "--pattern", 
                         help="Regular expression inclusion pattern", default='.*')
-    parser.add_argument("-f", "--format", help="Select only a file format", type=str, choices=FILE_FORMAT)
+    parser.add_argument("-f", "--format", help="Select only a file format", type=str, 
+                        choices=FILE_FORMAT)
     parser.add_argument("-z", "--size", help="Start size in bytes", type=int, 
                         default=1, metavar='BYTES')
     parser.add_argument("-m", "--max-tracks", help="Maximum number of tracks", 
                         type=int, default=None, metavar='NUMBER')
     parser.add_argument("-t", "--title", help="Playlist title", default=None)
-    parser.add_argument("-g", "--encoding", help="Text encoding", choices=('UTF-8', 'ASCII', 'UNICODE'), default=None)
+    parser.add_argument("-g", "--encoding", help="Text encoding", 
+                        choices=('UTF-8', 'ASCII', 'UNICODE'), default=None)
     parser.add_argument("-I", "--image", help="Playlist image", default=None)
-    parser.add_argument("-l", "--link", help="Add remote file links", nargs=argparse.ONE_OR_MORE, default=[])
-    parser.add_argument("-r", "--recursive", help="Recursive search", action='store_true')
-    parser.add_argument("-a", "--absolute", help="Absolute file name", action='store_true')
+    parser.add_argument("-l", "--link", help="Add remote file links", 
+                        nargs=argparse.ONE_OR_MORE, default=[])
+    parser.add_argument("-r", "--recursive", help="Recursive search", 
+                        action='store_true')
+    parser.add_argument("-a", "--absolute", help="Absolute file name", 
+                        action='store_true')
     parser.add_argument("-s", "--shuffle", help="Casual order", action='store_true')
-    parser.add_argument("-u", "--unique", help="The same files are not placed in the playlist", action='store_true')
-    parser.add_argument("-c", "--append", help="Continue playlist instead of override it", action='store_true')
+    parser.add_argument("-u", "--unique", 
+                        help="The same files are not placed in the playlist", 
+                        action='store_true')
+    parser.add_argument("-c", "--append", 
+                        help="Continue playlist instead of override it", 
+                        action='store_true')
     parser.add_argument("-w", "--windows", help="Windows style folder separator", 
                         action='store_true')
-    parser.add_argument("-S", "--split", help="Split playlist by directories", action='store_true')
-    parser.add_argument("-o", "--orderby-name", help="Order playlist files by name", action='store_true')
-    parser.add_argument("-O", "--orderby-date", help="Order playlist files by date", action='store_true')
+    parser.add_argument("-S", "--split", 
+                        help="Split playlist by directories", 
+                        action='store_true')
+    parser.add_argument("-o", "--orderby-name", help="Order playlist files by name", 
+                        action='store_true')
+    parser.add_argument("-O", "--orderby-date", help="Order playlist files by date", 
+                        action='store_true')
 
     args = parser.parse_args()
 
@@ -118,7 +137,8 @@ def get_args():
             # Check if extensions are disabled and image is specified
             if getsize(args.playlist) > 0:
                 if not args.enabled_extensions and args.image:
-                    print(f'warning: image {args.image} has not been set because the extension flag'
+                    print(f'warning: image {args.image} has not '
+                          'been set because the extension flag'
                           ' is not present in the playlist')
                     args.image = None
 
@@ -307,7 +327,8 @@ def _process_playlist(files, cli_args, other_playlist=None):
                        max_tracks=cli_args.max_tracks,
                        verbose=cli_args.verbose)
     else:
-        print(f'warning: no multimedia files are found here: {",".join(cli_args.directories)}')
+        print('warning: no multimedia '
+              f'files are found here: {",".join(cli_args.directories)}')
 
 
 def main():
