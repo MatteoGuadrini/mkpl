@@ -24,13 +24,15 @@
 
 # region imports
 import argparse
-from string import capwords
-from re import findall, sub
+import re
 from filecmp import cmp
+from os.path import basename, dirname, exists, getctime, getsize, isdir, join, normpath
 from pathlib import Path
 from random import shuffle
-from os.path import (join, exists, isdir, getsize, 
-                     normpath, basename, dirname, getctime)
+from re import findall, sub
+from string import capwords
+
+from mutagen import File
 
 # endregion
 
@@ -170,6 +172,27 @@ def file_in_playlist(playlist, file, root=None):
         # Compare two files
         if cmp(f, file):
             return True
+
+
+def find_pattern(path, pattern):
+    """Find patter in a file"""
+
+    file = File(path)
+    # Create compiled pattern
+    compiled_pattern = re.compile(pattern)
+    # Check pattern into filename
+    if compiled_pattern.findall(path):
+        return path
+    # Check supports of ID3 tags
+    if path.endswith('.mp3'):
+        # Check pattern into title
+        for title in file.tags.get('TIT2'):
+            if compiled_pattern.findall(title):
+                return path
+        # Check pattern into album
+        for album in file.tags.get('TALB'):
+            if compiled_pattern.findall(album):
+                return path
 
 
 def vprint(verbose, *messages):
