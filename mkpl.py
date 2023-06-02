@@ -175,24 +175,24 @@ def file_in_playlist(playlist, file, root=None):
 
 
 def find_pattern(path, pattern):
-    """Find patter in a file"""
+    """Find patter in a file and tags"""
 
     file = File(path)
     # Create compiled pattern
     compiled_pattern = re.compile(pattern)
     # Check pattern into filename
     if compiled_pattern.findall(path):
-        return path
+        return file.filename
     # Check supports of ID3 tags
-    if path.endswith('.mp3'):
+    if hasattr(file, 'ID3'):
         # Check pattern into title
         for title in file.tags.get('TIT2'):
             if compiled_pattern.findall(title):
-                return path
+                return file.filename
         # Check pattern into album
         for album in file.tags.get('TALB'):
             if compiled_pattern.findall(album):
-                return path
+                return file.filename
 
 
 def vprint(verbose, *messages):
