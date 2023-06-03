@@ -174,25 +174,25 @@ def file_in_playlist(playlist, file, root=None):
             return True
 
 
-def find_pattern(path, pattern):
+def find_pattern(pattern, path):
     """Find patter in a file and tags"""
 
     file = File(path)
     # Create compiled pattern
     compiled_pattern = re.compile(pattern)
     # Check pattern into filename
-    if compiled_pattern.findall(path):
-        return file.filename
+    if compiled_pattern.findall(file.filename):
+        return True
     # Check supports of ID3 tags
     if hasattr(file, 'ID3'):
         # Check pattern into title
         for title in file.tags.get('TIT2'):
             if compiled_pattern.findall(title):
-                return file.filename
+                return True
         # Check pattern into album
         for album in file.tags.get('TALB'):
             if compiled_pattern.findall(album):
-                return file.filename
+                return True
 
 
 def vprint(verbose, *messages):
@@ -270,11 +270,13 @@ def make_playlist(directory,
                                     str(file),
                                     root=root if not absolute else None):
                     continue
-            # Check absolute file names
+            # Get size of file
             size = file.stat().st_size
+            # Check absolute file names
+            file_for_pattern = str(file)
             file = str(file) if absolute else str(file.relative_to(path.parent))
             # Check re pattern
-            if findall(pattern, file):
+            if find_pattern(pattern, file_for_pattern):
                 # Check file size
                 if size >= min_size:
                     vprint(verbose, f"add multimedia file {file}")
