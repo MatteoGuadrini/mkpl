@@ -35,6 +35,7 @@ setup(
         'GitHub Project': __info__.__homepage__,
         'Issue Tracker': __info__.__homepage__ + '/issues'
     },
+    install_requires=["mutagen"],
     license='GNU General Public License v3.0',
     author=__info__.__author__,
     author_email=__info__.__email__,

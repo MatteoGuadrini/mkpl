@@ -43,6 +43,7 @@ $ python setup.py install                 # for others
 | -S    | --split        | Split playlist by directories                 |                           |
 | -o    | --orderby-name | Order playlist files by name                  |                           |
 | -O    | --orderby-date | Order playlist files by creation date         |                           |
+| -T    | --orderby-track| Order playlist files by track                 |                           |
 
 ## Examples
 
@@ -141,11 +142,12 @@ $ python setup.py install                 # for others
     ...
     ```
 
-15. Sort playlist files by name (`-o`) or by creation date (`-O`):
+15. Sort playlist files by name (`-o`), by creation date (`-O`) or by track number (`-T`):
 
     ```bash
     mkpl -d "new_collection" -r "my music.m3u" -o
     mkpl -d "new_collection" -r "my music.m3u" -O
+    mkpl -d "new_collection" -r "my music.m3u" -T
     ```
 
 ## Use it like Python module

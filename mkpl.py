@@ -165,6 +165,12 @@ def get_args():
     parser.add_argument(
         "-O", "--orderby-date", help="Order playlist files by date", action="store_true"
     )
+    parser.add_argument(
+        "-T",
+        "--orderby-track",
+        help="Order playlist files by track",
+        action="store_true",
+    )
 
     args = parser.parse_args()
 
@@ -237,9 +243,15 @@ def file_in_playlist(playlist, file, root=None):
             return True
 
 
+def get_track(file):
+    """Sort file by track"""
+    file = File(file)
+    if hasattr(file, "tags"):
+        return file.tags.get("TRCK", "0")[0]
+
+
 def find_pattern(pattern, path):
     """Find patter in a file and tags"""
-
     file = File(path)
     # Create compiled pattern
     if not isinstance(pattern, re.Pattern):
@@ -297,6 +309,7 @@ def make_playlist(
     file_formats,
     sortby_name=False,
     sortby_date=False,
+    sortby_track=False,
     recursive=False,
     exclude_dirs=None,
     unique=False,
@@ -323,11 +336,6 @@ def make_playlist(
         # Check recursive
         folder = "**/*" if recursive else "*"
         files = path.glob(folder + f".{fmt}")
-        # Check sort
-        if sortby_name:
-            files = sorted(files)
-        if sortby_date:
-            files = sorted(files, key=getctime)
         for file in files:
             # Check if in exclude dirs
             if any([e_path in str(file) for e_path in exclude_dirs]):
@@ -350,6 +358,13 @@ def make_playlist(
                 if size >= min_size:
                     vprint(verbose, f"add multimedia file {file}")
                     filelist.append(sub("/", r"\\", file) if windows else file)
+    # Check sort
+    if sortby_name:
+        filelist = sorted(filelist)
+    if sortby_date:
+        filelist = sorted(filelist, key=getctime)
+    if sortby_track:
+        filelist = sorted(filelist, key=get_track)
     return filelist
 
 
@@ -445,6 +460,7 @@ def main():
             FILE_FORMAT,
             sortby_name=args.orderby_name,
             sortby_date=args.orderby_date,
+            sortby_track=args.orderby_track,
             recursive=args.recursive,
             exclude_dirs=args.exclude_dirs,
             unique=args.unique,
