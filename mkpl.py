@@ -70,6 +70,7 @@ def get_args():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         epilog="See latest release from https://github.com/MatteoGuadrini/mkpl",
     )
+    orderby_group = parser.add_mutually_exclusive_group()
 
     parser.add_argument("playlist", help="Playlist file", type=str)
     parser.add_argument("-v", "--verbose", help="Enable verbosity", action="store_true")
@@ -140,7 +141,6 @@ def get_args():
     parser.add_argument(
         "-a", "--absolute", help="Absolute file name", action="store_true"
     )
-    parser.add_argument("-s", "--shuffle", help="Casual order", action="store_true")
     parser.add_argument(
         "-u",
         "--unique",
@@ -159,13 +159,16 @@ def get_args():
     parser.add_argument(
         "-S", "--split", help="Split playlist by directories", action="store_true"
     )
-    parser.add_argument(
+    orderby_group.add_argument(
+        "-s", "--shuffle", help="Casual order", action="store_true"
+    )
+    orderby_group.add_argument(
         "-o", "--orderby-name", help="Order playlist files by name", action="store_true"
     )
-    parser.add_argument(
+    orderby_group.add_argument(
         "-O", "--orderby-date", help="Order playlist files by date", action="store_true"
     )
-    parser.add_argument(
+    orderby_group.add_argument(
         "-T",
         "--orderby-track",
         help="Order playlist files by track",
@@ -361,9 +364,9 @@ def make_playlist(
     # Check sort
     if sortby_name:
         filelist = sorted(filelist)
-    if sortby_date:
+    elif sortby_date:
         filelist = sorted(filelist, key=getctime)
-    if sortby_track:
+    elif sortby_track:
         filelist = sorted(filelist, key=get_track)
     return filelist
 

@@ -1,6 +1,6 @@
 # ``make_playlist``: Make playlist command line tool
 
-``mkpl`` is a _command line tool_ for create playlist file (**M3U format**).
+``mkpl`` is a _command line tool_ for create playlist files (**M3U format**).
 
 ## Installation
 
