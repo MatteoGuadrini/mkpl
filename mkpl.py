@@ -284,6 +284,7 @@ def write_playlist(
     playlist,
     open_mode,
     files,
+    encoding,
     enabled_extensions=False,
     image=None,
     ext_part=None,
@@ -291,7 +292,12 @@ def write_playlist(
     verbose=False,
 ):
     """Write playlist into file"""
-    with open(playlist, mode=open_mode) as pl:
+    with open(
+        playlist,
+        mode=open_mode,
+        encoding="UTF-8" if encoding == "UNICODE" else encoding,
+        errors="ignore",
+    ) as pl:
         if image and enabled_extensions:
             vprint(verbose, f"set image {image}")
             joined_string = f"\n#EXTIMG: {image}\n"
@@ -431,6 +437,7 @@ def _process_playlist(files, cli_args, other_playlist=None):
             other_playlist if other_playlist else cli_args.playlist,
             cli_args.open_mode,
             files,
+            encoding=cli_args.encoding,
             enabled_extensions=cli_args.enabled_extensions,
             image=cli_args.image,
             ext_part=cli_args.ext_part,
