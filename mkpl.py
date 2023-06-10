@@ -488,6 +488,7 @@ def main():
             playlist_ext = ".m3u8" if args.encoding == "UNICODE" else ".m3u"
             playlist_path = join(dirname(args.playlist), playlist_name + playlist_ext)
             _process_playlist(directory_files, args, playlist_path)
+            args.enabled_extensions = False
 
     _process_playlist(multimedia_files, args)
 
