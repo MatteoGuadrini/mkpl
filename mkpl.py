@@ -246,6 +246,16 @@ def file_in_playlist(playlist, file, root=None):
             return True
 
 
+def report_issue(exc):
+    """Report issue"""
+    print(
+        "error: {0} on line {1}, with error {2}".format(
+            type(exc).__name__, exc.__traceback__.tb_lineno, str(exc)
+        )
+    )
+    exit(1)
+
+
 def get_track(file):
     """Sort file by track"""
     file = File(file)
@@ -497,6 +507,9 @@ def main():
 
 # region main
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        report_issue(e)
 
 # endregion
