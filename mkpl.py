@@ -464,52 +464,55 @@ def _process_playlist(files, cli_args, other_playlist=None):
 def main():
     """Make a playlist file"""
 
-    args = get_args()
-    multimedia_files = list()
-    vprint(
-        args.verbose,
-        f"formats={FILE_FORMAT}, recursive={args.recursive}, "
-        f"pattern={args.pattern}, split={args.split}",
-    )
-
-    # Make multimedia list
-    for directory in args.directories:
-        directory_files = make_playlist(
-            directory,
-            args.pattern,
-            FILE_FORMAT,
-            sortby_name=args.orderby_name,
-            sortby_date=args.orderby_date,
-            sortby_track=args.orderby_track,
-            recursive=args.recursive,
-            exclude_dirs=args.exclude_dirs,
-            unique=args.unique,
-            absolute=args.absolute,
-            min_size=args.size,
-            windows=args.windows,
-            verbose=args.verbose,
+    try:
+        args = get_args()
+        multimedia_files = list()
+        vprint(
+            args.verbose,
+            f"formats={FILE_FORMAT}, recursive={args.recursive}, "
+            f"pattern={args.pattern}, split={args.split}",
         )
 
-        multimedia_files.extend(directory_files)
+        # Make multimedia list
+        for directory in args.directories:
+            directory_files = make_playlist(
+                directory,
+                args.pattern,
+                FILE_FORMAT,
+                sortby_name=args.orderby_name,
+                sortby_date=args.orderby_date,
+                sortby_track=args.orderby_track,
+                recursive=args.recursive,
+                exclude_dirs=args.exclude_dirs,
+                unique=args.unique,
+                absolute=args.absolute,
+                min_size=args.size,
+                windows=args.windows,
+                verbose=args.verbose,
+            )
 
-        # Check if you must split into directory playlist
-        if args.split:
-            playlist_name = basename(normpath(directory))
-            playlist_ext = ".m3u8" if args.encoding == "UNICODE" else ".m3u"
-            playlist_path = join(dirname(args.playlist), playlist_name + playlist_ext)
-            _process_playlist(directory_files, args, playlist_path)
-            args.enabled_extensions = False
+            multimedia_files.extend(directory_files)
 
-    _process_playlist(multimedia_files, args)
+            # Check if you must split into directory playlist
+            if args.split:
+                playlist_name = basename(normpath(directory))
+                playlist_ext = ".m3u8" if args.encoding == "UNICODE" else ".m3u"
+                playlist_path = join(
+                    dirname(args.playlist), playlist_name + playlist_ext
+                )
+                _process_playlist(directory_files, args, playlist_path)
+                args.enabled_extensions = False
+
+        _process_playlist(multimedia_files, args)
+
+    except Exception as err:
+        report_issue(err)
 
 
 # endregion
 
 # region main
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as e:
-        report_issue(e)
+    main()
 
 # endregion
