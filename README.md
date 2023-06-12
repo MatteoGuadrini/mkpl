@@ -1,6 +1,6 @@
 # ``make_playlist``: Make playlist command line tool
 
-``mkpl`` is a _command line tool_ for create playlist files (**M3U format**).
+``mkpl`` is a _command line tool_ to create playlist files (**[M3U](https://en.wikipedia.org/wiki/M3U) format**).
 
 ## Installation
 
@@ -20,30 +20,30 @@ $ python setup.py install                 # for others
 
 ``mkpl`` have many command line arguments. They are explained in this table:
 
-| short | long           | description                                   | args                      |
-|-------|----------------|-----------------------------------------------|---------------------------|
-| -d    | --directories  | Directories that contains multimedia file     | Path of directories       |
-| -e    | --exclude-dirs | Exclude directory paths                       | Path of directories       |
-| -i    | --include      | Include other file format                     | Format of file. ex. mp3   |
-| -p    | --pattern      | Regular expression inclusion pattern          | Regular expression string |
-| -f    | --format       | Select only a file format                     | Format of file. ex. mp3   |
-| -s    | --size         | Start size in bytes                           | Bytes number              |
-| -m    | --max-tracks   | Maximum number of tracks                      | Number                    |
-| -t    | --title        | Playlist title                                | Title string              |
-| -g    | --encoding     | Text encoding                                 | UTF-8,ASCII,UNICODE       |
-| -I    | --image        | Playlist image                                | Image path                |
-| -l    | --link         | Add remote file links                         | Links                     |
-| -r    | --recursive    | Recursive search                              |                           |
-| -a    | --absolute     | Absolute file name                            |                           |
-| -s    | --shuffle      | Casual order                                  |                           |
-| -u    | --unique       | The same files are not placed in the playlist |                           |
-| -c    | --append       | Continue playlist instead of override it      |                           |
-| -w    | --windows      | Windows style folder separator                |                           |
-| -v    | --verbose      | Enable verbosity (debug mode)                 |                           |
-| -S    | --split        | Split playlist by directories                 |                           |
-| -o    | --orderby-name | Order playlist files by name                  |                           |
-| -O    | --orderby-date | Order playlist files by creation date         |                           |
-| -T    | --orderby-track| Order playlist files by track                 |                           |
+| short | long            | description                                   | args                      |
+|-------|-----------------|-----------------------------------------------|---------------------------|
+| -d    | --directories   | Directories that contains multimedia file     | Path of directories       |
+| -e    | --exclude-dirs  | Exclude directory paths                       | Path of directories       |
+| -i    | --include       | Include other file format                     | Format of file. ex. mp3   |
+| -p    | --pattern       | Regular expression inclusion pattern          | Regular expression string |
+| -f    | --format        | Select only a file format                     | Format of file. ex. mp3   |
+| -s    | --size          | Start size in bytes                           | Bytes number              |
+| -m    | --max-tracks    | Maximum number of tracks                      | Number                    |
+| -t    | --title         | Playlist title                                | Title string              |
+| -g    | --encoding      | Text encoding                                 | UTF-8,ASCII,UNICODE       |
+| -I    | --image         | Playlist image                                | Image path                |
+| -l    | --link          | Add remote file links                         | Links                     |
+| -r    | --recursive     | Recursive search                              |                           |
+| -a    | --absolute      | Absolute file name                            |                           |
+| -s    | --shuffle       | Casual order                                  |                           |
+| -u    | --unique        | The same files are not placed in the playlist |                           |
+| -c    | --append        | Continue playlist instead of override it      |                           |
+| -w    | --windows       | Windows style folder separator                |                           |
+| -v    | --verbose       | Enable verbosity (debug mode)                 |                           |
+| -S    | --split         | Split playlist by directories                 |                           |
+| -o    | --orderby-name  | Order playlist files by name                  |                           |
+| -O    | --orderby-date  | Order playlist files by creation date         |                           |
+| -T    | --orderby-track | Order playlist files by track                 |                           |
 
 ## Examples
 

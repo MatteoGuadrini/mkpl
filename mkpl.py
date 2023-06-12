@@ -53,7 +53,7 @@ AUDIO_FORMAT = {
 }
 VIDEO_FORMAT = {"mp4", "avi", "xvid", "divx", "mpeg", "mpg", "mov", "wmv"}
 FILE_FORMAT = AUDIO_FORMAT.union(VIDEO_FORMAT)
-__version__ = "1.6.0"
+__version__ = "1.7.0"
 
 
 # endregion
@@ -291,22 +291,22 @@ def vprint(verbose, *messages):
 
 
 def write_playlist(
-    playlist,
-    open_mode,
-    files,
-    encoding,
-    enabled_extensions=False,
-    image=None,
-    ext_part=None,
-    max_tracks=None,
-    verbose=False,
+        playlist,
+        open_mode,
+        files,
+        encoding,
+        enabled_extensions=False,
+        image=None,
+        ext_part=None,
+        max_tracks=None,
+        verbose=False,
 ):
     """Write playlist into file"""
     with open(
-        playlist,
-        mode=open_mode,
-        encoding="UTF-8" if encoding == "UNICODE" else encoding,
-        errors="ignore",
+            playlist,
+            mode=open_mode,
+            encoding="UTF-8" if encoding == "UNICODE" else encoding,
+            errors="ignore",
     ) as pl:
         if image and enabled_extensions:
             vprint(verbose, f"set image {image}")
@@ -323,19 +323,19 @@ def write_playlist(
 
 
 def make_playlist(
-    directory,
-    pattern,
-    file_formats,
-    sortby_name=False,
-    sortby_date=False,
-    sortby_track=False,
-    recursive=False,
-    exclude_dirs=None,
-    unique=False,
-    absolute=False,
-    min_size=1,
-    windows=False,
-    verbose=False,
+        directory,
+        pattern,
+        file_formats,
+        sortby_name=False,
+        sortby_date=False,
+        sortby_track=False,
+        recursive=False,
+        exclude_dirs=None,
+        unique=False,
+        absolute=False,
+        min_size=1,
+        windows=False,
+        verbose=False,
 ):
     """Make playlist list"""
     filelist = list()
@@ -362,7 +362,7 @@ def make_playlist(
             # Check if file is in playlist
             if unique:
                 if file_in_playlist(
-                    filelist, str(file), root=root if not absolute else None
+                        filelist, str(file), root=root if not absolute else None
                 ):
                     continue
             # Get size of file

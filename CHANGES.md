@@ -1,5 +1,14 @@
 # Release notes
 
+## 1.7.0
+Jun 12, 2023
+
+- Add _find_pattern_ function
+- Add find pattern for _ID3 tags_
+- Add `orderby-track` cli argument: see issue #6
+- Add _encoding_ and _ignore error handling_ to `write_playlist` function: see issue #7
+- Fix reset _enabled_extensions_ with split argument
+
 ## 1.6.0
 Mar 07, 2023
 
