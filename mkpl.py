@@ -99,7 +99,7 @@ def get_args():
         metavar="FORMAT",
     )
     parser.add_argument(
-        "-p", "--pattern", help="Regular expression inclusion pattern", default=".*"
+        "-p", "--pattern", help="Regular expression inclusion pattern", default=None
     )
     parser.add_argument(
         "-f",
@@ -290,6 +290,21 @@ def vprint(verbose, *messages):
         print("debug:", *messages)
 
 
+def unix_to_dos(path, viceversa=False):
+    """Substitute folder separator with windows separator
+
+    :path: path to substitute folder separator
+    :viceversa: dos to unix
+    """
+    if viceversa:
+        old_sep = r"\\"
+        new_sep = "/"
+    else:
+        old_sep = "/"
+        new_sep = r"\\"
+    return sub(old_sep, new_sep, path)
+
+
 def write_playlist(
         playlist,
         open_mode,
@@ -324,8 +339,8 @@ def write_playlist(
 
 def make_playlist(
         directory,
-        pattern,
         file_formats,
+        pattern=None,
         sortby_name=False,
         sortby_date=False,
         sortby_track=False,
@@ -355,28 +370,32 @@ def make_playlist(
         # Check recursive
         folder = "**/*" if recursive else "*"
         files = path.glob(folder + f".{fmt}")
+        # Process found files
         for file in files:
+            # Get size of file
+            size = file.stat().st_size
+            # Check absolute file names
+            file = str(file) if absolute else str(file.relative_to(path.parent))
+            # Check file match pattern
+            if pattern:
+                # Check re pattern
+                compiled_pattern = re.compile(pattern)
+                if not find_pattern(compiled_pattern, file):
+                    continue
             # Check if in exclude dirs
-            if any([e_path in str(file) for e_path in exclude_dirs]):
+            if any([e_path in file for e_path in exclude_dirs]):
                 continue
             # Check if file is in playlist
             if unique:
                 if file_in_playlist(
-                        filelist, str(file), root=root if not absolute else None
+                        filelist, file, root=root if not absolute else None
                 ):
                     continue
-            # Get size of file
-            size = file.stat().st_size
-            # Check absolute file names
-            file_for_pattern = str(file)
-            file = str(file) if absolute else str(file.relative_to(path.parent))
-            # Check re pattern
-            compiled_pattern = re.compile(pattern)
-            if find_pattern(compiled_pattern, file_for_pattern):
-                # Check file size
-                if size >= min_size:
-                    vprint(verbose, f"add multimedia file {file}")
-                    filelist.append(sub("/", r"\\", file) if windows else file)
+            # Check file size
+            if size <= min_size:
+                continue
+            vprint(verbose, f"add multimedia file {file}")
+            filelist.append(unix_to_dos(file) if windows else file)
     # Check sort
     if sortby_name:
         filelist = sorted(filelist)
@@ -477,8 +496,8 @@ def main():
         for directory in args.directories:
             directory_files = make_playlist(
                 directory,
-                args.pattern,
                 FILE_FORMAT,
+                args.pattern,
                 sortby_name=args.orderby_name,
                 sortby_date=args.orderby_date,
                 sortby_track=args.orderby_track,
