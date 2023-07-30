@@ -377,7 +377,7 @@ def make_playlist(
             # Get size of file
             size = file.stat().st_size
             # Check absolute file names
-            file = str(file) if absolute else str(file.relative_to(path.parent))
+            file = str(file.resolve()) if absolute else str(file)
             # Check file match pattern
             if pattern:
                 # Check re pattern
