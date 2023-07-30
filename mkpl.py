@@ -241,6 +241,8 @@ def file_in_playlist(playlist, file, root=None):
         # Check if absolute path in playlist
         if root:
             f = join(root, f)
+        # Make standard the path
+        f = unix_to_dos(f, viceversa=True)
         # Compare two files
         if cmp(f, file):
             return True
