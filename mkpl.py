@@ -32,7 +32,7 @@ from random import shuffle
 from re import sub
 from string import capwords
 
-from mutagen import File
+from mutagen import File, MutagenError
 
 # endregion
 
@@ -258,24 +258,37 @@ def report_issue(exc):
     exit(1)
 
 
+def open_multimedia_file(path):
+    """Open multimedia file
+
+    :param path: multimedia file to open
+    """
+    try:
+        file = File(path)
+    except MutagenError:
+        print(f"warning: file '{path}' loading failed")
+        return False
+    return file
+
+
 def get_track(file):
     """Sort file by track"""
-    file = File(file)
-    if hasattr(file, "tags"):
+    file = open_multimedia_file(file)
+    if file and hasattr(file, "tags"):
         return file.tags.get("TRCK", "0")[0]
 
 
 def find_pattern(pattern, path):
     """Find patter in a file and tags"""
-    file = File(path)
+    file = open_multimedia_file(path)
     # Create compiled pattern
     if not isinstance(pattern, re.Pattern):
         pattern = re.compile(pattern)
     # Check pattern into filename
-    if pattern.findall(file.filename):
+    if pattern.findall(path):
         return True
     # Check supports of ID3 tagsadd compiled pattern
-    if hasattr(file, "ID3"):
+    if file and hasattr(file, "ID3"):
         # Check pattern into title
         for title in file.tags.get("TIT2"):
             if pattern.findall(title):
@@ -295,8 +308,8 @@ def vprint(verbose, *messages):
 def unix_to_dos(path, viceversa=False):
     """Substitute folder separator with windows separator
 
-    :path: path to substitute folder separator
-    :viceversa: dos to unix
+    :param path: path to substitute folder separator
+    :param viceversa: dos to unix
     """
     if viceversa:
         old_sep = r"\\"
