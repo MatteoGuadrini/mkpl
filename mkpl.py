@@ -272,7 +272,7 @@ def open_multimedia_file(path):
 
 
 def get_track(file):
-    """Sort file by track"""
+    """Get file by track for sort"""
     file = open_multimedia_file(file)
     if file and hasattr(file, "tags"):
         return file.tags.get("TRCK", "0")[0]
@@ -332,24 +332,25 @@ def write_playlist(
         verbose=False,
 ):
     """Write playlist into file"""
-    with open(
-            playlist,
-            mode=open_mode,
-            encoding="UTF-8" if encoding == "UNICODE" else encoding,
-            errors="ignore",
-    ) as pl:
-        if image and enabled_extensions:
-            vprint(verbose, f"set image {image}")
-            joined_string = f"\n#EXTIMG: {image}\n"
-        else:
-            joined_string = "\n"
-        end_file_string = "\n"
-        # Write extensions if exists
-        if ext_part:
-            pl.write("\n".join(files[:ext_part]) + joined_string)
-        # Write all multimedia files
-        vprint(verbose, f"write playlist {pl.name}")
-        pl.write(joined_string.join(files[ext_part:max_tracks]) + end_file_string)
+    if playlist:
+        with open(
+                playlist,
+                mode=open_mode,
+                encoding="UTF-8" if encoding == "UNICODE" else encoding,
+                errors="ignore",
+        ) as pl:
+            if image and enabled_extensions:
+                vprint(verbose, f"set image {image}")
+                joined_string = f"\n#EXTIMG: {image}\n"
+            else:
+                joined_string = "\n"
+            end_file_string = "\n"
+            # Write extensions if exists
+            if ext_part:
+                pl.write("\n".join(files[:ext_part]) + joined_string)
+            # Write all multimedia files
+            vprint(verbose, f"write playlist {pl.name}")
+            pl.write(joined_string.join(files[ext_part:max_tracks]) + end_file_string)
 
 
 def make_playlist(
