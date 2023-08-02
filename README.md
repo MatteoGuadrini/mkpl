@@ -44,6 +44,7 @@ $ python setup.py install                 # for others
 | -o    | --orderby-name  | Order playlist files by name                  |                           |
 | -O    | --orderby-date  | Order playlist files by creation date         |                           |
 | -T    | --orderby-track | Order playlist files by track                 |                           |
+| -y    | --orderby-year  | Order playlist files by year                  |                           |
 
 ## Examples
 
@@ -142,12 +143,13 @@ $ python setup.py install                 # for others
     ...
     ```
 
-15. Sort playlist files by name (`-o`), by creation date (`-O`) or by track number (`-T`):
+15. Sort playlist files by name (`-o`), by creation date (`-O`), by track number (`-T`) or by year (`-y`):
 
     ```bash
     mkpl -d "new_collection" -r "my music.m3u" -o
     mkpl -d "new_collection" -r "my music.m3u" -O
     mkpl -d "new_collection" -r "my music.m3u" -T
+    mkpl -d "new_collection" -r "my music.m3u" -y
     ```
 
 ## Use it like Python module
@@ -184,8 +186,6 @@ For [Telethon](http://www.telethon.it/)
 The Telethon Foundation is a non-profit organization recognized by the Ministry of University and Scientific and Technological Research.
 They were born in 1990 to respond to the appeal of patients suffering from rare diseases.
 Come today, we are organized to dare to listen to them and answers, every day of the year.
-
-<a href="https://www.telethon.it/sostienici/dona-ora"> <img src="https://www.telethon.it/dev/_nuxt/img/c6d474e.svg" alt="Telethon" title="Telethon" width="200" height="104" /> </a>
 
 [Adopt the future](https://www.ioadottoilfuturo.it/)
 

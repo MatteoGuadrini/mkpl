@@ -32,7 +32,7 @@ from random import shuffle
 from re import sub
 from string import capwords
 
-from mutagen import File, MutagenError
+from mutagen import File, MutagenError, id3
 
 # endregion
 
@@ -174,6 +174,12 @@ def get_args():
         help="Order playlist files by track",
         action="store_true",
     )
+    orderby_group.add_argument(
+        "-y",
+        "--orderby-year",
+        help="Order playlist files by year",
+        action="store_true",
+    )
 
     args = parser.parse_args()
 
@@ -275,7 +281,16 @@ def get_track(file):
     """Get file by track for sort"""
     file = open_multimedia_file(file)
     if file and hasattr(file, "tags"):
-        return file.tags.get("TRCK", "0")[0]
+        default = id3.TRCK(text="0")
+        return file.tags.get("TRCK", default)[0]
+
+
+def get_year(file):
+    """Get file by year for sort"""
+    file = open_multimedia_file(file)
+    if file and hasattr(file, "tags"):
+        default = id3.TDOR(text="0")
+        return file.tags.get("TDOR", default)[0]
 
 
 def find_pattern(pattern, path):
@@ -360,6 +375,7 @@ def make_playlist(
         sortby_name=False,
         sortby_date=False,
         sortby_track=False,
+        sortby_year=False,
         recursive=False,
         exclude_dirs=None,
         unique=False,
@@ -419,6 +435,8 @@ def make_playlist(
         filelist = sorted(filelist, key=getctime)
     elif sortby_track:
         filelist = sorted(filelist, key=get_track)
+    elif sortby_year:
+        filelist = sorted(filelist, key=get_year)
     return filelist
 
 
@@ -517,6 +535,7 @@ def main():
                 sortby_name=args.orderby_name,
                 sortby_date=args.orderby_date,
                 sortby_track=args.orderby_track,
+                sortby_year=args.orderby_year,
                 recursive=args.recursive,
                 exclude_dirs=args.exclude_dirs,
                 unique=args.unique,
