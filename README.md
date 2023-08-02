@@ -32,7 +32,8 @@ $ python setup.py install                 # for others
 | -t    | --title         | Playlist title                                | Title string              |
 | -g    | --encoding      | Text encoding                                 | UTF-8,ASCII,UNICODE       |
 | -I    | --image         | Playlist image                                | Image path                |
-| -l    | --link          | Add remote file links                         | Links                     |
+| -l    | --link          | Add local or remote files                     | Files                     |
+| -j    | --join          | Join one or more other playlist files         | Playlist files            |
 | -r    | --recursive     | Recursive search                              |                           |
 | -a    | --absolute      | Absolute file name                            |                           |
 | -s    | --shuffle       | Casual order                                  |                           |
@@ -151,6 +152,11 @@ $ python setup.py install                 # for others
     mkpl -d "new_collection" -r "my music.m3u" -T
     mkpl -d "new_collection" -r "my music.m3u" -y
     ```
+
+16. Join the _"First playlist.m3u"_ and  _"Second playlist.m3u8"_ with new **"Third playlist.m3u"**:
+
+    ```bash
+    mkpl -d "new_collection" -r "Third playlist" -j "First playlist.m3u" "Second playlist.m3u8"
 
 ## Use it like Python module
 

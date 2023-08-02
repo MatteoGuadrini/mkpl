@@ -66,7 +66,7 @@ def get_args():
     global FILE_FORMAT
 
     parser = argparse.ArgumentParser(
-        description="Command line tool to create media playlists in M3U format.",
+        description="Command line tool to creates playlist file in M3U format.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         epilog="See latest release from https://github.com/MatteoGuadrini/mkpl",
     )
@@ -131,8 +131,17 @@ def get_args():
     parser.add_argument(
         "-l",
         "--link",
-        help="Add remote file links",
+        help="Add local or remote file links",
         nargs=argparse.ONE_OR_MORE,
+        metavar='FILES',
+        default=[],
+    )
+    parser.add_argument(
+        "-j",
+        "--join",
+        help="Join one or more other playlist files",
+        nargs=argparse.ONE_OR_MORE,
+        metavar='PLAYLISTS',
         default=[],
     )
     parser.add_argument(
@@ -252,6 +261,19 @@ def file_in_playlist(playlist, file, root=None):
         # Compare two files
         if cmp(f, file):
             return True
+
+
+def join_playlist(playlist, *others):
+    """Join current playlist with others"""
+    for file in others:
+        try:
+            # open playlist, remove extensions and extend current playlist file
+            lines = open(file).readlines()
+            playlist.extend([line.rstrip() for line in lines if not line.startswith('#')])
+        except FileNotFoundError:
+            print(f"warning: {file} file not found")
+        except OSError as err:
+            print(f"warning: {file} generated error: {err}")
 
 
 def report_issue(exc):
@@ -482,6 +504,10 @@ def add_extension(filelist, cli_args, verbose=False):
 
 def _process_playlist(files, cli_args, other_playlist=None):
     """Private function cli only for process arguments and make playlist"""
+
+    # Join other playlist files
+    if cli_args.join:
+        join_playlist(files, *cli_args.join)
 
     # Add link
     files.extend(cli_args.link)
