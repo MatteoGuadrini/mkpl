@@ -1,6 +1,8 @@
-# ``make_playlist``: Make playlist command line tool
+# ``make_playlist``: Playlist maker
 
-``mkpl`` is a _command line tool_ to create playlist files (**[M3U](https://en.wikipedia.org/wiki/M3U) format**).
+![mkpl](img/mkpl_logo.svg)
+
+``mkpl`` is a _command line tool_ to create playlist files in (**[M3U](https://en.wikipedia.org/wiki/M3U) format**).
 
 ## Installation
 
@@ -167,8 +169,8 @@ from make_playlist import *
 
 # Prepare playlist list: find multimedia files with name starts between a and f
 playlist = make_playlist('/Music/collections',
-                         '^[a-f].*',
                          ('mp3', 'mp4', 'aac'),
+                         '^[a-f].*',
                          recursive=True,
                          unique=True)
 
