@@ -71,7 +71,7 @@ VIDEO_FORMAT = {
     "f4a",
 }
 FILE_FORMAT = AUDIO_FORMAT.union(VIDEO_FORMAT)
-__version__ = "1.7.0"
+__version__ = "1.8.0"
 
 
 # endregion
