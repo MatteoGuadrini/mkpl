@@ -1,8 +1,8 @@
 # ``make_playlist``: Playlist maker
 
-![mkpl](img/mkpl_logo.svg)
+<img src="img/mkpl_logo.svg" alt="mkpl" title="mkpl" width="200" height="200" />
 
-``mkpl`` is a _command line tool_ to create playlist files in (**[M3U](https://en.wikipedia.org/wiki/M3U) format**).
+``mkpl`` is a _command line tool_ to create playlist files (**[M3U](https://en.wikipedia.org/wiki/M3U) format**).
 
 ## Installation
 
@@ -15,7 +15,7 @@ $ dnf copr enable matteoguadrini/mkpl
 $ dnf install python-make_playlist -y     # for Red Hat and fedora
 
 $ git clone https://github.com/MatteoGuadrini/mkpl.git && cd mkpl
-$ python setup.py install                 # for others
+$ pip install .                           # for others
 ```
 
 ## Command arguments

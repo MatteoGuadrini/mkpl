@@ -24,6 +24,7 @@
 
 # region imports
 import argparse
+import os.path
 import re
 from filecmp import cmp
 from os.path import basename, dirname, exists, getctime, getsize, isdir, join, normpath
@@ -50,8 +51,25 @@ AUDIO_FORMAT = {
     "flac",
     "alac",
     "opus",
+    "ape",
+    "webm",
 }
-VIDEO_FORMAT = {"mp4", "avi", "xvid", "divx", "mpeg", "mpg", "mov", "wmv"}
+VIDEO_FORMAT = {
+    "mp4",
+    "avi",
+    "xvid",
+    "divx",
+    "mpeg",
+    "mpg",
+    "mov",
+    "wmv",
+    "flv",
+    "vob",
+    "asf",
+    "m4v",
+    "3gp",
+    "f4a",
+}
 FILE_FORMAT = AUDIO_FORMAT.union(VIDEO_FORMAT)
 __version__ = "1.7.0"
 
@@ -317,23 +335,28 @@ def get_year(file):
 
 def find_pattern(pattern, path):
     """Find patter in a file and tags"""
-    file = open_multimedia_file(path)
+    global AUDIO_FORMAT
+
     # Create compiled pattern
     if not isinstance(pattern, re.Pattern):
         pattern = re.compile(pattern)
     # Check pattern into filename
     if pattern.findall(path):
         return True
-    # Check supports of ID3 tagsadd compiled pattern
-    if file and hasattr(file, "ID3"):
-        # Check pattern into title
-        for title in file.tags.get("TIT2"):
-            if pattern.findall(title):
-                return True
-        # Check pattern into album
-        for album in file.tags.get("TALB"):
-            if pattern.findall(album):
-                return True
+    # Check type of file
+    ext = os.path.splitext(path)[1].replace('.', '').lower()
+    if ext in AUDIO_FORMAT:
+        file = open_multimedia_file(path)
+        # Check supports of ID3 tagsadd compiled pattern
+        if file and hasattr(file, "ID3"):
+            # Check pattern into title
+            if file.tags.get("TIT2"):
+                if pattern.findall(file.tags.get("TIT2")[0]):
+                    return True
+            # Check pattern into album
+            if file.tags.get("TALB"):
+                if pattern.findall(file.tags.get("TALB")[0]):
+                    return True
 
 
 def vprint(verbose, *messages):
