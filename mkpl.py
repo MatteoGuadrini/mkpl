@@ -24,6 +24,7 @@
 
 # region imports
 import argparse
+import os.path
 import re
 from filecmp import cmp
 from os.path import basename, dirname, exists, getctime, getsize, isdir, join, normpath
@@ -32,7 +33,7 @@ from random import shuffle
 from re import sub
 from string import capwords
 
-from mutagen import File
+from mutagen import File, MutagenError, id3
 
 # endregion
 
@@ -50,10 +51,27 @@ AUDIO_FORMAT = {
     "flac",
     "alac",
     "opus",
+    "ape",
+    "webm",
 }
-VIDEO_FORMAT = {"mp4", "avi", "xvid", "divx", "mpeg", "mpg", "mov", "wmv"}
+VIDEO_FORMAT = {
+    "mp4",
+    "avi",
+    "xvid",
+    "divx",
+    "mpeg",
+    "mpg",
+    "mov",
+    "wmv",
+    "flv",
+    "vob",
+    "asf",
+    "m4v",
+    "3gp",
+    "f4a",
+}
 FILE_FORMAT = AUDIO_FORMAT.union(VIDEO_FORMAT)
-__version__ = "1.7.0"
+__version__ = "1.8.0"
 
 
 # endregion
@@ -66,7 +84,7 @@ def get_args():
     global FILE_FORMAT
 
     parser = argparse.ArgumentParser(
-        description="Command line tool to create media playlists in M3U format.",
+        description="Command line tool to creates playlist file in M3U format.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         epilog="See latest release from https://github.com/MatteoGuadrini/mkpl",
     )
@@ -99,7 +117,7 @@ def get_args():
         metavar="FORMAT",
     )
     parser.add_argument(
-        "-p", "--pattern", help="Regular expression inclusion pattern", default=".*"
+        "-p", "--pattern", help="Regular expression inclusion pattern", default=None
     )
     parser.add_argument(
         "-f",
@@ -131,8 +149,17 @@ def get_args():
     parser.add_argument(
         "-l",
         "--link",
-        help="Add remote file links",
+        help="Add local or remote file links",
         nargs=argparse.ONE_OR_MORE,
+        metavar='FILES',
+        default=[],
+    )
+    parser.add_argument(
+        "-j",
+        "--join",
+        help="Join one or more other playlist files",
+        nargs=argparse.ONE_OR_MORE,
+        metavar='PLAYLISTS',
         default=[],
     )
     parser.add_argument(
@@ -172,6 +199,12 @@ def get_args():
         "-T",
         "--orderby-track",
         help="Order playlist files by track",
+        action="store_true",
+    )
+    orderby_group.add_argument(
+        "-y",
+        "--orderby-year",
+        help="Order playlist files by year",
         action="store_true",
     )
 
@@ -241,9 +274,24 @@ def file_in_playlist(playlist, file, root=None):
         # Check if absolute path in playlist
         if root:
             f = join(root, f)
+        # Make standard the path
+        f = unix_to_dos(f, viceversa=True)
         # Compare two files
         if cmp(f, file):
             return True
+
+
+def join_playlist(playlist, *others):
+    """Join current playlist with others"""
+    for file in others:
+        try:
+            # open playlist, remove extensions and extend current playlist file
+            lines = open(file).readlines()
+            playlist.extend([line.rstrip() for line in lines if not line.startswith('#')])
+        except FileNotFoundError:
+            print(f"warning: {file} file not found")
+        except OSError as err:
+            print(f"warning: {file} generated error: {err}")
 
 
 def report_issue(exc):
@@ -256,38 +304,80 @@ def report_issue(exc):
     exit(1)
 
 
+def open_multimedia_file(path):
+    """Open multimedia file
+
+    :param path: multimedia file to open
+    """
+    try:
+        file = File(path)
+    except MutagenError:
+        print(f"warning: file '{path}' loading failed")
+        return False
+    return file
+
+
 def get_track(file):
-    """Sort file by track"""
-    file = File(file)
-    if hasattr(file, "tags"):
-        return file.tags.get("TRCK", "0")[0]
+    """Get file by track for sort"""
+    file = open_multimedia_file(file)
+    if file and hasattr(file, "tags"):
+        default = id3.TRCK(text="0")
+        return file.tags.get("TRCK", default)[0]
+
+
+def get_year(file):
+    """Get file by year for sort"""
+    file = open_multimedia_file(file)
+    if file and hasattr(file, "tags"):
+        default = id3.TDOR(text="0")
+        return file.tags.get("TDOR", default)[0]
 
 
 def find_pattern(pattern, path):
     """Find patter in a file and tags"""
-    file = File(path)
+    global AUDIO_FORMAT
+
     # Create compiled pattern
     if not isinstance(pattern, re.Pattern):
         pattern = re.compile(pattern)
     # Check pattern into filename
-    if pattern.findall(file.filename):
+    if pattern.findall(path):
         return True
-    # Check supports of ID3 tagsadd compiled pattern
-    if hasattr(file, "ID3"):
-        # Check pattern into title
-        for title in file.tags.get("TIT2"):
-            if pattern.findall(title):
-                return True
-        # Check pattern into album
-        for album in file.tags.get("TALB"):
-            if pattern.findall(album):
-                return True
+    # Check type of file
+    ext = os.path.splitext(path)[1].replace('.', '').lower()
+    if ext in AUDIO_FORMAT:
+        file = open_multimedia_file(path)
+        # Check supports of ID3 tagsadd compiled pattern
+        if file and hasattr(file, "ID3"):
+            # Check pattern into title
+            if file.tags.get("TIT2"):
+                if pattern.findall(file.tags.get("TIT2")[0]):
+                    return True
+            # Check pattern into album
+            if file.tags.get("TALB"):
+                if pattern.findall(file.tags.get("TALB")[0]):
+                    return True
 
 
 def vprint(verbose, *messages):
     """Verbose print"""
     if verbose:
         print("debug:", *messages)
+
+
+def unix_to_dos(path, viceversa=False):
+    """Substitute folder separator with windows separator
+
+    :param path: path to substitute folder separator
+    :param viceversa: dos to unix
+    """
+    if viceversa:
+        old_sep = r"\\"
+        new_sep = "/"
+    else:
+        old_sep = "/"
+        new_sep = r"\\"
+    return sub(old_sep, new_sep, path)
 
 
 def write_playlist(
@@ -302,33 +392,35 @@ def write_playlist(
         verbose=False,
 ):
     """Write playlist into file"""
-    with open(
-            playlist,
-            mode=open_mode,
-            encoding="UTF-8" if encoding == "UNICODE" else encoding,
-            errors="ignore",
-    ) as pl:
-        if image and enabled_extensions:
-            vprint(verbose, f"set image {image}")
-            joined_string = f"\n#EXTIMG: {image}\n"
-        else:
-            joined_string = "\n"
-        end_file_string = "\n"
-        # Write extensions if exists
-        if ext_part:
-            pl.write("\n".join(files[:ext_part]) + joined_string)
-        # Write all multimedia files
-        vprint(verbose, f"write playlist {pl.name}")
-        pl.write(joined_string.join(files[ext_part:max_tracks]) + end_file_string)
+    if playlist:
+        with open(
+                playlist,
+                mode=open_mode,
+                encoding="UTF-8" if encoding == "UNICODE" else encoding,
+                errors="ignore",
+        ) as pl:
+            if image and enabled_extensions:
+                vprint(verbose, f"set image {image}")
+                joined_string = f"\n#EXTIMG: {image}\n"
+            else:
+                joined_string = "\n"
+            end_file_string = "\n"
+            # Write extensions if exists
+            if ext_part:
+                pl.write("\n".join(files[:ext_part]) + joined_string)
+            # Write all multimedia files
+            vprint(verbose, f"write playlist {pl.name}")
+            pl.write(joined_string.join(files[ext_part:max_tracks]) + end_file_string)
 
 
 def make_playlist(
         directory,
-        pattern,
         file_formats,
+        pattern=None,
         sortby_name=False,
         sortby_date=False,
         sortby_track=False,
+        sortby_year=False,
         recursive=False,
         exclude_dirs=None,
         unique=False,
@@ -355,28 +447,32 @@ def make_playlist(
         # Check recursive
         folder = "**/*" if recursive else "*"
         files = path.glob(folder + f".{fmt}")
+        # Process found files
         for file in files:
+            # Get size of file
+            size = file.stat().st_size
+            # Check absolute file names
+            file = str(file.resolve()) if absolute else str(file)
+            # Check file match pattern
+            if pattern:
+                # Check re pattern
+                compiled_pattern = re.compile(pattern)
+                if not find_pattern(compiled_pattern, file):
+                    continue
             # Check if in exclude dirs
-            if any([e_path in str(file) for e_path in exclude_dirs]):
+            if any([e_path in file for e_path in exclude_dirs]):
                 continue
             # Check if file is in playlist
             if unique:
                 if file_in_playlist(
-                        filelist, str(file), root=root if not absolute else None
+                        filelist, file, root=root if not absolute else None
                 ):
                     continue
-            # Get size of file
-            size = file.stat().st_size
-            # Check absolute file names
-            file_for_pattern = str(file)
-            file = str(file) if absolute else str(file.relative_to(path.parent))
-            # Check re pattern
-            compiled_pattern = re.compile(pattern)
-            if find_pattern(compiled_pattern, file_for_pattern):
-                # Check file size
-                if size >= min_size:
-                    vprint(verbose, f"add multimedia file {file}")
-                    filelist.append(sub("/", r"\\", file) if windows else file)
+            # Check file size
+            if size <= min_size:
+                continue
+            vprint(verbose, f"add multimedia file {file}")
+            filelist.append(unix_to_dos(file) if windows else file)
     # Check sort
     if sortby_name:
         filelist = sorted(filelist)
@@ -384,6 +480,8 @@ def make_playlist(
         filelist = sorted(filelist, key=getctime)
     elif sortby_track:
         filelist = sorted(filelist, key=get_track)
+    elif sortby_year:
+        filelist = sorted(filelist, key=get_year)
     return filelist
 
 
@@ -429,6 +527,10 @@ def add_extension(filelist, cli_args, verbose=False):
 
 def _process_playlist(files, cli_args, other_playlist=None):
     """Private function cli only for process arguments and make playlist"""
+
+    # Join other playlist files
+    if cli_args.join:
+        join_playlist(files, *cli_args.join)
 
     # Add link
     files.extend(cli_args.link)
@@ -477,11 +579,12 @@ def main():
         for directory in args.directories:
             directory_files = make_playlist(
                 directory,
-                args.pattern,
                 FILE_FORMAT,
+                args.pattern,
                 sortby_name=args.orderby_name,
                 sortby_date=args.orderby_date,
                 sortby_track=args.orderby_track,
+                sortby_year=args.orderby_year,
                 recursive=args.recursive,
                 exclude_dirs=args.exclude_dirs,
                 unique=args.unique,

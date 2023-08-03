@@ -1,5 +1,19 @@
 # Release notes
 
+## 1.8.0
+Aug 03, 2023
+
+- Refactor _make_playlist_ function for better performance
+- Add standard path on unique argument
+- Add _open_multimedia_file_ function
+- Add `orderby-year` cli argument
+- Add `join` cli argument
+- Add mkpl logo
+- Migrate to pyproject.toml installation
+- Fix absolute name into _make_playlist_ function, refs #8
+- Fix check if playlist is not empty before writes it to file
+- Fix check extension of file before open tags
+
 ## 1.7.0
 Jun 12, 2023
 

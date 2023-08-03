@@ -1,4 +1,6 @@
-# ``make_playlist``: Make playlist command line tool
+# ``make_playlist``: Playlist maker
+
+<img src="img/mkpl_logo.svg" alt="mkpl" title="mkpl" width="200" height="200" />
 
 ``mkpl`` is a _command line tool_ to create playlist files (**[M3U](https://en.wikipedia.org/wiki/M3U) format**).
 
@@ -13,7 +15,7 @@ $ dnf copr enable matteoguadrini/mkpl
 $ dnf install python-make_playlist -y     # for Red Hat and fedora
 
 $ git clone https://github.com/MatteoGuadrini/mkpl.git && cd mkpl
-$ python setup.py install                 # for others
+$ pip install .                           # for others
 ```
 
 ## Command arguments
@@ -32,7 +34,8 @@ $ python setup.py install                 # for others
 | -t    | --title         | Playlist title                                | Title string              |
 | -g    | --encoding      | Text encoding                                 | UTF-8,ASCII,UNICODE       |
 | -I    | --image         | Playlist image                                | Image path                |
-| -l    | --link          | Add remote file links                         | Links                     |
+| -l    | --link          | Add local or remote files                     | Files                     |
+| -j    | --join          | Join one or more other playlist files         | Playlist files            |
 | -r    | --recursive     | Recursive search                              |                           |
 | -a    | --absolute      | Absolute file name                            |                           |
 | -s    | --shuffle       | Casual order                                  |                           |
@@ -44,6 +47,7 @@ $ python setup.py install                 # for others
 | -o    | --orderby-name  | Order playlist files by name                  |                           |
 | -O    | --orderby-date  | Order playlist files by creation date         |                           |
 | -T    | --orderby-track | Order playlist files by track                 |                           |
+| -y    | --orderby-year  | Order playlist files by year                  |                           |
 
 ## Examples
 
@@ -142,13 +146,19 @@ $ python setup.py install                 # for others
     ...
     ```
 
-15. Sort playlist files by name (`-o`), by creation date (`-O`) or by track number (`-T`):
+15. Sort playlist files by name (`-o`), by creation date (`-O`), by track number (`-T`) or by year (`-y`):
 
     ```bash
     mkpl -d "new_collection" -r "my music.m3u" -o
     mkpl -d "new_collection" -r "my music.m3u" -O
     mkpl -d "new_collection" -r "my music.m3u" -T
+    mkpl -d "new_collection" -r "my music.m3u" -y
     ```
+
+16. Join the _"First playlist.m3u"_ and  _"Second playlist.m3u8"_ with new **"Third playlist.m3u"**:
+
+    ```bash
+    mkpl -d "new_collection" -r "Third playlist" -j "First playlist.m3u" "Second playlist.m3u8"
 
 ## Use it like Python module
 
@@ -159,8 +169,8 @@ from make_playlist import *
 
 # Prepare playlist list: find multimedia files with name starts between a and f
 playlist = make_playlist('/Music/collections',
-                         '^[a-f].*',
                          ('mp3', 'mp4', 'aac'),
+                         '^[a-f].*',
                          recursive=True,
                          unique=True)
 
@@ -184,8 +194,6 @@ For [Telethon](http://www.telethon.it/)
 The Telethon Foundation is a non-profit organization recognized by the Ministry of University and Scientific and Technological Research.
 They were born in 1990 to respond to the appeal of patients suffering from rare diseases.
 Come today, we are organized to dare to listen to them and answers, every day of the year.
-
-<a href="https://www.telethon.it/sostienici/dona-ora"> <img src="https://www.telethon.it/dev/_nuxt/img/c6d474e.svg" alt="Telethon" title="Telethon" width="200" height="104" /> </a>
 
 [Adopt the future](https://www.ioadottoilfuturo.it/)
 
