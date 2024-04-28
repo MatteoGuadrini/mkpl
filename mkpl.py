@@ -430,6 +430,7 @@ def make_playlist(
         absolute=False,
         min_size=1,
         windows=False,
+        interactive=False,
         verbose=False,
 ):
     """Make playlist list"""
@@ -474,6 +475,8 @@ def make_playlist(
             # Check file size
             if size <= min_size:
                 continue
+            if interactive:
+                pass
             vprint(verbose, f"add multimedia file {file}")
             filelist.append(unix_to_dos(file) if windows else file)
     # Check sort
@@ -594,6 +597,7 @@ def main():
                 absolute=args.absolute,
                 min_size=args.size,
                 windows=args.windows,
+                interactive=args.interactive,
                 verbose=args.verbose,
             )
 
