@@ -268,6 +268,28 @@ def get_args():
     return args
 
 
+def confirm(file, default="y"):
+    """Ask user to enter Y or N (case-insensitive)
+
+    :file: file to add into playlist
+    :default: default answer
+    :return: True if the answer is Y.
+    :rtype: bool
+    """
+    while (
+        answer := input(
+            "Add file {0} to playlist? {1}:".format(
+                file, "[Y/n]" if default == "y" else "[y/N]"
+            )
+        ).lower()
+    ) not in ("y", "n"):
+        # Check if default
+        if not answer:
+            answer = default
+            break
+    return answer == "y"
+
+
 def file_in_playlist(playlist, file, root=None):
     """Check if file is in the playlist"""
     for f in playlist:
@@ -476,7 +498,8 @@ def make_playlist(
             if size <= min_size:
                 continue
             if interactive:
-                pass
+                if not confirm(file):
+                    continue
             vprint(verbose, f"add multimedia file {file}")
             filelist.append(unix_to_dos(file) if windows else file)
     # Check sort
