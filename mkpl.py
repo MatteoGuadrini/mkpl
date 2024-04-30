@@ -189,6 +189,9 @@ def get_args():
     parser.add_argument(
         "-R", "--interactive", help="Asks each file for confirmation", action="store_true"
     )
+    parser.add_argument(
+        "-C", "--count", help="Count elements into playlist", action="store_true"
+    )
     orderby_group.add_argument(
         "-s", "--shuffle", help="Casual order", action="store_true"
     )
