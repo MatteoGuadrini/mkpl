@@ -641,6 +641,10 @@ def main():
 
         _process_playlist(multimedia_files, args)
 
+        # Count files into playlist
+        if args.count:
+            print(len([file for file in multimedia_files if not file.startswith("#")]))
+
     except Exception as err:
         report_issue(err)
 
