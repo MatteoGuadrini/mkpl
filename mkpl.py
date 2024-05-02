@@ -213,6 +213,12 @@ def get_args():
         help="Order playlist files by year",
         action="store_true",
     )
+    orderby_group.add_argument(
+        "-Z",
+        "--orderby-size",
+        help="Order playlist files by size",
+        action="store_true",
+    )
 
     args = parser.parse_args()
 
