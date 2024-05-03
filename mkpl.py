@@ -286,11 +286,11 @@ def confirm(file, default="y"):
     :rtype: bool
     """
     while (
-        answer := input(
-            "Add file {0} to playlist? {1}:".format(
-                file, "[Y/n]" if default == "y" else "[y/N]"
-            )
-        ).lower()
+            answer := input(
+                "Add file {0} to playlist? {1}:".format(
+                    file, "[Y/n]" if default == "y" else "[y/N]"
+                )
+            ).lower()
     ) not in ("y", "n"):
         # Check if default
         if not answer:
@@ -455,6 +455,7 @@ def make_playlist(
         sortby_date=False,
         sortby_track=False,
         sortby_year=False,
+        sortby_size=False,
         recursive=False,
         exclude_dirs=None,
         unique=False,
@@ -520,6 +521,8 @@ def make_playlist(
         filelist = sorted(filelist, key=get_track)
     elif sortby_year:
         filelist = sorted(filelist, key=get_year)
+    elif sortby_size:
+        filelist = sorted(filelist, key=os.path.getsize)
     return filelist
 
 
@@ -623,6 +626,7 @@ def main():
                 sortby_date=args.orderby_date,
                 sortby_track=args.orderby_track,
                 sortby_year=args.orderby_year,
+                sortby_size=args.orderby_size,
                 recursive=args.recursive,
                 exclude_dirs=args.exclude_dirs,
                 unique=args.unique,
