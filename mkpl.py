@@ -151,7 +151,7 @@ def get_args():
         "--link",
         help="Add local or remote file links",
         nargs=argparse.ONE_OR_MORE,
-        metavar='FILES',
+        metavar="FILES",
         default=[],
     )
     parser.add_argument(
@@ -159,7 +159,7 @@ def get_args():
         "--join",
         help="Join one or more other playlist files",
         nargs=argparse.ONE_OR_MORE,
-        metavar='PLAYLISTS',
+        metavar="PLAYLISTS",
         default=[],
     )
     parser.add_argument(
@@ -187,7 +187,10 @@ def get_args():
         "-S", "--split", help="Split playlist by directories", action="store_true"
     )
     parser.add_argument(
-        "-R", "--interactive", help="Asks each file for confirmation", action="store_true"
+        "-R",
+        "--interactive",
+        help="Asks each file for confirmation",
+        action="store_true",
     )
     parser.add_argument(
         "-C", "--count", help="Count elements into playlist", action="store_true"
@@ -292,11 +295,11 @@ def confirm(file, default="y"):
     :rtype: bool
     """
     while (
-            answer := input(
-                "Add file {0} to playlist? {1}:".format(
-                    file, "[Y/n]" if default == "y" else "[y/N]"
-                )
-            ).lower()
+        answer := input(
+            "Add file {0} to playlist? {1}:".format(
+                file, "[Y/n]" if default == "y" else "[y/N]"
+            )
+        ).lower()
     ) not in ("y", "n"):
         # Check if default
         if not answer:
@@ -327,7 +330,9 @@ def join_playlist(playlist, *others):
         try:
             # open playlist, remove extensions and extend current playlist file
             lines = open(file).readlines()
-            playlist.extend([line.rstrip() for line in lines if not line.startswith('#')])
+            playlist.extend(
+                [line.rstrip() for line in lines if not line.startswith("#")]
+            )
         except FileNotFoundError:
             print(f"warning: {file} file not found")
         except OSError as err:
@@ -373,6 +378,13 @@ def get_year(file):
         return file.tags.get("TDOR", default)[0]
 
 
+def get_length(file):
+    """Get file by length for sort"""
+    file = open_multimedia_file(file)
+    if file and hasattr(file, "info"):
+        return file.info.length if hasattr(file.info, "length") else 0.0
+
+
 def find_pattern(pattern, path):
     """Find patter in a file and tags"""
     global AUDIO_FORMAT
@@ -384,7 +396,7 @@ def find_pattern(pattern, path):
     if pattern.findall(path):
         return True
     # Check type of file
-    ext = os.path.splitext(path)[1].replace('.', '').lower()
+    ext = os.path.splitext(path)[1].replace(".", "").lower()
     if ext in AUDIO_FORMAT:
         file = open_multimedia_file(path)
         # Check supports of ID3 tagsadd compiled pattern
@@ -421,23 +433,23 @@ def unix_to_dos(path, viceversa=False):
 
 
 def write_playlist(
-        playlist,
-        open_mode,
-        files,
-        encoding,
-        enabled_extensions=False,
-        image=None,
-        ext_part=None,
-        max_tracks=None,
-        verbose=False,
+    playlist,
+    open_mode,
+    files,
+    encoding,
+    enabled_extensions=False,
+    image=None,
+    ext_part=None,
+    max_tracks=None,
+    verbose=False,
 ):
     """Write playlist into file"""
     if playlist:
         with open(
-                playlist,
-                mode=open_mode,
-                encoding="UTF-8" if encoding == "UNICODE" else encoding,
-                errors="ignore",
+            playlist,
+            mode=open_mode,
+            encoding="UTF-8" if encoding == "UNICODE" else encoding,
+            errors="ignore",
         ) as pl:
             if image and enabled_extensions:
                 vprint(verbose, f"set image {image}")
@@ -454,22 +466,22 @@ def write_playlist(
 
 
 def make_playlist(
-        directory,
-        file_formats,
-        pattern=None,
-        sortby_name=False,
-        sortby_date=False,
-        sortby_track=False,
-        sortby_year=False,
-        sortby_size=False,
-        recursive=False,
-        exclude_dirs=None,
-        unique=False,
-        absolute=False,
-        min_size=1,
-        windows=False,
-        interactive=False,
-        verbose=False,
+    directory,
+    file_formats,
+    pattern=None,
+    sortby_name=False,
+    sortby_date=False,
+    sortby_track=False,
+    sortby_year=False,
+    sortby_size=False,
+    recursive=False,
+    exclude_dirs=None,
+    unique=False,
+    absolute=False,
+    min_size=1,
+    windows=False,
+    interactive=False,
+    verbose=False,
 ):
     """Make playlist list"""
     filelist = list()
@@ -507,7 +519,7 @@ def make_playlist(
             # Check if file is in playlist
             if unique:
                 if file_in_playlist(
-                        filelist, file, root=root if not absolute else None
+                    filelist, file, root=root if not absolute else None
                 ):
                     continue
             # Check file size
