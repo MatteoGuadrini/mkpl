@@ -399,7 +399,7 @@ def find_pattern(pattern, path):
     ext = os.path.splitext(path)[1].replace(".", "").lower()
     if ext in AUDIO_FORMAT:
         file = open_multimedia_file(path)
-        # Check supports of ID3 tagsadd compiled pattern
+        # Check supports of ID3 tags add compiled pattern
         if file and hasattr(file, "ID3"):
             # Check pattern into title
             if file.tags.get("TIT2"):
@@ -474,6 +474,7 @@ def make_playlist(
     sortby_track=False,
     sortby_year=False,
     sortby_size=False,
+    sortby_length=False,
     recursive=False,
     exclude_dirs=None,
     unique=False,
@@ -541,6 +542,8 @@ def make_playlist(
         filelist = sorted(filelist, key=get_year)
     elif sortby_size:
         filelist = sorted(filelist, key=os.path.getsize)
+    elif sortby_length:
+        filelist = sorted(filelist, key=get_length)
     return filelist
 
 
@@ -645,6 +648,7 @@ def main():
                 sortby_track=args.orderby_track,
                 sortby_year=args.orderby_year,
                 sortby_size=args.orderby_size,
+                sortby_length=args.orderby_length,
                 recursive=args.recursive,
                 exclude_dirs=args.exclude_dirs,
                 unique=args.unique,
