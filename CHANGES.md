@@ -1,5 +1,14 @@
 # Release notes
 
+## 1.9.0
+May 09, 2024
+
+- Add `orderby-size` cli argument
+- Add `orderby-length` cli argument
+- Add `interactive` cli argument
+- Add `count` cli argument
+- Add **confirm** function for _interactive_ mode
+
 ## 1.8.0
 Aug 03, 2023
 
