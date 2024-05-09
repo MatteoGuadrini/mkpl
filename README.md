@@ -22,32 +22,36 @@ $ pip install .                           # for others
 
 ``mkpl`` have many command line arguments. They are explained in this table:
 
-| short | long            | description                                   | args                      |
-|-------|-----------------|-----------------------------------------------|---------------------------|
-| -d    | --directories   | Directories that contains multimedia file     | Path of directories       |
-| -e    | --exclude-dirs  | Exclude directory paths                       | Path of directories       |
-| -i    | --include       | Include other file format                     | Format of file. ex. mp3   |
-| -p    | --pattern       | Regular expression inclusion pattern          | Regular expression string |
-| -f    | --format        | Select only a file format                     | Format of file. ex. mp3   |
-| -s    | --size          | Start size in bytes                           | Bytes number              |
-| -m    | --max-tracks    | Maximum number of tracks                      | Number                    |
-| -t    | --title         | Playlist title                                | Title string              |
-| -g    | --encoding      | Text encoding                                 | UTF-8,ASCII,UNICODE       |
-| -I    | --image         | Playlist image                                | Image path                |
-| -l    | --link          | Add local or remote files                     | Files                     |
-| -j    | --join          | Join one or more other playlist files         | Playlist files            |
-| -r    | --recursive     | Recursive search                              |                           |
-| -a    | --absolute      | Absolute file name                            |                           |
-| -s    | --shuffle       | Casual order                                  |                           |
-| -u    | --unique        | The same files are not placed in the playlist |                           |
-| -c    | --append        | Continue playlist instead of override it      |                           |
-| -w    | --windows       | Windows style folder separator                |                           |
-| -v    | --verbose       | Enable verbosity (debug mode)                 |                           |
-| -S    | --split         | Split playlist by directories                 |                           |
-| -o    | --orderby-name  | Order playlist files by name                  |                           |
-| -O    | --orderby-date  | Order playlist files by creation date         |                           |
-| -T    | --orderby-track | Order playlist files by track                 |                           |
-| -y    | --orderby-year  | Order playlist files by year                  |                           |
+| short | long             | description                                   | args                      |
+|-------|------------------|-----------------------------------------------|---------------------------|
+| -d    | --directories    | Directories that contains multimedia file     | Path of directories       |
+| -e    | --exclude-dirs   | Exclude directory paths                       | Path of directories       |
+| -i    | --include        | Include other file format                     | Format of file. ex. mp3   |
+| -p    | --pattern        | Regular expression inclusion pattern          | Regular expression string |
+| -f    | --format         | Select only a file format                     | Format of file. ex. mp3   |
+| -s    | --size           | Start size in bytes                           | Bytes number              |
+| -m    | --max-tracks     | Maximum number of tracks                      | Number                    |
+| -t    | --title          | Playlist title                                | Title string              |
+| -g    | --encoding       | Text encoding                                 | UTF-8,ASCII,UNICODE       |
+| -I    | --image          | Playlist image                                | Image path                |
+| -l    | --link           | Add local or remote files                     | Files                     |
+| -j    | --join           | Join one or more other playlist files         | Playlist files            |
+| -r    | --recursive      | Recursive search                              |                           |
+| -a    | --absolute       | Absolute file name                            |                           |
+| -s    | --shuffle        | Casual order                                  |                           |
+| -u    | --unique         | The same files are not placed in the playlist |                           |
+| -c    | --append         | Continue playlist instead of override it      |                           |
+| -w    | --windows        | Windows style folder separator                |                           |
+| -v    | --verbose        | Enable verbosity (debug mode)                 |                           |
+| -S    | --split          | Split playlist by directories                 |                           |
+| -R    | --interactive    | Asks each file for confirmation               |                           |
+| -C    | --count          | Count elements into playlist                  |                           |
+| -o    | --orderby-name   | Order playlist files by name                  |                           |
+| -O    | --orderby-date   | Order playlist files by creation date         |                           |
+| -T    | --orderby-track  | Order playlist files by track                 |                           |
+| -y    | --orderby-year   | Order playlist files by year                  |                           |
+| -Z    | --orderby-size   | Order playlist files by size                  |                           |
+| -L    | --orderby-length | Order playlist files by length                |                           |
 
 ## Examples
 
@@ -146,19 +150,39 @@ $ pip install .                           # for others
     ...
     ```
 
-15. Sort playlist files by name (`-o`), by creation date (`-O`), by track number (`-T`) or by year (`-y`):
+15. Sort playlist files by name (`-o`), by creation date (`-O`), by track number (`-T`), by year (`-y`), by size (`-Z`) or by length (`-L`):
 
     ```bash
     mkpl -d "new_collection" -r "my music.m3u" -o
     mkpl -d "new_collection" -r "my music.m3u" -O
     mkpl -d "new_collection" -r "my music.m3u" -T
     mkpl -d "new_collection" -r "my music.m3u" -y
+    mkpl -d "new_collection" -r "my music.m3u" -Z
+    mkpl -d "new_collection" -r "my music.m3u" -L
     ```
 
 16. Join the _"First playlist.m3u"_ and  _"Second playlist.m3u8"_ with new **"Third playlist.m3u"**:
 
     ```bash
     mkpl -d "new_collection" -r "Third playlist" -j "First playlist.m3u" "Second playlist.m3u8"
+    ```
+
+17. Counts the multimedia files:
+
+    ```console
+    mkpl -d "new_collection" -r "My new collection" -C
+    4023
+    ```
+
+18. Asks confirmation for every file into folders:
+
+    ```console
+    mkpl -d "new_collection" -r "My new collection" -R
+    Add file new_collection/sample1.mp3 to playlist? [Y/n]:y
+    Add file new_collection/sample2.mp3 to playlist? [Y/n]:Y
+    Add file new_collection/sample3.mp3 to playlist? [Y/n]:n
+    Add file new_collection/sample4.mp3 to playlist? [Y/n]:N
+    ```
 
 ## Use it like Python module
 

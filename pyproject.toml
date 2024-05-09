@@ -7,7 +7,7 @@ py-modules = ["mkpl"]
 
 [project]
 name = "make_playlist"
-version = "1.8.0"
+version = "1.9.0"
 readme = "README.md"
 
 authors = [{ name = "Matteo Guadrini", email = "matteo.guadrini@hotmail.it" }]
@@ -16,7 +16,7 @@ maintainers = [
 ]
 
 description = "Make M3U format playlist from command line."
-requires-python = ">=3.6"
+requires-python = ">=3.7"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
