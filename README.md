@@ -77,7 +77,7 @@ $ pip install .                           # for others
 4. Create a shuffled playlist with my music collection and exclude dirs
 
     ```bash
-    mkpl -d "my_mp3_collection" "my_mp4_collection" -r -s -e "my_mp3_collection/metallica" "my_mp3_collection/dk" "my music.m3u"
+    mkpl -d "my_mp3_collection" "my_mp4_collection" -r -s -e "my_mp3_collection/metallica" "my_mp3_collection/dk" -- "my music.m3u"
     ```
    
 5. Create a TV series playlist with max 15 tracks
