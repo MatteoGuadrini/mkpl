@@ -367,7 +367,7 @@ def get_track(file):
     file = open_multimedia_file(file)
     if file and hasattr(file, "tags"):
         default = id3.TRCK(text="0")
-        return file.tags.get("TRCK", default)[0]
+        return int(file.tags.get("TRCK", default)[0])
 
 
 def get_year(file):
