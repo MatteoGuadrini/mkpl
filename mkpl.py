@@ -59,6 +59,7 @@ VIDEO_FORMAT = {
     "avi",
     "xvid",
     "divx",
+    "mkv",
     "mpeg",
     "mpg",
     "mov",
