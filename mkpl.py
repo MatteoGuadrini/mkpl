@@ -229,6 +229,12 @@ def get_args():
         help="Order playlist files by length",
         action="store_true",
     )
+    orderby_group.add_argument(
+        "-U",
+        "--url-chars",
+        help="Substitute some chars with URL Encoding (Percent Encoding)",
+        action="store_true",
+    )
 
     args = parser.parse_args()
 
