@@ -346,6 +346,50 @@ def join_playlist(playlist, *others):
             print(f"warning: {file} generated error: {err}")
 
 
+def url_chars(playlist):
+    """URL encoding converts characters into a format that can be transmitted over the Internet."""
+    URL_CHARS = {
+        " ": "%20",
+        "!": "%21",
+        '"': "%22",
+        "#": "%23",
+        "$": "%24",
+        "%": "%25",
+        "&": "%26",
+        "'": "%27",
+        "(": "%28",
+        ")": "%29",
+        "*": "%2A",
+        "+": "%2B",
+        ",": "%2C",
+        "-": "%2D",
+        ":": "%3A",
+        ";": "%3B",
+        "<": "%3C",
+        "=": "%3D",
+        ">": "%3E",
+        "?": "%3F",
+        "@": "%40",
+        "[": "%5B",
+        "]": "%5D",
+        "^": "%5E",
+        "_": "%5F",
+        "`": "%60",
+        "{": "%7B",
+        "|": "%7C",
+        "}": "%7D",
+        "~": "%7E",
+    }
+    ret = []
+    for file in playlist:
+        for char in file:
+            if URL_CHARS.get(char):
+                file = file.replace(char, URL_CHARS.get(char))
+        ret.append(file)
+
+    return ret
+
+
 def report_issue(exc):
     """Report issue"""
     print(
@@ -677,6 +721,10 @@ def main():
                 )
                 _process_playlist(directory_files, args, playlist_path)
                 args.enabled_extensions = False
+        
+        # Substitute chars with URL encoding
+        if args.url_chars:
+            multimedia_files = url_chars(multimedia_files)
 
         _process_playlist(multimedia_files, args)
 
