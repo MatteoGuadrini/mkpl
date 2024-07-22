@@ -714,6 +714,9 @@ def main():
 
             # Check if you must split into directory playlist
             if args.split:
+                # Substitute chars with URL encoding
+                if args.url_chars:
+                    multimedia_files = url_chars(directory_files)
                 playlist_name = basename(normpath(directory))
                 playlist_ext = ".m3u8" if args.encoding == "UNICODE" else ".m3u"
                 playlist_path = join(
@@ -721,7 +724,7 @@ def main():
                 )
                 _process_playlist(directory_files, args, playlist_path)
                 args.enabled_extensions = False
-        
+
         # Substitute chars with URL encoding
         if args.url_chars:
             multimedia_files = url_chars(multimedia_files)
