@@ -36,6 +36,7 @@ $ pip install .                           # for others
 | -I    | --image          | Playlist image                                | Image path                |
 | -l    | --link           | Add local or remote files                     | Files                     |
 | -j    | --join           | Join one or more other playlist files         | Playlist files            |
+| -U    | --url-chars      | Substitute some chars with URL Encoding       |                           |
 | -r    | --recursive      | Recursive search                              |                           |
 | -a    | --absolute       | Absolute file name                            |                           |
 | -s    | --shuffle        | Casual order                                  |                           |
