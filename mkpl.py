@@ -34,6 +34,7 @@ from re import sub
 from string import capwords
 
 from mutagen import File, MutagenError, id3
+from tempcache import TempCache
 
 # endregion
 
@@ -234,6 +235,13 @@ def get_args():
         "--url-chars",
         help="Substitute some chars with URL Encoding (Percent Encoding)",
         action="store_true",
+    )
+    orderby_group.add_argument(
+        "-n",
+        "--cache",
+        help="Cache playlist results",
+        type=int,
+        metavar="SECONDS",
     )
 
     args = parser.parse_args()
@@ -688,27 +696,58 @@ def main():
             f"pattern={args.pattern}, split={args.split}",
         )
 
+        # Define cache
+        if args.cache:
+            cache = TempCache("mkpl", max_age=args.cache)
+            vprint(args.verbose, f"use cache {cache.path}")
+            # Clean the cache
+            cache.clear_items()
+        else:
+            cache = None
+
         # Make multimedia list
         for directory in args.directories:
-            directory_files = make_playlist(
-                directory,
-                FILE_FORMAT,
-                args.pattern,
-                sortby_name=args.orderby_name,
-                sortby_date=args.orderby_date,
-                sortby_track=args.orderby_track,
-                sortby_year=args.orderby_year,
-                sortby_size=args.orderby_size,
-                sortby_length=args.orderby_length,
-                recursive=args.recursive,
-                exclude_dirs=args.exclude_dirs,
-                unique=args.unique,
-                absolute=args.absolute,
-                min_size=args.size,
-                windows=args.windows,
-                interactive=args.interactive,
-                verbose=args.verbose,
-            )
+            if args.cache:
+                directory_files = cache.cache_result(
+                    make_playlist,
+                    directory,
+                    FILE_FORMAT,
+                    args.pattern,
+                    sortby_name=args.orderby_name,
+                    sortby_date=args.orderby_date,
+                    sortby_track=args.orderby_track,
+                    sortby_year=args.orderby_year,
+                    sortby_size=args.orderby_size,
+                    sortby_length=args.orderby_length,
+                    recursive=args.recursive,
+                    exclude_dirs=args.exclude_dirs,
+                    unique=args.unique,
+                    absolute=args.absolute,
+                    min_size=args.size,
+                    windows=args.windows,
+                    interactive=args.interactive,
+                    verbose=args.verbose,
+                )
+            else:
+                directory_files = make_playlist(
+                    directory,
+                    FILE_FORMAT,
+                    args.pattern,
+                    sortby_name=args.orderby_name,
+                    sortby_date=args.orderby_date,
+                    sortby_track=args.orderby_track,
+                    sortby_year=args.orderby_year,
+                    sortby_size=args.orderby_size,
+                    sortby_length=args.orderby_length,
+                    recursive=args.recursive,
+                    exclude_dirs=args.exclude_dirs,
+                    unique=args.unique,
+                    absolute=args.absolute,
+                    min_size=args.size,
+                    windows=args.windows,
+                    interactive=args.interactive,
+                    verbose=args.verbose,
+                )
 
             multimedia_files.extend(directory_files)
 

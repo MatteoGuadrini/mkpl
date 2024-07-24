@@ -11,9 +11,6 @@ To install ``mkpl``, see here:
 ```console
 $ pip install make_playlist               # for python enviroment
 
-$ dnf copr enable matteoguadrini/mkpl
-$ dnf install python-make_playlist -y     # for Red Hat and fedora
-
 $ git clone https://github.com/MatteoGuadrini/mkpl.git && cd mkpl
 $ pip install .                           # for others
 ```
@@ -36,6 +33,7 @@ $ pip install .                           # for others
 | -I    | --image          | Playlist image                                | Image path                |
 | -l    | --link           | Add local or remote files                     | Files                     |
 | -j    | --join           | Join one or more other playlist files         | Playlist files            |
+| -n    | --cache          | Cache playlist results                        | Seconds                   |
 | -U    | --url-chars      | Substitute some chars with URL Encoding       |                           |
 | -r    | --recursive      | Recursive search                              |                           |
 | -a    | --absolute       | Absolute file name                            |                           |
