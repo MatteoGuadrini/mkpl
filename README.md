@@ -11,9 +11,6 @@ To install ``mkpl``, see here:
 ```console
 $ pip install make_playlist               # for python enviroment
 
-$ dnf copr enable matteoguadrini/mkpl
-$ dnf install python-make_playlist -y     # for Red Hat and fedora
-
 $ git clone https://github.com/MatteoGuadrini/mkpl.git && cd mkpl
 $ pip install .                           # for others
 ```
@@ -36,6 +33,8 @@ $ pip install .                           # for others
 | -I    | --image          | Playlist image                                | Image path                |
 | -l    | --link           | Add local or remote files                     | Files                     |
 | -j    | --join           | Join one or more other playlist files         | Playlist files            |
+| -n    | --cache          | Cache playlist results                        | Seconds                   |
+| -U    | --url-chars      | Substitute some chars with URL Encoding       |                           |
 | -r    | --recursive      | Recursive search                              |                           |
 | -a    | --absolute       | Absolute file name                            |                           |
 | -s    | --shuffle        | Casual order                                  |                           |
@@ -77,7 +76,7 @@ $ pip install .                           # for others
 4. Create a shuffled playlist with my music collection and exclude dirs
 
     ```bash
-    mkpl -d "my_mp3_collection" "my_mp4_collection" -r -s -e "my_mp3_collection/metallica" "my_mp3_collection/dk" "my music.m3u"
+    mkpl -d "my_mp3_collection" "my_mp4_collection" -r -s -e "my_mp3_collection/metallica" "my_mp3_collection/dk" -- "my music.m3u"
     ```
    
 5. Create a TV series playlist with max 15 tracks

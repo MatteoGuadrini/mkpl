@@ -34,6 +34,7 @@ from re import sub
 from string import capwords
 
 from mutagen import File, MutagenError, id3
+from tempcache import TempCache
 
 # endregion
 
@@ -59,6 +60,7 @@ VIDEO_FORMAT = {
     "avi",
     "xvid",
     "divx",
+    "mkv",
     "mpeg",
     "mpg",
     "mov",
@@ -71,7 +73,7 @@ VIDEO_FORMAT = {
     "f4a",
 }
 FILE_FORMAT = AUDIO_FORMAT.union(VIDEO_FORMAT)
-__version__ = "1.9.0"
+__version__ = "1.10.0"
 
 
 # endregion
@@ -228,6 +230,19 @@ def get_args():
         help="Order playlist files by length",
         action="store_true",
     )
+    orderby_group.add_argument(
+        "-U",
+        "--url-chars",
+        help="Substitute some chars with URL Encoding (Percent Encoding)",
+        action="store_true",
+    )
+    orderby_group.add_argument(
+        "-n",
+        "--cache",
+        help="Cache playlist results",
+        type=int,
+        metavar="SECONDS",
+    )
 
     args = parser.parse_args()
 
@@ -339,6 +354,50 @@ def join_playlist(playlist, *others):
             print(f"warning: {file} generated error: {err}")
 
 
+def url_chars(playlist):
+    """URL encoding converts characters into a format that can be transmitted over the Internet."""
+    URL_CHARS = {
+        " ": "%20",
+        "!": "%21",
+        '"': "%22",
+        "#": "%23",
+        "$": "%24",
+        "%": "%25",
+        "&": "%26",
+        "'": "%27",
+        "(": "%28",
+        ")": "%29",
+        "*": "%2A",
+        "+": "%2B",
+        ",": "%2C",
+        "-": "%2D",
+        ":": "%3A",
+        ";": "%3B",
+        "<": "%3C",
+        "=": "%3D",
+        ">": "%3E",
+        "?": "%3F",
+        "@": "%40",
+        "[": "%5B",
+        "]": "%5D",
+        "^": "%5E",
+        "_": "%5F",
+        "`": "%60",
+        "{": "%7B",
+        "|": "%7C",
+        "}": "%7D",
+        "~": "%7E",
+    }
+    ret = []
+    for file in playlist:
+        for char in file:
+            if URL_CHARS.get(char):
+                file = file.replace(char, URL_CHARS.get(char))
+        ret.append(file)
+
+    return ret
+
+
 def report_issue(exc):
     """Report issue"""
     print(
@@ -367,7 +426,7 @@ def get_track(file):
     file = open_multimedia_file(file)
     if file and hasattr(file, "tags"):
         default = id3.TRCK(text="0")
-        return file.tags.get("TRCK", default)[0]
+        return int(file.tags.get("TRCK", default)[0])
 
 
 def get_year(file):
@@ -637,32 +696,66 @@ def main():
             f"pattern={args.pattern}, split={args.split}",
         )
 
+        # Define cache
+        if args.cache:
+            cache = TempCache("mkpl", max_age=args.cache)
+            vprint(args.verbose, f"use cache {cache.path}")
+            # Clean the cache
+            cache.clear_items()
+        else:
+            cache = None
+
         # Make multimedia list
         for directory in args.directories:
-            directory_files = make_playlist(
-                directory,
-                FILE_FORMAT,
-                args.pattern,
-                sortby_name=args.orderby_name,
-                sortby_date=args.orderby_date,
-                sortby_track=args.orderby_track,
-                sortby_year=args.orderby_year,
-                sortby_size=args.orderby_size,
-                sortby_length=args.orderby_length,
-                recursive=args.recursive,
-                exclude_dirs=args.exclude_dirs,
-                unique=args.unique,
-                absolute=args.absolute,
-                min_size=args.size,
-                windows=args.windows,
-                interactive=args.interactive,
-                verbose=args.verbose,
-            )
+            if args.cache:
+                directory_files = cache.cache_result(
+                    make_playlist,
+                    directory,
+                    FILE_FORMAT,
+                    args.pattern,
+                    sortby_name=args.orderby_name,
+                    sortby_date=args.orderby_date,
+                    sortby_track=args.orderby_track,
+                    sortby_year=args.orderby_year,
+                    sortby_size=args.orderby_size,
+                    sortby_length=args.orderby_length,
+                    recursive=args.recursive,
+                    exclude_dirs=args.exclude_dirs,
+                    unique=args.unique,
+                    absolute=args.absolute,
+                    min_size=args.size,
+                    windows=args.windows,
+                    interactive=args.interactive,
+                    verbose=args.verbose,
+                )
+            else:
+                directory_files = make_playlist(
+                    directory,
+                    FILE_FORMAT,
+                    args.pattern,
+                    sortby_name=args.orderby_name,
+                    sortby_date=args.orderby_date,
+                    sortby_track=args.orderby_track,
+                    sortby_year=args.orderby_year,
+                    sortby_size=args.orderby_size,
+                    sortby_length=args.orderby_length,
+                    recursive=args.recursive,
+                    exclude_dirs=args.exclude_dirs,
+                    unique=args.unique,
+                    absolute=args.absolute,
+                    min_size=args.size,
+                    windows=args.windows,
+                    interactive=args.interactive,
+                    verbose=args.verbose,
+                )
 
             multimedia_files.extend(directory_files)
 
             # Check if you must split into directory playlist
             if args.split:
+                # Substitute chars with URL encoding
+                if args.url_chars:
+                    multimedia_files = url_chars(directory_files)
                 playlist_name = basename(normpath(directory))
                 playlist_ext = ".m3u8" if args.encoding == "UNICODE" else ".m3u"
                 playlist_path = join(
@@ -670,6 +763,10 @@ def main():
                 )
                 _process_playlist(directory_files, args, playlist_path)
                 args.enabled_extensions = False
+
+        # Substitute chars with URL encoding
+        if args.url_chars:
+            multimedia_files = url_chars(multimedia_files)
 
         _process_playlist(multimedia_files, args)
 
