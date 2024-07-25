@@ -1,5 +1,14 @@
 # Release notes
 
+## 1.10.0
+Jul 25, 2024
+
+- Add `url-chars` cli argument
+- Add `cache` cli argument, refs #10
+- Add **url_chars** function, refs #12
+- Fix _mkv_ extension, refs #13
+- Fix **orderby-track** return function, refs #14
+
 ## 1.9.0
 May 09, 2024
 
