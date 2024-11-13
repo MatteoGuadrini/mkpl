@@ -301,6 +301,24 @@ def get_args():
     return args
 
 
+def human_size_to_byte(size):
+    """Convert human size into bytes
+
+    :param size: size string
+    :return: int
+    """
+    size_name = ("b", "kb", "mb", "gb", "tb", "pb", "eb", "zb", "yb")
+    size_parts = re.search("([0-9]+) ?([a-zA-Z]+)?", size)
+    num, unit = int(size_parts[1]), size_parts[2]
+    if unit:
+        idx = size_name.index(unit.lower())
+        factor = 1024**idx
+        size_bytes = num * factor
+    else:
+        size_bytes = num
+    return size_bytes
+
+
 def confirm(file, default="y"):
     """Ask user to enter Y or N (case-insensitive)
 
