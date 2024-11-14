@@ -129,7 +129,11 @@ def get_args():
         choices=FILE_FORMAT,
     )
     parser.add_argument(
-        "-z", "--size", help="Start size in bytes", type=int, default=1, metavar="BYTES"
+        "-z",
+        "--size",
+        help="Minimum size (bytes, kb, mb, ...)",
+        default="1",
+        metavar="BYTES",
     )
     parser.add_argument(
         "-m",
@@ -298,6 +302,10 @@ def get_args():
     if args.format:
         FILE_FORMAT = {args.format.strip("*").strip(".")}
 
+    # Convert size string into number
+    if args.size:
+        args.size = human_size_to_byte(args.size)
+
     return args
 
 
@@ -311,7 +319,9 @@ def human_size_to_byte(size):
     size_parts = re.search("([0-9]+) ?([a-zA-Z]+)?", size)
     num, unit = int(size_parts[1]), size_parts[2]
     if unit:
-        idx = size_name.index(unit.lower())
+        unit = unit.lower()
+        unit = unit if "b" in unit else unit + "b"
+        idx = size_name.index(unit)
         factor = 1024**idx
         size_bytes = num * factor
     else:
