@@ -155,9 +155,9 @@ def get_args():
     parser.add_argument(
         "-l",
         "--link",
-        help="Add local or remote file links",
+        help="Add remote file links",
         nargs=argparse.ONE_OR_MORE,
-        metavar="FILES",
+        metavar="HTTP_LINK",
         default=[],
     )
     parser.add_argument(
@@ -305,6 +305,10 @@ def get_args():
     # Convert size string into number
     if args.size:
         args.size = human_size_to_byte(args.size)
+
+    # Check link argument if it is a valid link
+    if args.link:
+        args.link = [link for link in args.link if re.match("https?://", link)]
 
     return args
 
