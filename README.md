@@ -26,7 +26,7 @@ $ pip install .                           # for others
 | -i    | --include        | Include other file format                     | Format of file. ex. mp3   |
 | -p    | --pattern        | Regular expression inclusion pattern          | Regular expression string |
 | -f    | --format         | Select only a file format                     | Format of file. ex. mp3   |
-| -s    | --size           | Start size in bytes                           | Bytes number              |
+| -s    | --size           | Minimum size (bytes, kb, mb, ...)             | Bytes (kb, mb, gb, ...)   |
 | -m    | --max-tracks     | Maximum number of tracks                      | Number                    |
 | -t    | --title          | Playlist title                                | Title string              |
 | -g    | --encoding       | Text encoding                                 | UTF-8,ASCII,UNICODE       |
@@ -67,10 +67,10 @@ $ pip install .                           # for others
     mkpl -d HarryPotter -f mkv HP_saga.m3u
     ```
 
-3. Create a shuffled playlist with my music collection
+3. Create a shuffled playlist with my music collection; include only files with minimum size of 2 Megabyte
 
     ```bash
-    mkpl -d "my_mp3_collection" "my_mp4_collection" -rs "my music.m3u"
+    mkpl -d "my_mp3_collection" "my_mp4_collection" -rs -z 2mb "my music.m3u"
     ```
    
 4. Create a shuffled playlist with my music collection and exclude dirs
