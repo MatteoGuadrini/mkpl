@@ -161,6 +161,13 @@ def get_args():
         default=[],
     )
     parser.add_argument(
+        "-F",
+        "--file",
+        help="Add file",
+        nargs=argparse.ONE_OR_MORE,
+        default=[],
+    )
+    parser.add_argument(
         "-j",
         "--join",
         help="Join one or more other playlist files",
@@ -687,6 +694,9 @@ def _process_playlist(files, cli_args, other_playlist=None):
 
     # Add link
     files.extend(cli_args.link)
+
+    # Add other files
+    files.extend(cli_args.file)
 
     # Build a playlist
     if files:
