@@ -317,6 +317,10 @@ def get_args():
     if args.link:
         args.link = [link for link in args.link if re.match("https?://", link)]
 
+    # Check if other files exists
+    if args.file:
+        args.file = [f for f in args.file if os.path.exists(f)]
+
     return args
 
 
