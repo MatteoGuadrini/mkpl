@@ -122,6 +122,12 @@ def get_args():
         "-p", "--pattern", help="Regular expression inclusion pattern", default=None
     )
     parser.add_argument(
+        "-P",
+        "--exclude-pattern",
+        help="Regular expression exclusion pattern",
+        default=None,
+    )
+    parser.add_argument(
         "-f",
         "--format",
         help="Select only a file format",
@@ -571,6 +577,7 @@ def make_playlist(
     directory,
     file_formats,
     pattern=None,
+    exclude_pattern=None,
     sortby_name=False,
     sortby_date=False,
     sortby_track=False,
@@ -615,6 +622,11 @@ def make_playlist(
                 # Check re pattern
                 compiled_pattern = re.compile(pattern)
                 if not find_pattern(compiled_pattern, file):
+                    continue
+            if exclude_pattern:
+                # Check re pattern
+                compiled_pattern = re.compile(exclude_pattern)
+                if find_pattern(compiled_pattern, file):
                     continue
             # Check if in exclude dirs
             if any([e_path in file for e_path in exclude_dirs]):
@@ -759,6 +771,7 @@ def main():
                     directory,
                     FILE_FORMAT,
                     args.pattern,
+                    args.exclude_pattern,
                     sortby_name=args.orderby_name,
                     sortby_date=args.orderby_date,
                     sortby_track=args.orderby_track,
@@ -779,6 +792,7 @@ def main():
                     directory,
                     FILE_FORMAT,
                     args.pattern,
+                    args.exclude_pattern,
                     sortby_name=args.orderby_name,
                     sortby_date=args.orderby_date,
                     sortby_track=args.orderby_track,
