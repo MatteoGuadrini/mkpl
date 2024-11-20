@@ -87,7 +87,6 @@ def get_args():
 
     parser = argparse.ArgumentParser(
         description="Command line tool to creates playlist file in M3U format.",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         epilog="See latest release from https://github.com/MatteoGuadrini/mkpl",
     )
     orderby_group = parser.add_mutually_exclusive_group()
