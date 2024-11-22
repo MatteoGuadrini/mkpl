@@ -73,7 +73,7 @@ VIDEO_FORMAT = {
     "f4a",
 }
 FILE_FORMAT = AUDIO_FORMAT.union(VIDEO_FORMAT)
-__version__ = "1.10.0"
+__version__ = "1.11.0"
 
 
 # endregion
@@ -87,7 +87,6 @@ def get_args():
 
     parser = argparse.ArgumentParser(
         description="Command line tool to creates playlist file in M3U format.",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         epilog="See latest release from https://github.com/MatteoGuadrini/mkpl",
     )
     orderby_group = parser.add_mutually_exclusive_group()
@@ -122,6 +121,12 @@ def get_args():
         "-p", "--pattern", help="Regular expression inclusion pattern", default=None
     )
     parser.add_argument(
+        "-P",
+        "--exclude-pattern",
+        help="Regular expression exclusion pattern",
+        default=None,
+    )
+    parser.add_argument(
         "-f",
         "--format",
         help="Select only a file format",
@@ -129,7 +134,11 @@ def get_args():
         choices=FILE_FORMAT,
     )
     parser.add_argument(
-        "-z", "--size", help="Start size in bytes", type=int, default=1, metavar="BYTES"
+        "-z",
+        "--size",
+        help="Minimum size (bytes, kb, mb, ...)",
+        default="1",
+        metavar="BYTES",
     )
     parser.add_argument(
         "-m",
@@ -151,9 +160,16 @@ def get_args():
     parser.add_argument(
         "-l",
         "--link",
-        help="Add local or remote file links",
+        help="Add remote file links",
         nargs=argparse.ONE_OR_MORE,
-        metavar="FILES",
+        metavar="HTTP_LINK",
+        default=[],
+    )
+    parser.add_argument(
+        "-F",
+        "--file",
+        help="Add file",
+        nargs=argparse.ONE_OR_MORE,
         default=[],
     )
     parser.add_argument(
@@ -298,7 +314,39 @@ def get_args():
     if args.format:
         FILE_FORMAT = {args.format.strip("*").strip(".")}
 
+    # Convert size string into number
+    if args.size:
+        args.size = human_size_to_byte(args.size)
+
+    # Check link argument if it is a valid link
+    if args.link:
+        args.link = [link for link in args.link if re.match("https?://", link)]
+
+    # Check if other files exists
+    if args.file:
+        args.file = [f for f in args.file if os.path.exists(f)]
+
     return args
+
+
+def human_size_to_byte(size):
+    """Convert human size into bytes
+
+    :param size: size string
+    :return: int
+    """
+    size_name = ("b", "kb", "mb", "gb", "tb", "pb", "eb", "zb", "yb")
+    size_parts = re.search("([0-9]+) ?([a-zA-Z]+)?", size)
+    num, unit = int(size_parts[1]), size_parts[2]
+    if unit:
+        unit = unit.lower()
+        unit = unit if "b" in unit else unit + "b"
+        idx = size_name.index(unit)
+        factor = 1024**idx
+        size_bytes = num * factor
+    else:
+        size_bytes = num
+    return size_bytes
 
 
 def confirm(file, default="y"):
@@ -528,6 +576,7 @@ def make_playlist(
     directory,
     file_formats,
     pattern=None,
+    exclude_pattern=None,
     sortby_name=False,
     sortby_date=False,
     sortby_track=False,
@@ -572,6 +621,11 @@ def make_playlist(
                 # Check re pattern
                 compiled_pattern = re.compile(pattern)
                 if not find_pattern(compiled_pattern, file):
+                    continue
+            if exclude_pattern:
+                # Check re pattern
+                compiled_pattern = re.compile(exclude_pattern)
+                if find_pattern(compiled_pattern, file):
                     continue
             # Check if in exclude dirs
             if any([e_path in file for e_path in exclude_dirs]):
@@ -656,6 +710,9 @@ def _process_playlist(files, cli_args, other_playlist=None):
     # Add link
     files.extend(cli_args.link)
 
+    # Add other files
+    files.extend(cli_args.file)
+
     # Build a playlist
     if files:
         # Check shuffle
@@ -713,6 +770,7 @@ def main():
                     directory,
                     FILE_FORMAT,
                     args.pattern,
+                    args.exclude_pattern,
                     sortby_name=args.orderby_name,
                     sortby_date=args.orderby_date,
                     sortby_track=args.orderby_track,
@@ -733,6 +791,7 @@ def main():
                     directory,
                     FILE_FORMAT,
                     args.pattern,
+                    args.exclude_pattern,
                     sortby_name=args.orderby_name,
                     sortby_date=args.orderby_date,
                     sortby_track=args.orderby_track,

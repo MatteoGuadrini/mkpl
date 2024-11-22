@@ -1,5 +1,13 @@
 # Release notes
 
+## 1.11.0
+Nov 22, 2024
+
+- Add `exclude-pattern` cli argument
+- Add `file` cli argument
+- Add **human_size_to_byte** function
+- Fix `link` argument if it is a valid http link
+
 ## 1.10.0
 Jul 25, 2024
 

@@ -7,8 +7,9 @@ py-modules = ["mkpl"]
 
 [project]
 name = "make_playlist"
-version = "1.10.0"
+version = "1.11.0"
 readme = "README.md"
+keywords = ["playlist", "multimedia", "file", "maker", "make", "m3u", "m3u8"]
 
 authors = [{ name = "Matteo Guadrini", email = "matteo.guadrini@hotmail.it" }]
 maintainers = [
