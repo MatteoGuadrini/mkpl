@@ -5,7 +5,7 @@
 # created by: matteo.guadrini
 # mkpl -- mkpl
 #
-#     Copyright (C) 2024 Matteo Guadrini <matteo.guadrini@hotmail.it>
+#     Copyright (C) 2025 Matteo Guadrini <matteo.guadrini@hotmail.it>
 #
 #     This program is free software: you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
@@ -86,7 +86,7 @@ def get_args():
     global FILE_FORMAT
 
     parser = argparse.ArgumentParser(
-        description="Command line tool to creates playlist file in M3U format.",
+        description="Command line tool to create playlist files in M3U format.",
         epilog="See latest release from https://github.com/MatteoGuadrini/mkpl",
     )
     orderby_group = parser.add_mutually_exclusive_group()
@@ -179,6 +179,13 @@ def get_args():
         nargs=argparse.ONE_OR_MORE,
         metavar="PLAYLISTS",
         default=[],
+    )
+    parser.add_argument(
+        "-M",
+        "--length",
+        help="Minimum length",
+        default=None,
+        metavar="SECONDS",
     )
     parser.add_argument(
         "-r", "--recursive", help="Recursive search", action="store_true"
