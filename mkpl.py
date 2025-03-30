@@ -181,11 +181,7 @@ def get_args():
         default=[],
     )
     parser.add_argument(
-        "-M",
-        "--length",
-        help="Minimum length",
-        default=None,
-        metavar="SECONDS",
+        "-M", "--length", help="Minimum length", default=1, metavar="SECONDS", type=int
     )
     parser.add_argument(
         "-r", "--recursive", help="Recursive search", action="store_true"
@@ -595,6 +591,7 @@ def make_playlist(
     unique=False,
     absolute=False,
     min_size=1,
+    min_length=1,
     windows=False,
     interactive=False,
     verbose=False,
@@ -645,6 +642,9 @@ def make_playlist(
                     continue
             # Check file size
             if size <= min_size:
+                continue
+            # Check length
+            if get_length(file) <= min_length:
                 continue
             if interactive:
                 if not confirm(file):
@@ -744,7 +744,7 @@ def _process_playlist(files, cli_args, other_playlist=None):
     else:
         print(
             "warning: no multimedia "
-            f'files are found here: {",".join(cli_args.directories)}'
+            f"files are found here: {','.join(cli_args.directories)}"
         )
 
 
@@ -789,6 +789,7 @@ def main():
                     unique=args.unique,
                     absolute=args.absolute,
                     min_size=args.size,
+                    min_length=args.length,
                     windows=args.windows,
                     interactive=args.interactive,
                     verbose=args.verbose,
@@ -810,6 +811,7 @@ def main():
                     unique=args.unique,
                     absolute=args.absolute,
                     min_size=args.size,
+                    min_length=args.length,
                     windows=args.windows,
                     interactive=args.interactive,
                     verbose=args.verbose,
