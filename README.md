@@ -1,6 +1,5 @@
-# ``make_playlist``: Playlist maker
-
-<img src="img/mkpl_logo.svg" alt="mkpl" title="mkpl" width="200" height="200" />
+<img src="img/mkpl_logo.svg" alt="mkpl" title="mkpl" align="right" width="150"/> **make_playlist**: Playlist maker
+======
 
 ``mkpl`` is a _command line tool_ to create playlist files (**[M3U](https://en.wikipedia.org/wiki/M3U) format**).
 
@@ -28,6 +27,7 @@ $ pip install .                           # for others
 | -P    | --exclude-pattern | Regular expression exclusion pattern          | Regular expression string |
 | -f    | --format          | Select only a file format                     | Format of file. ex. mp3   |
 | -s    | --size            | Minimum size (bytes, kb, mb, ...)             | Bytes (kb, mb, gb, ...)   |
+| -M    | --length          | Minimum length                                | Seconds                   |
 | -m    | --max-tracks      | Maximum number of tracks                      | Number                    |
 | -t    | --title           | Playlist title                                | Title string              |
 | -g    | --encoding        | Text encoding                                 | UTF-8,ASCII,UNICODE       |
@@ -190,6 +190,12 @@ $ pip install .                           # for others
     Add file new_collection/sample2.mp3 to playlist? [Y/n]:Y
     Add file new_collection/sample3.mp3 to playlist? [Y/n]:n
     Add file new_collection/sample4.mp3 to playlist? [Y/n]:N
+    ```
+
+20. Includes mp3 files with minimum length of 42 seconds:
+
+    ```bash
+    mkpl -d "music_collection" -M 42 "My new collection"
     ```
 
 ## Use it like Python module
