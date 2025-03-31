@@ -1,5 +1,10 @@
 # Release notes
 
+## 1.12.0
+Mar 31, 2025
+
+- Add `length` cli argument
+
 ## 1.11.0
 Nov 22, 2024
 

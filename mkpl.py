@@ -5,7 +5,7 @@
 # created by: matteo.guadrini
 # mkpl -- mkpl
 #
-#     Copyright (C) 2024 Matteo Guadrini <matteo.guadrini@hotmail.it>
+#     Copyright (C) 2025 Matteo Guadrini <matteo.guadrini@hotmail.it>
 #
 #     This program is free software: you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
@@ -73,7 +73,7 @@ VIDEO_FORMAT = {
     "f4a",
 }
 FILE_FORMAT = AUDIO_FORMAT.union(VIDEO_FORMAT)
-__version__ = "1.11.0"
+__version__ = "1.12.0"
 
 
 # endregion
@@ -86,7 +86,7 @@ def get_args():
     global FILE_FORMAT
 
     parser = argparse.ArgumentParser(
-        description="Command line tool to creates playlist file in M3U format.",
+        description="Command line tool to create playlist files in M3U format.",
         epilog="See latest release from https://github.com/MatteoGuadrini/mkpl",
     )
     orderby_group = parser.add_mutually_exclusive_group()
@@ -179,6 +179,9 @@ def get_args():
         nargs=argparse.ONE_OR_MORE,
         metavar="PLAYLISTS",
         default=[],
+    )
+    parser.add_argument(
+        "-M", "--length", help="Minimum length", default=1, metavar="SECONDS", type=int
     )
     parser.add_argument(
         "-r", "--recursive", help="Recursive search", action="store_true"
@@ -588,6 +591,7 @@ def make_playlist(
     unique=False,
     absolute=False,
     min_size=1,
+    min_length=1,
     windows=False,
     interactive=False,
     verbose=False,
@@ -638,6 +642,9 @@ def make_playlist(
                     continue
             # Check file size
             if size <= min_size:
+                continue
+            # Check length
+            if get_length(file) <= min_length:
                 continue
             if interactive:
                 if not confirm(file):
@@ -737,7 +744,7 @@ def _process_playlist(files, cli_args, other_playlist=None):
     else:
         print(
             "warning: no multimedia "
-            f'files are found here: {",".join(cli_args.directories)}'
+            f"files are found here: {','.join(cli_args.directories)}"
         )
 
 
@@ -782,6 +789,7 @@ def main():
                     unique=args.unique,
                     absolute=args.absolute,
                     min_size=args.size,
+                    min_length=args.length,
                     windows=args.windows,
                     interactive=args.interactive,
                     verbose=args.verbose,
@@ -803,6 +811,7 @@ def main():
                     unique=args.unique,
                     absolute=args.absolute,
                     min_size=args.size,
+                    min_length=args.length,
                     windows=args.windows,
                     interactive=args.interactive,
                     verbose=args.verbose,
