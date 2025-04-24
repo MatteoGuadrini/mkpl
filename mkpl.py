@@ -181,7 +181,7 @@ def get_args():
         default=[],
     )
     parser.add_argument(
-        "-M", "--length", help="Minimum length", default=1, metavar="SECONDS", type=int
+        "-M", "--length", help="Minimum length", default=0, metavar="SECONDS", type=int
     )
     parser.add_argument(
         "-r", "--recursive", help="Recursive search", action="store_true"
@@ -492,7 +492,8 @@ def get_length(file):
     """Get file by length for sort"""
     file = open_multimedia_file(file)
     if file and hasattr(file, "info"):
-        return file.info.length if hasattr(file.info, "length") else 0.0
+        return file.info.length if hasattr(file.info, "length") else 1.0
+    return 1.0
 
 
 def find_pattern(pattern, path):
