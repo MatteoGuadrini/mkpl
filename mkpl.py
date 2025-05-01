@@ -33,7 +33,7 @@ from random import shuffle
 from re import sub
 from string import capwords
 
-from mutagen import File, MutagenError, id3, ID3Tags, mp4
+from mutagen import File, MutagenError, id3, mp4
 from tempcache import TempCache
 
 # endregion
@@ -476,14 +476,11 @@ def get_track(file):
     """Get file by track for sort"""
     file = open_multimedia_file(file)
     if file and hasattr(file, "tags"):
-        if isinstance(file.tags, ID3Tags):
+        if isinstance(file.tags, id3.ID3Tags):
             default = id3.TRCK(text="0")
             return int(file.tags.get("TRCK", default)[0])
         elif isinstance(file.tags, mp4.MP4Tags):
-            default = mp4.MP4Tags()
-            default["trkn"] = [(0,0)]
-            file.tags.update(default)
-            return file.tags.get("trkn")[0][0]
+            return file.tags.get("trkn", [(0,0)])[0][0]
     return 0
 
 
@@ -491,8 +488,16 @@ def get_year(file):
     """Get file by year for sort"""
     file = open_multimedia_file(file)
     if file and hasattr(file, "tags"):
-        default = id3.TDOR(text="0")
-        return file.tags.get("TDOR", default)[0]
+        if isinstance(file.tags, id3.ID3Tags):
+            default = id3.TDOR(text="0")
+            return file.tags.get("TDOR", default)[0]
+        elif isinstance(file.tags, mp4.MP4Tags):
+            tags = file.tags.get("\xa9day", "0")
+            if isinstance(tags, str):
+                return tags
+            elif isinstance(tags, (tuple, list)):
+                return tags[0]
+    return "0"
 
 
 def get_length(file):
