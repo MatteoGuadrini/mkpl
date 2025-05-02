@@ -47,6 +47,7 @@ $ pip install .                           # for others
 | -S    | --split           | Split playlist by directories                 |                           |
 | -R    | --interactive     | Asks each file for confirmation               |                           |
 | -C    | --count           | Count elements into playlist                  |                           |
+| -E    | --explain-error   | Explain error with traceback                  |                           |
 | -o    | --orderby-name    | Order playlist files by name                  |                           |
 | -O    | --orderby-date    | Order playlist files by creation date         |                           |
 | -T    | --orderby-track   | Order playlist files by track                 |                           |
