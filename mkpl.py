@@ -26,13 +26,13 @@
 import argparse
 import os.path
 import re
+import traceback
 from filecmp import cmp
 from os.path import basename, dirname, exists, getctime, getsize, isdir, join, normpath
 from pathlib import Path
 from random import shuffle
 from re import sub
 from string import capwords
-import traceback
 
 from mutagen import File, MutagenError, id3, mp4
 from tempcache import TempCache
@@ -74,7 +74,7 @@ VIDEO_FORMAT = {
     "f4a",
 }
 FILE_FORMAT = AUDIO_FORMAT.union(VIDEO_FORMAT)
-__version__ = "1.12.0"
+__version__ = "1.13.0"
 
 
 # endregion

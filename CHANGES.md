@@ -1,5 +1,11 @@
 # Release notes
 
+## 1.13.0
+May 03, 2025
+
+- Add `explain-error` cli argument
+- Add _mp4_ tag support
+
 ## 1.12.0
 Mar 31, 2025
 
