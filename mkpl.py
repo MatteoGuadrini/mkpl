@@ -26,6 +26,7 @@
 import argparse
 import os.path
 import re
+import traceback
 from filecmp import cmp
 from os.path import basename, dirname, exists, getctime, getsize, isdir, join, normpath
 from pathlib import Path
@@ -33,7 +34,7 @@ from random import shuffle
 from re import sub
 from string import capwords
 
-from mutagen import File, MutagenError, id3
+from mutagen import File, MutagenError, id3, mp4
 from tempcache import TempCache
 
 # endregion
@@ -73,7 +74,7 @@ VIDEO_FORMAT = {
     "f4a",
 }
 FILE_FORMAT = AUDIO_FORMAT.union(VIDEO_FORMAT)
-__version__ = "1.12.0"
+__version__ = "1.13.0"
 
 
 # endregion
@@ -215,6 +216,12 @@ def get_args():
     )
     parser.add_argument(
         "-C", "--count", help="Count elements into playlist", action="store_true"
+    )
+    parser.add_argument(
+        "-E",
+        "--explain-error",
+        help="Explain error with traceback",
+        action="store_true",
     )
     orderby_group.add_argument(
         "-s", "--shuffle", help="Casual order", action="store_true"
@@ -449,13 +456,15 @@ def url_chars(playlist):
     return ret
 
 
-def report_issue(exc):
+def report_issue(exc, tb=False):
     """Report issue"""
     print(
         "error: {0} on line {1}, with error {2}".format(
             type(exc).__name__, exc.__traceback__.tb_lineno, str(exc)
         )
     )
+    if tb:
+        traceback.print_exc()
     exit(1)
 
 
@@ -476,24 +485,36 @@ def get_track(file):
     """Get file by track for sort"""
     file = open_multimedia_file(file)
     if file and hasattr(file, "tags"):
-        default = id3.TRCK(text="0")
-        return int(file.tags.get("TRCK", default)[0])
+        if isinstance(file.tags, id3.ID3Tags):
+            default = id3.TRCK(text="0")
+            return int(file.tags.get("TRCK", default)[0])
+        elif isinstance(file.tags, mp4.MP4Tags):
+            return file.tags.get("trkn", [(0, 0)])[0][0]
+    return 0
 
 
 def get_year(file):
     """Get file by year for sort"""
     file = open_multimedia_file(file)
     if file and hasattr(file, "tags"):
-        default = id3.TDOR(text="0")
-        return file.tags.get("TDOR", default)[0]
+        if isinstance(file.tags, id3.ID3Tags):
+            default = id3.TDOR(text="0")
+            return file.tags.get("TDOR", default)[0]
+        elif isinstance(file.tags, mp4.MP4Tags):
+            tags = file.tags.get("\xa9day", "0")
+            if isinstance(tags, str):
+                return tags
+            elif isinstance(tags, (tuple, list)):
+                return tags[0]
+    return "0"
 
 
 def get_length(file):
     """Get file by length for sort"""
     file = open_multimedia_file(file)
     if file and hasattr(file, "info"):
-        return file.info.length if hasattr(file.info, "length") else 1.0
-    return 1.0
+        return file.info.length if hasattr(file.info, "length") else 0.1
+    return 0.1
 
 
 def find_pattern(pattern, path):
@@ -592,7 +613,7 @@ def make_playlist(
     unique=False,
     absolute=False,
     min_size=1,
-    min_length=1,
+    min_length=0,
     windows=False,
     interactive=False,
     verbose=False,
@@ -645,7 +666,7 @@ def make_playlist(
             if size <= min_size:
                 continue
             # Check length
-            if get_length(file) <= min_length:
+            if min_length and get_length(file) <= min_length:
                 continue
             if interactive:
                 if not confirm(file):
@@ -752,87 +773,79 @@ def _process_playlist(files, cli_args, other_playlist=None):
 def main():
     """Make a playlist file"""
 
-    try:
-        args = get_args()
-        multimedia_files = list()
-        vprint(
-            args.verbose,
-            f"formats={FILE_FORMAT}, recursive={args.recursive}, "
-            f"pattern={args.pattern}, split={args.split}",
-        )
-
-        # Define cache
+    args = get_args()
+    multimedia_files = list()
+    vprint(
+        args.verbose,
+        f"formats={FILE_FORMAT}, recursive={args.recursive}, "
+        f"pattern={args.pattern}, split={args.split}",
+    )
+    # Define cache
+    if args.cache:
+        cache = TempCache("mkpl", max_age=args.cache)
+        vprint(args.verbose, f"use cache {cache.path}")
+        # Clean the cache
+        cache.clear_items()
+    else:
+        cache = None
+    # Make multimedia list
+    for directory in args.directories:
         if args.cache:
-            cache = TempCache("mkpl", max_age=args.cache)
-            vprint(args.verbose, f"use cache {cache.path}")
-            # Clean the cache
-            cache.clear_items()
+            directory_files = cache.cache_result(
+                make_playlist,
+                directory,
+                FILE_FORMAT,
+                args.pattern,
+                args.exclude_pattern,
+                sortby_name=args.orderby_name,
+                sortby_date=args.orderby_date,
+                sortby_track=args.orderby_track,
+                sortby_year=args.orderby_year,
+                sortby_size=args.orderby_size,
+                sortby_length=args.orderby_length,
+                recursive=args.recursive,
+                exclude_dirs=args.exclude_dirs,
+                unique=args.unique,
+                absolute=args.absolute,
+                min_size=args.size,
+                min_length=args.length,
+                windows=args.windows,
+                interactive=args.interactive,
+                verbose=args.verbose,
+            )
         else:
-            cache = None
-
-        # Make multimedia list
-        for directory in args.directories:
-            if args.cache:
-                directory_files = cache.cache_result(
-                    make_playlist,
-                    directory,
-                    FILE_FORMAT,
-                    args.pattern,
-                    args.exclude_pattern,
-                    sortby_name=args.orderby_name,
-                    sortby_date=args.orderby_date,
-                    sortby_track=args.orderby_track,
-                    sortby_year=args.orderby_year,
-                    sortby_size=args.orderby_size,
-                    sortby_length=args.orderby_length,
-                    recursive=args.recursive,
-                    exclude_dirs=args.exclude_dirs,
-                    unique=args.unique,
-                    absolute=args.absolute,
-                    min_size=args.size,
-                    min_length=args.length,
-                    windows=args.windows,
-                    interactive=args.interactive,
-                    verbose=args.verbose,
-                )
-            else:
-                directory_files = make_playlist(
-                    directory,
-                    FILE_FORMAT,
-                    args.pattern,
-                    args.exclude_pattern,
-                    sortby_name=args.orderby_name,
-                    sortby_date=args.orderby_date,
-                    sortby_track=args.orderby_track,
-                    sortby_year=args.orderby_year,
-                    sortby_size=args.orderby_size,
-                    sortby_length=args.orderby_length,
-                    recursive=args.recursive,
-                    exclude_dirs=args.exclude_dirs,
-                    unique=args.unique,
-                    absolute=args.absolute,
-                    min_size=args.size,
-                    min_length=args.length,
-                    windows=args.windows,
-                    interactive=args.interactive,
-                    verbose=args.verbose,
-                )
-
-            multimedia_files.extend(directory_files)
-
-            # Check if you must split into directory playlist
-            if args.split:
-                # Substitute chars with URL encoding
-                if args.url_chars:
-                    multimedia_files = url_chars(directory_files)
-                playlist_name = basename(normpath(directory))
-                playlist_ext = ".m3u8" if args.encoding == "UNICODE" else ".m3u"
-                playlist_path = join(
-                    dirname(args.playlist), playlist_name + playlist_ext
-                )
-                _process_playlist(directory_files, args, playlist_path)
-                args.enabled_extensions = False
-
+            directory_files = make_playlist(
+                directory,
+                FILE_FORMAT,
+                args.pattern,
+                args.exclude_pattern,
+                sortby_name=args.orderby_name,
+                sortby_date=args.orderby_date,
+                sortby_track=args.orderby_track,
+                sortby_year=args.orderby_year,
+                sortby_size=args.orderby_size,
+                sortby_length=args.orderby_length,
+                recursive=args.recursive,
+                exclude_dirs=args.exclude_dirs,
+                unique=args.unique,
+                absolute=args.absolute,
+                min_size=args.size,
+                min_length=args.length,
+                windows=args.windows,
+                interactive=args.interactive,
+                verbose=args.verbose,
+            )
+        multimedia_files.extend(directory_files)
+        # Check if you must split into directory playlist
+        if args.split:
+            # Substitute chars with URL encoding
+            if args.url_chars:
+                multimedia_files = url_chars(directory_files)
+            playlist_name = basename(normpath(directory))
+            playlist_ext = ".m3u8" if args.encoding == "UNICODE" else ".m3u"
+            playlist_path = join(dirname(args.playlist), playlist_name + playlist_ext)
+            _process_playlist(directory_files, args, playlist_path)
+            args.enabled_extensions = False
         # Substitute chars with URL encoding
         if args.url_chars:
             multimedia_files = url_chars(multimedia_files)
@@ -843,14 +856,14 @@ def main():
         if args.count:
             print(len([file for file in multimedia_files if not file.startswith("#")]))
 
-    except Exception as err:
-        report_issue(err)
-
 
 # endregion
 
 # region main
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as err:
+        report_issue(err)
 
 # endregion
