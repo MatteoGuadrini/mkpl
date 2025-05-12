@@ -28,6 +28,7 @@ $ pip install .                           # for others
 | -f    | --format          | Select only a file format                     | Format of file. ex. mp3   |
 | -s    | --size            | Minimum size (bytes, kb, mb, ...)             | Bytes (kb, mb, gb, ...)   |
 | -M    | --length          | Minimum length                                | Seconds                   |
+| -X    | --max-length      | Maximum length                                | Seconds                   |
 | -m    | --max-tracks      | Maximum number of tracks                      | Number                    |
 | -t    | --title           | Playlist title                                | Title string              |
 | -g    | --encoding        | Text encoding                                 | UTF-8,ASCII,UNICODE       |

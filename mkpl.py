@@ -185,6 +185,14 @@ def get_args():
         "-M", "--length", help="Minimum length", default=0, metavar="SECONDS", type=int
     )
     parser.add_argument(
+        "-X",
+        "--max-length",
+        help="Maximum length",
+        default=0,
+        metavar="SECONDS",
+        type=int,
+    )
+    parser.add_argument(
         "-r", "--recursive", help="Recursive search", action="store_true"
     )
     parser.add_argument(
@@ -335,6 +343,12 @@ def get_args():
     # Check if other files exists
     if args.file:
         args.file = [f for f in args.file if os.path.exists(f)]
+
+    # Check min-max length
+    if args.length == args.max_length:
+        parser.error("minimum and maximum length must not has the same values")
+    elif args.length >= args.max_length:
+        parser.error("minimum length is upper of maximum length")
 
     return args
 
@@ -614,6 +628,7 @@ def make_playlist(
     absolute=False,
     min_size=1,
     min_length=0,
+    max_length=0,
     windows=False,
     interactive=False,
     verbose=False,
@@ -665,8 +680,11 @@ def make_playlist(
             # Check file size
             if size <= min_size:
                 continue
-            # Check length
+            # Check minimum length
             if min_length and get_length(file) <= min_length:
+                continue
+            # Check maximum length
+            if max_length and get_length(file) >= max_length:
                 continue
             if interactive:
                 if not confirm(file):
@@ -809,6 +827,7 @@ def main():
                 absolute=args.absolute,
                 min_size=args.size,
                 min_length=args.length,
+                max_length=args.max_length,
                 windows=args.windows,
                 interactive=args.interactive,
                 verbose=args.verbose,
@@ -831,6 +850,7 @@ def main():
                 absolute=args.absolute,
                 min_size=args.size,
                 min_length=args.length,
+                max_length=args.max_length,
                 windows=args.windows,
                 interactive=args.interactive,
                 verbose=args.verbose,
