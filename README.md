@@ -27,6 +27,7 @@ $ pip install .                           # for others
 | -P    | --exclude-pattern | Regular expression exclusion pattern          | Regular expression string |
 | -f    | --format          | Select only a file format                     | Format of file. ex. mp3   |
 | -s    | --size            | Minimum size (bytes, kb, mb, ...)             | Bytes (kb, mb, gb, ...)   |
+| -A    | --max-size        | Maximum size (bytes, kb, mb, ...)             | Bytes (kb, mb, gb, ...)   |
 | -M    | --length          | Minimum length                                | Seconds                   |
 | -X    | --max-length      | Maximum length                                | Seconds                   |
 | -m    | --max-tracks      | Maximum number of tracks                      | Number                    |
@@ -78,10 +79,12 @@ $ pip install .                           # for others
     mkpl -d HarryPotter -f mkv HP_saga.m3u
     ```
 
-4. Create a shuffled playlist with my music collection; include only files with minimum size of 2 Megabyte
+4. Create a shuffled playlist with my music collection; include only files with minimum size of 2 Megabyte...and with range
 
     ```bash
     mkpl -d "my_mp3_collection" "my_mp4_collection" -rs -z 2mb "my music.m3u"
+    # Range between 2 and 4 Megabytes
+    mkpl -d "my_mp3_collection" "my_mp4_collection" -rs -z 2mb -A 4Mb "my music.m3u"
     ```
    
 5. Create a shuffled playlist with my music collection and exclude dirs
@@ -194,10 +197,12 @@ $ pip install .                           # for others
     Add file new_collection/sample4.mp3 to playlist? [Y/n]:N
     ```
 
-20. Includes mp3 files with minimum length of 42 seconds:
+20. Includes mp3 files with minimum length of 42 seconds...and range:
 
     ```bash
     mkpl -d "music_collection" -M 42 "My new collection"
+    # Range of minimum of 42 seconds and maximum of 300 seonds
+    mkpl -d "music_collection" -M 42 -X 300 "My new collection"
     ```
 
 ## Use it like Python module
