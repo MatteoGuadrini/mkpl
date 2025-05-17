@@ -1,7 +1,7 @@
 <img src="img/mkpl_logo.svg" alt="mkpl" title="mkpl" align="right" width="150"/> **make_playlist**: Playlist maker
 ======
 
-``mkpl`` is a _command line tool_ to create playlist files (**[M3U](https://en.wikipedia.org/wiki/M3U) format**).
+``mkpl`` is a _command line tool_ to create playlist files (**[M3U](https://en.wikipedia.org/wiki/M3U) format**), automatically.
 
 ## Installation
 
