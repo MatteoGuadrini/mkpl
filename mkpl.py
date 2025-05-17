@@ -74,7 +74,7 @@ VIDEO_FORMAT = {
     "f4a",
 }
 FILE_FORMAT = AUDIO_FORMAT.union(VIDEO_FORMAT)
-__version__ = "1.13.0"
+__version__ = "1.14.0"
 
 
 # endregion
@@ -138,7 +138,14 @@ def get_args():
         "-z",
         "--size",
         help="Minimum size (bytes, kb, mb, ...)",
-        default="1",
+        default="0",
+        metavar="BYTES",
+    )
+    parser.add_argument(
+        "-A",
+        "--max-size",
+        help="Maximum size (bytes, kb, mb, ...)",
+        default="0",
         metavar="BYTES",
     )
     parser.add_argument(
@@ -183,6 +190,14 @@ def get_args():
     )
     parser.add_argument(
         "-M", "--length", help="Minimum length", default=0, metavar="SECONDS", type=int
+    )
+    parser.add_argument(
+        "-X",
+        "--max-length",
+        help="Maximum length",
+        default=0,
+        metavar="SECONDS",
+        type=int,
     )
     parser.add_argument(
         "-r", "--recursive", help="Recursive search", action="store_true"
@@ -325,8 +340,8 @@ def get_args():
         FILE_FORMAT = {args.format.strip("*").strip(".")}
 
     # Convert size string into number
-    if args.size:
-        args.size = human_size_to_byte(args.size)
+    args.size = human_size_to_byte(args.size)
+    args.max_size = human_size_to_byte(args.max_size)
 
     # Check link argument if it is a valid link
     if args.link:
@@ -335,6 +350,12 @@ def get_args():
     # Check if other files exists
     if args.file:
         args.file = [f for f in args.file if os.path.exists(f)]
+
+    # Check min-max length
+    if args.length and args.length == args.max_length:
+        parser.error("minimum and maximum length must not has the same values")
+    elif args.max_length and args.length >= args.max_length:
+        parser.error("minimum length is upper of maximum length")
 
     return args
 
@@ -612,8 +633,10 @@ def make_playlist(
     exclude_dirs=None,
     unique=False,
     absolute=False,
-    min_size=1,
+    min_size=0,
+    max_size=0,
     min_length=0,
+    max_length=0,
     windows=False,
     interactive=False,
     verbose=False,
@@ -662,11 +685,17 @@ def make_playlist(
                     filelist, file, root=root if not absolute else None
                 ):
                     continue
-            # Check file size
-            if size <= min_size:
+            # Check minimum file size
+            if min_size and size <= min_size:
                 continue
-            # Check length
+            # Check maximum file size
+            if max_size and size >= max_size:
+                continue
+            # Check minimum length
             if min_length and get_length(file) <= min_length:
+                continue
+            # Check maximum length
+            if max_length and get_length(file) >= max_length:
                 continue
             if interactive:
                 if not confirm(file):
@@ -773,7 +802,6 @@ def _process_playlist(files, cli_args, other_playlist=None):
 def main():
     """Make a playlist file"""
 
-    args = get_args()
     multimedia_files = list()
     vprint(
         args.verbose,
@@ -808,7 +836,9 @@ def main():
                 unique=args.unique,
                 absolute=args.absolute,
                 min_size=args.size,
+                max_size=args.max_size,
                 min_length=args.length,
+                max_length=args.max_length,
                 windows=args.windows,
                 interactive=args.interactive,
                 verbose=args.verbose,
@@ -830,7 +860,9 @@ def main():
                 unique=args.unique,
                 absolute=args.absolute,
                 min_size=args.size,
+                max_size=args.max_size,
                 min_length=args.length,
+                max_length=args.max_length,
                 windows=args.windows,
                 interactive=args.interactive,
                 verbose=args.verbose,
@@ -861,9 +893,10 @@ def main():
 
 # region main
 if __name__ == "__main__":
+    args = get_args()
     try:
         main()
     except Exception as err:
-        report_issue(err)
+        report_issue(err, tb=args.explain_error)
 
 # endregion

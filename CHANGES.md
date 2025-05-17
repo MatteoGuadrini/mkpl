@@ -1,5 +1,11 @@
 # Release notes
 
+## 1.14.0
+May 16, 2025
+
+- Add `max-length` cli argument
+- Add `max-size` cli argument
+
 ## 1.13.0
 May 03, 2025
 
