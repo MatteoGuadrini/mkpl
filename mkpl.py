@@ -285,79 +285,79 @@ def get_args():
         metavar="SECONDS",
     )
 
-    args = parser.parse_args()
+    arguments = parser.parse_args()
 
     # Check extension of playlist file
-    if not args.playlist.endswith(".m3u"):
-        if args.encoding == "UNICODE":
-            if not args.playlist.endswith(".m3u8"):
-                args.playlist += ".m3u8"
+    if not arguments.playlist.endswith(".m3u"):
+        if arguments.encoding == "UNICODE":
+            if not arguments.playlist.endswith(".m3u8"):
+                arguments.playlist += ".m3u8"
         else:
-            args.playlist += ".m3u"
+            arguments.playlist += ".m3u"
 
     # Check if playlist is not a directory
-    if isdir(args.playlist):
-        parser.error(f"{args.playlist} is a directory")
+    if isdir(arguments.playlist):
+        parser.error(f"{arguments.playlist} is a directory")
 
     # Open playlist file
-    args.open_mode = "at+" if args.append else "wt"
-    args.enabled_extensions = False
-    args.enabled_title = False
-    args.enabled_encoding = False
+    arguments.open_mode = "at+" if arguments.append else "wt"
+    arguments.enabled_extensions = False
+    arguments.enabled_title = False
+    arguments.enabled_encoding = False
     # Verify extension attribute in append mode
-    if args.append:
-        with open(args.playlist, mode=args.open_mode) as opened_playlist:
+    if arguments.append:
+        with open(arguments.playlist, mode=arguments.open_mode) as opened_playlist:
             opened_playlist.seek(0)
             first_three_lines = opened_playlist.readlines(100)
             for line in first_three_lines:
                 if "#EXTM3U" in line:
-                    args.enabled_extensions = True
+                    arguments.enabled_extensions = True
                 if "#PLAYLIST" in line:
-                    args.enabled_title = True
+                    arguments.enabled_title = True
                 if "#EXTENC" in line:
-                    args.enabled_encoding = True
+                    arguments.enabled_encoding = True
             # Check if extensions are disabled and image is specified
-            if getsize(args.playlist) > 0:
-                if not args.enabled_extensions and args.image:
+            if getsize(arguments.playlist) > 0:
+                if not arguments.enabled_extensions and arguments.image:
                     print(
-                        f"warning: image {args.image} has not "
+                        f"warning: image {arguments.image} has not "
                         "been set because the extension flag"
                         " is not present in the playlist"
                     )
-                    args.image = None
+                    arguments.image = None
 
     # Check if image file exists
-    if args.image:
-        if not exists(args.image):
-            parser.error(f"image file {args.image} does not exist")
+    if arguments.image:
+        if not exists(arguments.image):
+            parser.error(f"image file {arguments.image} does not exist")
 
     # Extend files format
-    if args.include:
-        FILE_FORMAT.update(set([fmt.strip("*").strip(".") for fmt in args.include]))
+    if arguments.include:
+        FILE_FORMAT.update(set([fmt.strip("*").strip(".") for fmt in arguments.include]))
 
     # Select only one format
-    if args.format:
-        FILE_FORMAT = {args.format.strip("*").strip(".")}
+    if arguments.format:
+        FILE_FORMAT = {arguments.format.strip("*").strip(".")}
 
     # Convert size string into number
-    args.size = human_size_to_byte(args.size)
-    args.max_size = human_size_to_byte(args.max_size)
+    arguments.size = human_size_to_byte(arguments.size)
+    arguments.max_size = human_size_to_byte(arguments.max_size)
 
     # Check link argument if it is a valid link
-    if args.link:
-        args.link = [link for link in args.link if re.match("https?://", link)]
+    if arguments.link:
+        arguments.link = [link for link in arguments.link if re.match("https?://", link)]
 
     # Check if other files exists
-    if args.file:
-        args.file = [f for f in args.file if os.path.exists(f)]
+    if arguments.file:
+        arguments.file = [f for f in arguments.file if os.path.exists(f)]
 
     # Check min-max length
-    if args.length and args.length == args.max_length:
+    if arguments.length and arguments.length == arguments.max_length:
         parser.error("minimum and maximum length must not has the same values")
-    elif args.max_length and args.length >= args.max_length:
+    elif arguments.max_length and arguments.length >= arguments.max_length:
         parser.error("minimum length is upper of maximum length")
 
-    return args
+    return arguments
 
 
 def human_size_to_byte(size):
@@ -416,6 +416,7 @@ def file_in_playlist(playlist, file, root=None):
         # Compare two files
         if cmp(f, file):
             return True
+    return False
 
 
 def join_playlist(playlist, *others):
@@ -429,13 +430,13 @@ def join_playlist(playlist, *others):
             )
         except FileNotFoundError:
             print(f"warning: {file} file not found")
-        except OSError as err:
-            print(f"warning: {file} generated error: {err}")
+        except OSError as error:
+            print(f"warning: {file} generated error: {error}")
 
 
 def url_chars(playlist):
     """URL encoding converts characters into a format that can be transmitted over the Internet."""
-    URL_CHARS = {
+    chars_dict = {
         " ": "%20",
         "!": "%21",
         '"': "%22",
@@ -470,8 +471,8 @@ def url_chars(playlist):
     ret = []
     for file in playlist:
         for char in file:
-            if URL_CHARS.get(char):
-                file = file.replace(char, URL_CHARS.get(char))
+            if chars_dict.get(char):
+                file = file.replace(char, chars_dict.get(char))
         ret.append(file)
 
     return ret
@@ -562,6 +563,7 @@ def find_pattern(pattern, path):
             if file.tags.get("TALB"):
                 if pattern.findall(file.tags.get("TALB")[0]):
                     return True
+    return False
 
 
 def vprint(verbose, *messages):
