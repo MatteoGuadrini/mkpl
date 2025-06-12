@@ -74,6 +74,7 @@ VIDEO_FORMAT = {
     "f4a",
 }
 FILE_FORMAT = AUDIO_FORMAT.union(VIDEO_FORMAT)
+EXPLAIN_ERROR = False
 __version__ = "1.14.0"
 
 
@@ -84,7 +85,7 @@ __version__ = "1.14.0"
 def get_args():
     """Get command-line arguments"""
 
-    global FILE_FORMAT
+    global FILE_FORMAT, EXPLAIN_ERROR
 
     parser = argparse.ArgumentParser(
         description="Command line tool to create playlist files in M3U format.",
@@ -92,7 +93,13 @@ def get_args():
     )
     orderby_group = parser.add_mutually_exclusive_group()
 
-    parser.add_argument("playlist", help="Playlist file", type=str)
+    parser.add_argument(
+        "playlist",
+        help="Playlist file",
+        type=str,
+        default=os.path.join(os.getcwd(), os.path.split(os.getcwd())[1]),
+        nargs=argparse.OPTIONAL,
+    )
     parser.add_argument("-v", "--verbose", help="Enable verbosity", action="store_true")
     parser.add_argument(
         "-V", "--version", help="Print version", action="version", version=__version__
@@ -287,6 +294,10 @@ def get_args():
 
     arguments = parser.parse_args()
 
+    # Check explain error
+    if arguments.explain_error:
+        EXPLAIN_ERROR = True
+
     # Check extension of playlist file
     if not arguments.playlist.endswith(".m3u"):
         if arguments.encoding == "UNICODE":
@@ -333,7 +344,9 @@ def get_args():
 
     # Extend files format
     if arguments.include:
-        FILE_FORMAT.update(set([fmt.strip("*").strip(".") for fmt in arguments.include]))
+        FILE_FORMAT.update(
+            set([fmt.strip("*").strip(".") for fmt in arguments.include])
+        )
 
     # Select only one format
     if arguments.format:
@@ -345,7 +358,9 @@ def get_args():
 
     # Check link argument if it is a valid link
     if arguments.link:
-        arguments.link = [link for link in arguments.link if re.match("https?://", link)]
+        arguments.link = [
+            link for link in arguments.link if re.match("https?://", link)
+        ]
 
     # Check if other files exists
     if arguments.file:
@@ -804,6 +819,7 @@ def _process_playlist(files, cli_args, other_playlist=None):
 def main():
     """Make a playlist file"""
 
+    args = get_args()
     multimedia_files = list()
     vprint(
         args.verbose,
@@ -895,10 +911,9 @@ def main():
 
 # region main
 if __name__ == "__main__":
-    args = get_args()
     try:
         main()
     except Exception as err:
-        report_issue(err, tb=args.explain_error)
+        report_issue(err, tb=EXPLAIN_ERROR)
 
 # endregion
