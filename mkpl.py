@@ -816,7 +816,7 @@ def _process_playlist(files, cli_args, other_playlist=None):
         )
 
 
-def main():
+def main_cli():
     """Make a playlist file"""
 
     args = get_args()
@@ -907,13 +907,18 @@ def main():
             print(len([file for file in multimedia_files if not file.startswith("#")]))
 
 
+def main():
+    """Main function of make playlist"""
+    try:
+        main_cli()
+    except Exception as err:
+        report_issue(err, tb=EXPLAIN_ERROR)
+
+
 # endregion
 
 # region main
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as err:
-        report_issue(err, tb=EXPLAIN_ERROR)
+    main()
 
 # endregion
