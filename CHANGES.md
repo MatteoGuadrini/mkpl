@@ -1,5 +1,11 @@
 # Release notes
 
+## 1.15.0
+Jun 13, 2025
+
+- Add default for `playlist` positional argument with current directory name, refs# 16
+- Fix issue #17
+
 ## 1.14.0
 May 16, 2025
 
