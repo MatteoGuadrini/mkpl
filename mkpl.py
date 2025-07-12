@@ -896,15 +896,15 @@ def main_cli():
             playlist_path = join(dirname(args.playlist), playlist_name + playlist_ext)
             _process_playlist(directory_files, args, playlist_path)
             args.enabled_extensions = False
-        # Substitute chars with URL encoding
-        if args.url_chars:
-            multimedia_files = url_chars(multimedia_files)
+    # Substitute chars with URL encoding
+    if args.url_chars:
+        multimedia_files = url_chars(multimedia_files)
 
-        _process_playlist(multimedia_files, args)
+    _process_playlist(multimedia_files, args)
 
-        # Count files into playlist
-        if args.count:
-            print(len([file for file in multimedia_files if not file.startswith("#")]))
+    # Count files into playlist
+    if args.count:
+        print(len([file for file in multimedia_files if not file.startswith("#")]))
 
 
 def main():
