@@ -92,6 +92,7 @@ def get_args():
         epilog="See latest release from https://github.com/MatteoGuadrini/mkpl",
     )
     orderby_group = parser.add_mutually_exclusive_group()
+    separator_group = parser.add_mutually_exclusive_group()
 
     parser.add_argument(
         "playlist",
@@ -109,7 +110,7 @@ def get_args():
         "--directories",
         help="Directories that contains multimedia file",
         nargs=argparse.ONE_OR_MORE,
-        default=["."],
+        default=[os.getcwd()],
     )
     parser.add_argument(
         "-e",
@@ -224,8 +225,11 @@ def get_args():
         help="Continue playlist instead of override it",
         action="store_true",
     )
-    parser.add_argument(
+    separator_group.add_argument(
         "-w", "--windows", help="Windows style folder separator", action="store_true"
+    )
+    separator_group.add_argument(
+        "-x", "--unix", help="Unix style folder separator", action="store_true"
     )
     parser.add_argument(
         "-S", "--split", help="Split playlist by directories", action="store_true"
@@ -655,6 +659,7 @@ def make_playlist(
     min_length=0,
     max_length=0,
     windows=False,
+    unix=False,
     interactive=False,
     verbose=False,
 ):
@@ -718,7 +723,13 @@ def make_playlist(
                 if not confirm(file):
                     continue
             vprint(verbose, f"add multimedia file {file}")
-            filelist.append(unix_to_dos(file) if windows else file)
+            # Substitute with Windows separator
+            if windows:
+                file = unix_to_dos(file)
+            # Substitute with Unix separator
+            elif unix:
+                file = unix_to_dos(file, viceversa=True)
+            filelist.append(file)
     # Check sort
     if sortby_name:
         filelist = sorted(filelist)
@@ -858,6 +869,7 @@ def main_cli():
                 min_length=args.length,
                 max_length=args.max_length,
                 windows=args.windows,
+                unix=args.unix,
                 interactive=args.interactive,
                 verbose=args.verbose,
             )
@@ -882,6 +894,7 @@ def main_cli():
                 min_length=args.length,
                 max_length=args.max_length,
                 windows=args.windows,
+                unix=args.unix,
                 interactive=args.interactive,
                 verbose=args.verbose,
             )
