@@ -75,7 +75,7 @@ VIDEO_FORMAT = {
 }
 FILE_FORMAT = AUDIO_FORMAT.union(VIDEO_FORMAT)
 EXPLAIN_ERROR = False
-__version__ = "1.15.1"
+__version__ = "1.16.0"
 
 
 # endregion

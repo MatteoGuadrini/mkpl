@@ -1,5 +1,10 @@
 # Release notes
 
+## 1.16.0
+Aug 24, 2025
+
+- Add `unix` argument, to force Unix like separator char folder
+
 ## 1.15.0
 Jun 13, 2025
 
