@@ -241,6 +241,12 @@ def get_args():
         action="store_true",
     )
     parser.add_argument(
+        "-N",
+        "--add-info",
+        help="Add file information to playlist. See EXTINF attribute",
+        action="store_true",
+    )
+    parser.add_argument(
         "-C", "--count", help="Count elements into playlist", action="store_true"
     )
     parser.add_argument(
@@ -604,6 +610,23 @@ def unix_to_dos(path, viceversa=False):
         old_sep = "/"
         new_sep = r"\\"
     return sub(old_sep, new_sep, path)
+
+
+def make_extinf(file):
+    """Compose EXTINF attribute"""
+    global AUDIO_FORMAT
+
+    # String format EXTINF attribute: %seconds%,"%artist% - %title%"
+    extinf_str = "#EXTINF:{},{} * {}"
+    # Check type of file
+    ext = os.path.splitext(file)[1].replace(".", "").lower()
+    if ext in AUDIO_FORMAT:
+        file = open_multimedia_file(file)
+        length = file.info.length if hasattr(file.info, "length") else 0.1
+        artist = file.tags.get("TPE1")
+        title = file.tags.get("TIT2")
+        return extinf_str.format(length, artist, title)
+    return "# No ID3 tags"
 
 
 def write_playlist(
