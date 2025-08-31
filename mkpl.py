@@ -623,10 +623,14 @@ def make_extinf(file):
     if ext in AUDIO_FORMAT:
         file = open_multimedia_file(file)
         length = file.info.length if hasattr(file.info, "length") else 0.1
-        artist = file.tags.get("TPE1")
-        title = file.tags.get("TIT2")
+        if isinstance(file.tags, id3.ID3Tags):
+            artist = file.tags.get("TPE1", "")
+            title = file.tags.get("TIT2", "")
+        elif isinstance(file.tags, mp4.MP4Tags):
+            artist = file.tags.get("\xa9ART", "")
+            title = file.tags.get("\xa9nam", "")
         return extinf_str.format(length, artist, title)
-    return "# No ID3 tags"
+    return "# Tags not found"
 
 
 def write_playlist(
