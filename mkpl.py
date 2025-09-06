@@ -627,8 +627,8 @@ def make_extinf(file):
             artist = file.tags.get("TPE1", "")
             title = file.tags.get("TIT2", "")
         elif isinstance(file.tags, mp4.MP4Tags):
-            artist = file.tags.get("\xa9ART", "")
-            title = file.tags.get("\xa9nam", "")
+            artist = file.tags.get("\xa9ART", [""])[0]
+            title = file.tags.get("\xa9nam", [""])[0]
         return extinf_str.format(length, artist, title)
     return "# Tags not found"
 
@@ -688,6 +688,7 @@ def make_playlist(
     windows=False,
     unix=False,
     interactive=False,
+    infos=False,
     verbose=False,
 ):
     """Make playlist list"""
@@ -756,6 +757,11 @@ def make_playlist(
             # Substitute with Unix separator
             elif unix:
                 file = unix_to_dos(file, viceversa=True)
+            # Add more infos on playlist file
+            if infos:
+                vprint(verbose, "add more info to file (EXTINF)")
+                file_info = make_extinf(file)
+                file = file_info + "\n" + file
             filelist.append(file)
     # Check sort
     if sortby_name:
@@ -780,7 +786,7 @@ def add_extension(filelist, cli_args, verbose=False):
 
     # Check if playlist is an extended M3U
     cli_args.ext_part = 0
-    if cli_args.title or cli_args.encoding or cli_args.image:
+    if cli_args.title or cli_args.encoding or cli_args.image or cli_args.add_info:
         if not cli_args.enabled_extensions:
             filelist.insert(0, "#EXTM3U")
             vprint(verbose, "enable extension flag")
@@ -898,6 +904,7 @@ def main_cli():
                 windows=args.windows,
                 unix=args.unix,
                 interactive=args.interactive,
+                infos=args.add_info,
                 verbose=args.verbose,
             )
         else:
@@ -923,6 +930,7 @@ def main_cli():
                 windows=args.windows,
                 unix=args.unix,
                 interactive=args.interactive,
+                infos=args.add_info,
                 verbose=args.verbose,
             )
         multimedia_files.extend(directory_files)
