@@ -110,7 +110,7 @@ def get_args():
         "--directories",
         help="Directories that contains multimedia file",
         nargs=argparse.ONE_OR_MORE,
-        default=[os.getcwd()],
+        default=["."],
     )
     parser.add_argument(
         "-e",
@@ -534,9 +534,11 @@ def get_track(file):
     if file and hasattr(file, "tags"):
         if isinstance(file.tags, id3.ID3Tags):
             default = id3.TRCK(text="0")
-            return int(file.tags.get("TRCK", default)[0])
+            ret = file.tags.get("TRCK", default)[0]
         elif isinstance(file.tags, mp4.MP4Tags):
-            return file.tags.get("trkn", [(0, 0)])[0][0]
+            ret = file.tags.get("trkn", [(0, 0)])[0][0]
+        if isinstance(ret, str) and ret.isdecimal():
+            return int(ret)
     return 0
 
 
@@ -617,7 +619,7 @@ def make_extinf(file):
     global AUDIO_FORMAT
 
     # String format EXTINF attribute: %seconds%,"%artist% - %title%"
-    extinf_str = "#EXTINF:{},{} * {}"
+    extinf_str = "#EXTINF:{:.1f},{} * {}"
     # Check type of file
     ext = os.path.splitext(file)[1].replace(".", "").lower()
     if ext in AUDIO_FORMAT:
@@ -642,6 +644,7 @@ def write_playlist(
     image=None,
     ext_part=None,
     max_tracks=None,
+    infos=False,
     verbose=False,
 ):
     """Write playlist into file"""
@@ -652,11 +655,13 @@ def write_playlist(
             encoding="UTF-8" if encoding == "UNICODE" else encoding,
             errors="ignore",
         ) as pl:
+            joined_string = "\n"
             if image and enabled_extensions:
                 vprint(verbose, f"set image {image}")
                 joined_string = f"\n#EXTIMG: {image}\n"
-            else:
-                joined_string = "\n"
+            if infos and enabled_extensions:
+                vprint(verbose, "add more info to file (EXTINF)")
+                files = [make_extinf(file) + "\n" + file for file in files]
             end_file_string = "\n"
             # Write extensions if exists
             if ext_part:
@@ -688,7 +693,6 @@ def make_playlist(
     windows=False,
     unix=False,
     interactive=False,
-    infos=False,
     verbose=False,
 ):
     """Make playlist list"""
@@ -757,11 +761,6 @@ def make_playlist(
             # Substitute with Unix separator
             elif unix:
                 file = unix_to_dos(file, viceversa=True)
-            # Add more infos on playlist file
-            if infos:
-                vprint(verbose, "add more info to file (EXTINF)")
-                file_info = make_extinf(file)
-                file = file_info + "\n" + file
             filelist.append(file)
     # Check sort
     if sortby_name:
@@ -851,6 +850,7 @@ def _process_playlist(files, cli_args, other_playlist=None):
             image=cli_args.image,
             ext_part=cli_args.ext_part,
             max_tracks=cli_args.max_tracks,
+            infos=cli_args.add_info,
             verbose=cli_args.verbose,
         )
     else:
@@ -904,7 +904,6 @@ def main_cli():
                 windows=args.windows,
                 unix=args.unix,
                 interactive=args.interactive,
-                infos=args.add_info,
                 verbose=args.verbose,
             )
         else:
@@ -930,7 +929,6 @@ def main_cli():
                 windows=args.windows,
                 unix=args.unix,
                 interactive=args.interactive,
-                infos=args.add_info,
                 verbose=args.verbose,
             )
         multimedia_files.extend(directory_files)
