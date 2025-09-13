@@ -547,7 +547,7 @@ def get_year(file):
     file = open_multimedia_file(file)
     if file and hasattr(file, "tags"):
         if isinstance(file.tags, id3.ID3Tags):
-            default = id3.TDOR(text="0")
+            default = id3.TDOR(text=["0"])
             return file.tags.get("TDOR", default)[0]
         elif isinstance(file.tags, mp4.MP4Tags):
             tags = file.tags.get("\xa9day", "0")
