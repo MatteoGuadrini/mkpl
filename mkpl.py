@@ -75,7 +75,7 @@ VIDEO_FORMAT = {
 }
 FILE_FORMAT = AUDIO_FORMAT.union(VIDEO_FORMAT)
 EXPLAIN_ERROR = False
-__version__ = "1.16.0"
+__version__ = "1.17.0"
 
 
 # endregion
@@ -659,13 +659,13 @@ def write_playlist(
             if image and enabled_extensions:
                 vprint(verbose, f"set image {image}")
                 joined_string = f"\n#EXTIMG: {image}\n"
+            # Write extensions if exists
+            if ext_part:
+                pl.write("\n".join(files[:ext_part]) + joined_string)
             if infos and enabled_extensions:
                 vprint(verbose, "add more info to file (EXTINF)")
                 files = [make_extinf(file) + "\n" + file for file in files]
             end_file_string = "\n"
-            # Write extensions if exists
-            if ext_part:
-                pl.write("\n".join(files[:ext_part]) + joined_string)
             # Write all multimedia files
             vprint(verbose, f"write playlist {pl.name}")
             pl.write(joined_string.join(files[ext_part:max_tracks]) + end_file_string)
