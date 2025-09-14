@@ -75,7 +75,7 @@ VIDEO_FORMAT = {
 }
 FILE_FORMAT = AUDIO_FORMAT.union(VIDEO_FORMAT)
 EXPLAIN_ERROR = False
-__version__ = "1.16.0"
+__version__ = "1.17.0"
 
 
 # endregion
@@ -238,6 +238,12 @@ def get_args():
         "-R",
         "--interactive",
         help="Asks each file for confirmation",
+        action="store_true",
+    )
+    parser.add_argument(
+        "-N",
+        "--add-info",
+        help="Add file information to playlist. See EXTINF attribute",
         action="store_true",
     )
     parser.add_argument(
@@ -528,9 +534,11 @@ def get_track(file):
     if file and hasattr(file, "tags"):
         if isinstance(file.tags, id3.ID3Tags):
             default = id3.TRCK(text="0")
-            return int(file.tags.get("TRCK", default)[0])
+            ret = file.tags.get("TRCK", default)[0]
         elif isinstance(file.tags, mp4.MP4Tags):
-            return file.tags.get("trkn", [(0, 0)])[0][0]
+            ret = file.tags.get("trkn", [(0, 0)])[0][0]
+        if isinstance(ret, str) and ret.isdecimal():
+            return int(ret)
     return 0
 
 
@@ -539,7 +547,7 @@ def get_year(file):
     file = open_multimedia_file(file)
     if file and hasattr(file, "tags"):
         if isinstance(file.tags, id3.ID3Tags):
-            default = id3.TDOR(text="0")
+            default = id3.TDOR(text=["0"])
             return file.tags.get("TDOR", default)[0]
         elif isinstance(file.tags, mp4.MP4Tags):
             tags = file.tags.get("\xa9day", "0")
@@ -606,6 +614,27 @@ def unix_to_dos(path, viceversa=False):
     return sub(old_sep, new_sep, path)
 
 
+def make_extinf(file):
+    """Compose EXTINF attribute"""
+    global AUDIO_FORMAT
+
+    # String format EXTINF attribute: %seconds%,"%artist% - %title%"
+    extinf_str = "#EXTINF:{:.1f},{} * {}"
+    # Check type of file
+    ext = os.path.splitext(file)[1].replace(".", "").lower()
+    if ext in AUDIO_FORMAT:
+        file = open_multimedia_file(file)
+        length = file.info.length if hasattr(file.info, "length") else 0.1
+        if isinstance(file.tags, id3.ID3Tags):
+            artist = file.tags.get("TPE1", "")
+            title = file.tags.get("TIT2", "")
+        elif isinstance(file.tags, mp4.MP4Tags):
+            artist = file.tags.get("\xa9ART", [""])[0]
+            title = file.tags.get("\xa9nam", [""])[0]
+        return extinf_str.format(length, artist, title)
+    return "# Tags not found"
+
+
 def write_playlist(
     playlist,
     open_mode,
@@ -615,6 +644,7 @@ def write_playlist(
     image=None,
     ext_part=None,
     max_tracks=None,
+    infos=False,
     verbose=False,
 ):
     """Write playlist into file"""
@@ -625,15 +655,17 @@ def write_playlist(
             encoding="UTF-8" if encoding == "UNICODE" else encoding,
             errors="ignore",
         ) as pl:
+            joined_string = "\n"
             if image and enabled_extensions:
                 vprint(verbose, f"set image {image}")
                 joined_string = f"\n#EXTIMG: {image}\n"
-            else:
-                joined_string = "\n"
-            end_file_string = "\n"
             # Write extensions if exists
             if ext_part:
                 pl.write("\n".join(files[:ext_part]) + joined_string)
+            if infos and enabled_extensions:
+                vprint(verbose, "add more info to file (EXTINF)")
+                files = [make_extinf(file) + "\n" + file for file in files]
+            end_file_string = "\n"
             # Write all multimedia files
             vprint(verbose, f"write playlist {pl.name}")
             pl.write(joined_string.join(files[ext_part:max_tracks]) + end_file_string)
@@ -753,7 +785,7 @@ def add_extension(filelist, cli_args, verbose=False):
 
     # Check if playlist is an extended M3U
     cli_args.ext_part = 0
-    if cli_args.title or cli_args.encoding or cli_args.image:
+    if cli_args.title or cli_args.encoding or cli_args.image or cli_args.add_info:
         if not cli_args.enabled_extensions:
             filelist.insert(0, "#EXTM3U")
             vprint(verbose, "enable extension flag")
@@ -818,6 +850,7 @@ def _process_playlist(files, cli_args, other_playlist=None):
             image=cli_args.image,
             ext_part=cli_args.ext_part,
             max_tracks=cli_args.max_tracks,
+            infos=cli_args.add_info,
             verbose=cli_args.verbose,
         )
     else:

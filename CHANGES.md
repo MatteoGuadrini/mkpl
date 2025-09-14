@@ -1,5 +1,10 @@
 # Release notes
 
+## 1.17.0
+Sep 14, 2025
+
+- Add `add-info` argument, to add file information to playlist files, refs #19
+
 ## 1.16.0
 Aug 24, 2025
 
