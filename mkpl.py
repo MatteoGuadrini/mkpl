@@ -28,6 +28,7 @@ import os.path
 import re
 import traceback
 from filecmp import cmp
+from itertools import islice
 from os.path import basename, dirname, exists, getctime, getsize, isdir, join, normpath
 from pathlib import Path
 from random import shuffle
@@ -330,7 +331,7 @@ def get_args():
     if arguments.append:
         with open(arguments.playlist, mode=arguments.open_mode) as opened_playlist:
             opened_playlist.seek(0)
-            first_three_lines = opened_playlist.readlines(100)
+            first_three_lines = list(islice(opened_playlist, 3))
             for line in first_three_lines:
                 if "#EXTM3U" in line:
                     arguments.enabled_extensions = True
