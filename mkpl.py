@@ -33,6 +33,7 @@ from pathlib import Path
 from random import shuffle
 from re import sub
 from string import capwords
+from urllib import parse
 
 from mutagen import File, MutagenError, id3, mp4
 from tempcache import TempCache
@@ -461,46 +462,9 @@ def join_playlist(playlist, *others):
 
 def url_chars(playlist):
     """URL encoding converts characters into a format that can be transmitted over the Internet."""
-    chars_dict = {
-        " ": "%20",
-        "!": "%21",
-        '"': "%22",
-        "#": "%23",
-        "$": "%24",
-        "%": "%25",
-        "&": "%26",
-        "'": "%27",
-        "(": "%28",
-        ")": "%29",
-        "*": "%2A",
-        "+": "%2B",
-        ",": "%2C",
-        "-": "%2D",
-        ":": "%3A",
-        ";": "%3B",
-        "<": "%3C",
-        "=": "%3D",
-        ">": "%3E",
-        "?": "%3F",
-        "@": "%40",
-        "[": "%5B",
-        "]": "%5D",
-        "^": "%5E",
-        "_": "%5F",
-        "`": "%60",
-        "{": "%7B",
-        "|": "%7C",
-        "}": "%7D",
-        "~": "%7E",
-    }
-    ret = []
-    for file in playlist:
-        for char in file:
-            if chars_dict.get(char):
-                file = file.replace(char, chars_dict.get(char))
-        ret.append(file)
-
-    return ret
+    return [
+        parse.quote(file, safe="/") for file in playlist if not file.startswith("#")
+    ]
 
 
 def report_issue(exc, tb=False):
