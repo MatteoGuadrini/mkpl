@@ -27,9 +27,10 @@ import argparse
 import os.path
 import re
 import traceback
+from collections import namedtuple
 from filecmp import cmp
 from itertools import islice
-from os.path import basename, dirname, exists, getctime, getsize, isdir, join, normpath
+from os.path import basename, exists, getctime, getsize, isdir, join, normpath
 from pathlib import Path
 from random import shuffle
 from re import sub
@@ -77,8 +78,16 @@ VIDEO_FORMAT = {
 }
 FILE_FORMAT = AUDIO_FORMAT.union(VIDEO_FORMAT)
 EXPLAIN_ERROR = False
+CACHE = None
 __version__ = "1.17.0"
 
+Playlist = namedtuple(
+    "Playlist", ("files", "ext", "name", "encoding"), defaults=([], False, False, False)
+)
+
+PlaylistEntry = namedtuple(
+    "PlaylistEntry", ("file", "image", "extinf"), defaults=(None, False, False)
+)
 
 # endregion
 
@@ -324,9 +333,15 @@ def get_args():
 
     # Open playlist file
     arguments.open_mode = "at+" if arguments.append else "wt"
-    arguments.enabled_extensions = False
-    arguments.enabled_title = False
-    arguments.enabled_encoding = False
+    arguments.enabled_extensions = (
+        True
+        if any(
+            (arguments.title, arguments.encoding, arguments.image, arguments.add_info)
+        )
+        else False
+    )
+    arguments.enabled_title = True if arguments.title else False
+    arguments.enabled_encoding = True if arguments.encoding else False
     # Verify extension attribute in append mode
     if arguments.append:
         with open(arguments.playlist, mode=arguments.open_mode) as opened_playlist:
@@ -383,6 +398,15 @@ def get_args():
         parser.error("minimum and maximum length must not has the same values")
     elif arguments.max_length and arguments.length >= arguments.max_length:
         parser.error("minimum length is upper of maximum length")
+
+    # Define cache
+    if arguments.cache:
+        CACHE = TempCache("mkpl", max_age=arguments.cache)
+        vprint(arguments.verbose, f"use cache {CACHE.path}")
+        # Clean the cache
+        CACHE.clear_items()
+    else:
+        CACHE = None
 
     return arguments
 
@@ -446,13 +470,13 @@ def file_in_playlist(playlist, file, root=None):
     return False
 
 
-def join_playlist(playlist, *others):
+def join_playlist(playlist: Playlist, *others):
     """Join current playlist with others"""
     for file in others:
         try:
             # open playlist, remove extensions and extend current playlist file
             lines = open(file).readlines()
-            playlist.extend(
+            playlist.files.extend(
                 [line.rstrip() for line in lines if not line.startswith("#")]
             )
         except FileNotFoundError:
@@ -461,11 +485,9 @@ def join_playlist(playlist, *others):
             print(f"warning: {file} generated error: {error}")
 
 
-def url_chars(playlist):
+def url_chars(file):
     """URL encoding converts characters into a format that can be transmitted over the Internet."""
-    return [
-        parse.quote(file, safe="/") for file in playlist if not file.startswith("#")
-    ]
+    return parse.quote(file, safe="/")
 
 
 def report_issue(exc, tb=False):
@@ -493,9 +515,9 @@ def open_multimedia_file(path):
     return file
 
 
-def get_track(file):
+def get_track(file: PlaylistEntry):
     """Get file by track for sort"""
-    file = open_multimedia_file(file)
+    file = open_multimedia_file(file.file)
     if file and hasattr(file, "tags"):
         if isinstance(file.tags, id3.ID3Tags):
             default = id3.TRCK(text="0")
@@ -507,9 +529,9 @@ def get_track(file):
     return 0
 
 
-def get_year(file):
+def get_year(file: PlaylistEntry):
     """Get file by year for sort"""
-    file = open_multimedia_file(file)
+    file = open_multimedia_file(file.file)
     if file and hasattr(file, "tags"):
         if isinstance(file.tags, id3.ID3Tags):
             default = id3.TDOR(text=["0"])
@@ -523,9 +545,9 @@ def get_year(file):
     return "0"
 
 
-def get_length(file):
+def get_length(file: PlaylistEntry):
     """Get file by length for sort"""
-    file = open_multimedia_file(file)
+    file = open_multimedia_file(file.file)
     if file and hasattr(file, "info"):
         return file.info.length if hasattr(file.info, "length") else 0.1
     return 0.1
@@ -584,7 +606,7 @@ def make_extinf(file):
     global AUDIO_FORMAT
 
     # String format EXTINF attribute: %seconds%,"%artist% - %title%"
-    extinf_str = "#EXTINF:{},{} - {}"
+    extinf_str = "{},{} - {}"
     # Check type of file
     ext = os.path.splitext(file)[1].replace(".", "").lower()
     if ext in AUDIO_FORMAT:
@@ -597,49 +619,47 @@ def make_extinf(file):
             artist = file.tags.get("\xa9ART", [""])[0]
             title = file.tags.get("\xa9nam", [""])[0]
         return extinf_str.format(length, artist, title)
-    return "# Tags not found"
+    return "Unknown extra infos"
 
 
 def write_playlist(
-    playlist,
-    open_mode,
-    files,
-    encoding,
-    enabled_extensions=False,
-    image=None,
-    ext_part=None,
-    max_tracks=None,
-    infos=False,
-    verbose=False,
+    playlist_file: str,
+    open_mode: str,
+    playlist: Playlist,
+    max_tracks: int = None,
 ):
     """Write playlist into file"""
-    if playlist:
-        with open(
-            playlist,
-            mode=open_mode,
-            encoding="UTF-8" if encoding == "UNICODE" else encoding,
-            errors="ignore",
-        ) as pl:
-            joined_string = "\n"
-            if image and enabled_extensions:
-                vprint(verbose, f"set image {image}")
-                joined_string = f"\n#EXTIMG: {image}\n"
-            # Write extensions if exists
-            if ext_part:
-                pl.write("\n".join(files[:ext_part]) + joined_string)
-            if infos and enabled_extensions:
-                vprint(verbose, "add more info to file (EXTINF)")
-                files = [make_extinf(file) + "\n" + file for file in files]
-            end_file_string = "\n"
-            # Write all multimedia files
-            vprint(verbose, f"write playlist {pl.name}")
-            pl.write(joined_string.join(files[ext_part:max_tracks]) + end_file_string)
+    encoding = playlist.encoding if playlist.encoding else None
+    with open(
+        playlist_file,
+        mode=open_mode,
+        encoding="UTF-8" if encoding == "UNICODE" else encoding,
+        errors="ignore",
+    ) as pl:
+        # Enable playlist extension
+        if playlist.ext:
+            pl.write("#EXTM3U\n")
+            if playlist.name:
+                pl.write(f"#PLAYLIST:{capwords(playlist.name)}\n")
+            if playlist.encoding:
+                pl.write(f"#EXTENC:{playlist.encoding}\n")
+        for file in playlist.files[:max_tracks]:
+            if file.image:
+                pl.write(f"#EXTIMG:{file.image}\n")
+            if file.extinf:
+                pl.write(f"#EXTINF:{file.extinf}\n")
+            pl.write(file.file + "\n")
 
 
 def make_playlist(
-    directory,
+    directories,
     file_formats,
-    pattern=None,
+    extension=False,
+    title=False,
+    encoding=False,
+    pattern=False,
+    image=False,
+    infos=False,
     exclude_pattern=None,
     sortby_name=False,
     sortby_date=False,
@@ -647,6 +667,7 @@ def make_playlist(
     sortby_year=False,
     sortby_size=False,
     sortby_length=False,
+    sortby_shuffle=False,
     recursive=False,
     exclude_dirs=None,
     unique=False,
@@ -655,267 +676,211 @@ def make_playlist(
     max_size=0,
     min_length=0,
     max_length=0,
+    url_char=False,
     windows=False,
     unix=False,
     interactive=False,
     verbose=False,
 ):
     """Make playlist list"""
-    filelist = list()
-    # Check if directory exists
-    if not exists(directory):
-        print(f"warning: {directory} does not exists")
-        return filelist
-    # Check if is a directory
-    if not isdir(directory):
-        print(f"warning: {directory} is not a directory")
-        return filelist
-    # Build a Path object
-    path = Path(directory)
-    root = path.parent
-    vprint(verbose, f"current directory={path}, root={root}")
-    for fmt in file_formats:
-        # Check recursive
-        folder = "**/*" if recursive else "*"
-        files = path.glob(folder + f".{fmt}")
-        # Process found files
-        for file in files:
-            # Get size of file
-            size = file.stat().st_size
-            # Check absolute file names
-            file = str(file.resolve()) if absolute else str(file)
-            # Check file match pattern
-            if pattern:
-                # Check re pattern
-                compiled_pattern = re.compile(pattern)
-                if not find_pattern(compiled_pattern, file):
+    filelist = Playlist([], extension, title, encoding)
+    exclude_dirs = [] if exclude_dirs is None else exclude_dirs
+    for directory in directories:
+        # Check if directory exists
+        if not exists(directory):
+            print(f"warning: {directory} does not exists")
+            return filelist
+        # Check if is a directory
+        if not isdir(directory):
+            print(f"warning: {directory} is not a directory")
+            return filelist
+        # Build a Path object
+        path = Path(directory)
+        root = path.parent
+        vprint(verbose, f"current directory={path}, root={root}")
+        for fmt in file_formats:
+            # Check recursive
+            folder = "**/*" if recursive else "*"
+            files = path.glob(folder + f".{fmt}")
+            # Process found files
+            for file in files:
+                # Get size of file
+                size = file.stat().st_size
+                # Check absolute file names
+                file = str(file.resolve()) if absolute else str(file)
+                # Check file match pattern
+                if pattern:
+                    # Check re pattern
+                    compiled_pattern = re.compile(pattern)
+                    if not find_pattern(compiled_pattern, file):
+                        continue
+                if exclude_pattern:
+                    # Check re pattern
+                    compiled_pattern = re.compile(exclude_pattern)
+                    if find_pattern(compiled_pattern, file):
+                        continue
+                # Check if in exclude dirs
+                if any([e_path in file for e_path in exclude_dirs]):
                     continue
-            if exclude_pattern:
-                # Check re pattern
-                compiled_pattern = re.compile(exclude_pattern)
-                if find_pattern(compiled_pattern, file):
+                # Check if file is in playlist
+                if unique:
+                    if file_in_playlist(
+                        filelist, file, root=root if not absolute else None
+                    ):
+                        continue
+                # Check minimum file size
+                if min_size and size <= min_size:
                     continue
-            # Check if in exclude dirs
-            if any([e_path in file for e_path in exclude_dirs]):
-                continue
-            # Check if file is in playlist
-            if unique:
-                if file_in_playlist(
-                    filelist, file, root=root if not absolute else None
-                ):
+                # Check maximum file size
+                if max_size and size >= max_size:
                     continue
-            # Check minimum file size
-            if min_size and size <= min_size:
-                continue
-            # Check maximum file size
-            if max_size and size >= max_size:
-                continue
-            # Check minimum length
-            if min_length and get_length(file) <= min_length:
-                continue
-            # Check maximum length
-            if max_length and get_length(file) >= max_length:
-                continue
-            if interactive:
-                if not confirm(file):
+                # Check minimum length
+                if min_length and get_length(file) <= min_length:
                     continue
-            vprint(verbose, f"add multimedia file {file}")
-            # Substitute with Windows separator
-            if windows:
-                file = unix_to_dos(file)
-            # Substitute with Unix separator
-            elif unix:
-                file = unix_to_dos(file, viceversa=True)
-            filelist.append(file)
+                # Check maximum length
+                if max_length and get_length(file) >= max_length:
+                    continue
+                if interactive:
+                    if not confirm(file):
+                        continue
+                vprint(verbose, f"add multimedia file {file}")
+                # Substitute with Windows separator
+                if windows:
+                    file = unix_to_dos(file)
+                # Substitute with Unix separator
+                elif unix:
+                    file = unix_to_dos(file, viceversa=True)
+                # URL chars
+                if url_char:
+                    file = url_chars(file)
+                # Append entry file into playlist
+                entry = PlaylistEntry(
+                    file,
+                    image,
+                    make_extinf(file) if infos else infos,
+                )
+                filelist.files.append(entry)
     # Check sort
     if sortby_name:
-        filelist = sorted(filelist)
+        filelist.files.sort()
     elif sortby_date:
-        filelist = sorted(filelist, key=getctime)
+        filelist.files.sort(key=getctime)
     elif sortby_track:
-        filelist = sorted(filelist, key=get_track)
+        filelist.files.sort(key=get_track)
     elif sortby_year:
-        filelist = sorted(filelist, key=get_year)
+        filelist.files.sort(key=get_year)
     elif sortby_size:
-        filelist = sorted(filelist, key=os.path.getsize)
+        filelist.files.sort(key=os.path.getsize)
     elif sortby_length:
-        filelist = sorted(filelist, key=get_length)
+        filelist.files.sort(key=get_length)
+    elif sortby_shuffle:
+        shuffle(filelist.files)
     return filelist
-
-
-def add_extension(filelist, cli_args, verbose=False):
-    """Add extension to playlist list"""
-    if not isinstance(filelist, list):
-        raise ValueError(f"{filelist} is not a list object")
-
-    # Check if playlist is an extended M3U
-    cli_args.ext_part = 0
-    if cli_args.title or cli_args.encoding or cli_args.image or cli_args.add_info:
-        if not cli_args.enabled_extensions:
-            filelist.insert(0, "#EXTM3U")
-            vprint(verbose, "enable extension flag")
-            cli_args.enabled_extensions = True
-            cli_args.ext_part += 1
-            if cli_args.max_tracks:
-                cli_args.max_tracks += 1
-
-        # Set title
-        if cli_args.title:
-            if not cli_args.enabled_title:
-                title = capwords(cli_args.title)
-                filelist.insert(1, f"#PLAYLIST: {title}")
-                vprint(verbose, f"set title {title}")
-                cli_args.ext_part += 1
-                if cli_args.max_tracks:
-                    cli_args.max_tracks += 1
-            else:
-                print("warning: title is already configured")
-
-        # Set encoding
-        if cli_args.encoding:
-            if not cli_args.enabled_encoding:
-                filelist.insert(1, f"#EXTENC: {cli_args.encoding}")
-                vprint(verbose, f"set encoding {cli_args.encoding}")
-                cli_args.ext_part += 1
-                if cli_args.max_tracks:
-                    cli_args.max_tracks += 1
-            else:
-                print("warning: encoding is already configured")
-
-
-def _process_playlist(files, cli_args, other_playlist=None):
-    """Private function cli only for process arguments and make playlist"""
-
-    # Join other playlist files
-    if cli_args.join:
-        join_playlist(files, *cli_args.join)
-
-    # Add link
-    files.extend(cli_args.link)
-
-    # Add other files
-    files.extend(cli_args.file)
-
-    # Build a playlist
-    if files:
-        # Check shuffle
-        if cli_args.shuffle:
-            shuffle(files)
-
-        # Add extension to playlist
-        add_extension(files, cli_args, verbose=cli_args.verbose)
-
-        # Write playlist to file
-        write_playlist(
-            other_playlist if other_playlist else cli_args.playlist,
-            cli_args.open_mode,
-            files,
-            encoding=cli_args.encoding,
-            enabled_extensions=cli_args.enabled_extensions,
-            image=cli_args.image,
-            ext_part=cli_args.ext_part,
-            max_tracks=cli_args.max_tracks,
-            infos=cli_args.add_info,
-            verbose=cli_args.verbose,
-        )
-    else:
-        print(
-            "warning: no multimedia "
-            f"files are found here: {','.join(cli_args.directories)}"
-        )
 
 
 def main_cli():
     """Make a playlist file"""
 
     args = get_args()
-    multimedia_files = list()
     vprint(
         args.verbose,
         f"formats={FILE_FORMAT}, recursive={args.recursive}, "
         f"pattern={args.pattern}, split={args.split}",
     )
-    # Define cache
-    if args.cache:
-        cache = TempCache("mkpl", max_age=args.cache)
-        vprint(args.verbose, f"use cache {cache.path}")
-        # Clean the cache
-        cache.clear_items()
-    else:
-        cache = None
-    # Make multimedia list
-    for directory in args.directories:
-        if args.cache:
-            directory_files = cache.cache_result(
-                make_playlist,
-                directory,
-                FILE_FORMAT,
-                args.pattern,
-                args.exclude_pattern,
-                sortby_name=args.orderby_name,
-                sortby_date=args.orderby_date,
-                sortby_track=args.orderby_track,
-                sortby_year=args.orderby_year,
-                sortby_size=args.orderby_size,
-                sortby_length=args.orderby_length,
-                recursive=args.recursive,
-                exclude_dirs=args.exclude_dirs,
-                unique=args.unique,
-                absolute=args.absolute,
-                min_size=args.size,
-                max_size=args.max_size,
-                min_length=args.length,
-                max_length=args.max_length,
-                windows=args.windows,
-                unix=args.unix,
-                interactive=args.interactive,
-                verbose=args.verbose,
-            )
-        else:
-            directory_files = make_playlist(
-                directory,
-                FILE_FORMAT,
-                args.pattern,
-                args.exclude_pattern,
-                sortby_name=args.orderby_name,
-                sortby_date=args.orderby_date,
-                sortby_track=args.orderby_track,
-                sortby_year=args.orderby_year,
-                sortby_size=args.orderby_size,
-                sortby_length=args.orderby_length,
-                recursive=args.recursive,
-                exclude_dirs=args.exclude_dirs,
-                unique=args.unique,
-                absolute=args.absolute,
-                min_size=args.size,
-                max_size=args.max_size,
-                min_length=args.length,
-                max_length=args.max_length,
-                windows=args.windows,
-                unix=args.unix,
-                interactive=args.interactive,
-                verbose=args.verbose,
-            )
-        multimedia_files.extend(directory_files)
-        # Check if you must split into directory playlist
-        if args.split:
-            # Substitute chars with URL encoding
-            if args.url_chars:
-                multimedia_files = url_chars(directory_files)
+    if args.split:
+        for directory in args.directories:
             playlist_name = basename(normpath(directory))
-            playlist_ext = ".m3u8" if args.encoding == "UNICODE" else ".m3u"
-            playlist_path = join(dirname(args.playlist), playlist_name + playlist_ext)
-            _process_playlist(directory_files, args, playlist_path)
-            args.enabled_extensions = False
-    # Substitute chars with URL encoding
-    if args.url_chars:
-        multimedia_files = url_chars(multimedia_files)
+            # Make multimedia list
+            playlist = make_playlist(
+                [directory],
+                FILE_FORMAT,
+                pattern=args.pattern,
+                exclude_pattern=args.exclude_pattern,
+                extension=args.enabled_extensions,
+                title=capwords(directory),
+                encoding=args.encoding,
+                image=args.image,
+                infos=args.add_info,
+                sortby_name=args.orderby_name,
+                sortby_date=args.orderby_date,
+                sortby_track=args.orderby_track,
+                sortby_year=args.orderby_year,
+                sortby_size=args.orderby_size,
+                sortby_length=args.orderby_length,
+                sortby_shuffle=args.shuffle,
+                recursive=args.recursive,
+                exclude_dirs=args.exclude_dirs,
+                unique=args.unique,
+                absolute=args.absolute,
+                min_size=args.size,
+                max_size=args.max_size,
+                min_length=args.length,
+                max_length=args.max_length,
+                url_char=args.url_chars,
+                windows=args.windows,
+                unix=args.unix,
+                interactive=args.interactive,
+                verbose=args.verbose,
+            )
+            if playlist.files:
+                vprint(args.verbose, f"write playlist {playlist_name}")
+                # Write playlist to file
+                write_playlist(playlist_name, args.open_mode, playlist)
+    # Make multimedia list
+    playlist = make_playlist(
+        args.directories,
+        FILE_FORMAT,
+        pattern=args.pattern,
+        exclude_pattern=args.exclude_pattern,
+        extension=args.enabled_extensions,
+        title=args.title,
+        encoding=args.encoding,
+        image=args.image,
+        infos=args.add_info,
+        sortby_name=args.orderby_name,
+        sortby_date=args.orderby_date,
+        sortby_track=args.orderby_track,
+        sortby_year=args.orderby_year,
+        sortby_size=args.orderby_size,
+        sortby_length=args.orderby_length,
+        sortby_shuffle=args.shuffle,
+        recursive=args.recursive,
+        exclude_dirs=args.exclude_dirs,
+        unique=args.unique,
+        absolute=args.absolute,
+        min_size=args.size,
+        max_size=args.max_size,
+        min_length=args.length,
+        max_length=args.max_length,
+        url_char=args.url_chars,
+        windows=args.windows,
+        unix=args.unix,
+        interactive=args.interactive,
+        verbose=args.verbose,
+    )
 
-    _process_playlist(multimedia_files, args)
+    # Join other playlist files
+    if args.join:
+        join_playlist(playlist, *args.join)
+
+    # Add link
+    playlist.files.extend(args.link)
+
+    # Add other files
+    playlist.files.extend(args.file)
+
+    if playlist.files:
+        vprint(args.verbose, f"write playlist {args.playlist}")
+        # Write playlist to file
+        write_playlist(args.playlist, args.open_mode, playlist, args.max_tracks)
+    else:
+        print(
+            f"warning: no multimedia files are found here: {','.join(args.directories)}"
+        )
 
     # Count files into playlist
     if args.count:
-        print(len([file for file in multimedia_files if not file.startswith("#")]))
+        print(len(playlist.files))
 
 
 def main():
@@ -930,6 +895,6 @@ def main():
 
 # region main
 if __name__ == "__main__":
-    main()
+    main() if not CACHE else CACHE.cache_result(main)
 
 # endregion
