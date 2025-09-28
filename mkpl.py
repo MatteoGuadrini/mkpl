@@ -78,7 +78,7 @@ VIDEO_FORMAT = {
 }
 FILE_FORMAT = AUDIO_FORMAT.union(VIDEO_FORMAT)
 EXPLAIN_ERROR = False
-CACHE = None
+CACHE = TempCache("mkpl", max_age=30)
 __version__ = "1.17.0"
 
 Playlist = namedtuple(
@@ -405,8 +405,6 @@ def get_args():
         vprint(arguments.verbose, f"use cache {CACHE.path}")
         # Clean the cache
         CACHE.clear_items()
-    else:
-        CACHE = None
 
     return arguments
 
@@ -534,15 +532,19 @@ def get_year(file: PlaylistEntry):
     file = open_multimedia_file(file.file)
     if file and hasattr(file, "tags"):
         if isinstance(file.tags, id3.ID3Tags):
-            default = id3.TDOR(text=["0"])
-            return file.tags.get("TDOR", default)[0]
-        elif isinstance(file.tags, mp4.MP4Tags):
-            tags = file.tags.get("\xa9day", "0")
+            default = id3.TDOR(text=["0000"])
+            tags = file.tags.get("TDOR", default)
             if isinstance(tags, str):
                 return tags
             elif isinstance(tags, (tuple, list)):
                 return tags[0]
-    return "0"
+        elif isinstance(file.tags, mp4.MP4Tags):
+            tags = file.tags.get("\xa9day", ["0000"])
+            if isinstance(tags, str):
+                return tags
+            elif isinstance(tags, (tuple, list)):
+                return tags[0]
+    return "0000"
 
 
 def get_length(file: PlaylistEntry):
@@ -551,6 +553,16 @@ def get_length(file: PlaylistEntry):
     if file and hasattr(file, "info"):
         return file.info.length if hasattr(file.info, "length") else 0.1
     return 0.1
+
+
+def get_ctime(file: PlaylistEntry):
+    """Get file by creation time for sort"""
+    return getctime(file.file)
+
+
+def get_size(file: PlaylistEntry):
+    """Get file by size for sort"""
+    return os.path.getsize(file.file)
 
 
 def find_pattern(pattern, path):
@@ -651,6 +663,7 @@ def write_playlist(
             pl.write(file.file + "\n")
 
 
+@CACHE
 def make_playlist(
     directories,
     file_formats,
@@ -764,13 +777,13 @@ def make_playlist(
     if sortby_name:
         filelist.files.sort()
     elif sortby_date:
-        filelist.files.sort(key=getctime)
+        filelist.files.sort(key=get_ctime)
     elif sortby_track:
         filelist.files.sort(key=get_track)
     elif sortby_year:
         filelist.files.sort(key=get_year)
     elif sortby_size:
-        filelist.files.sort(key=os.path.getsize)
+        filelist.files.sort(key=get_size)
     elif sortby_length:
         filelist.files.sort(key=get_length)
     elif sortby_shuffle:
@@ -895,6 +908,6 @@ def main():
 
 # region main
 if __name__ == "__main__":
-    main() if not CACHE else CACHE.cache_result(main)
+    main()
 
 # endregion
