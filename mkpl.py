@@ -613,6 +613,11 @@ def unix_to_dos(path, viceversa=False):
     return sub(old_sep, new_sep, path)
 
 
+def normalize_file(string: str):
+    """Escape newline character"""
+    return string.replace("\n", "\\n")
+
+
 def make_extinf(file):
     """Compose EXTINF attribute"""
     global AUDIO_FORMAT
@@ -630,7 +635,7 @@ def make_extinf(file):
         elif isinstance(file.tags, mp4.MP4Tags):
             artist = file.tags.get("\xa9ART", [""])[0]
             title = file.tags.get("\xa9nam", [""])[0]
-        return extinf_str.format(length, artist, title)
+        return extinf_str.format(length, artist.replace(), title).replace("\n", " ")
     return "Unknown extra infos"
 
 
@@ -766,6 +771,8 @@ def make_playlist(
                 # URL chars
                 if url_char:
                     file = url_chars(file)
+                # Normalize file path
+                file = normalize_file(file)
                 # Append entry file into playlist
                 entry = PlaylistEntry(
                     file,
