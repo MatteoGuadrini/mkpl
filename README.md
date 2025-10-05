@@ -215,21 +215,21 @@ $ pip install .                           # for others
     mkpl -d "HeavyMetal/Master of Puppets" -N "master"
     cat "master.m3u"
     #EXTM3U
-    #EXTINF:516.5,Metallica * Master of Puppets
+    #EXTINF:516,Metallica - Master of Puppets
     HeavyMetal/Master Of Puppets/02 - Master Of Puppets.mp3
-    #EXTINF:312.8,Metallica * Battery
+    #EXTINF:312,Metallica - Battery
     HeavyMetal/Master Of Puppets/01 - Battery.mp3
-    #EXTINF:397.2,Metallica * The Thing That Should Not Be
+    #EXTINF:397,Metallica - The Thing That Should Not Be
     HeavyMetal/Master Of Puppets/03 - The Thing That Should Not Be.mp3
-    #EXTINF:508.0,Metallica * Orion
+    #EXTINF:508,Metallica - Orion
     HeavyMetal/Master Of Puppets/07 - Orion (Instrumental).mp3
-    #EXTINF:497.1,Metallica * Disposable Heroes
+    #EXTINF:497,Metallica - Disposable Heroes
     HeavyMetal/Master Of Puppets/05 - Disposable Heroes.mp3
-    #EXTINF:330.4,Metallica * Damage, Inc.
+    #EXTINF:330,Metallica - Damage, Inc.
     HeavyMetal/Master Of Puppets/08 - Damage, Inc..mp3
-    #EXTINF:340.9,Metallica * Leper Messiah
+    #EXTINF:340,Metallica - Leper Messiah
     HeavyMetal/Master Of Puppets/06 - Leper Messiah.mp3
-    #EXTINF:387.9,Metallica * Welcome Home (Sanitarium)
+    #EXTINF:387,Metallica - Welcome Home (Sanitarium)
     HeavyMetal/Master Of Puppets/04 - Welcome Home (Sanitarium).mp3
     ```
 

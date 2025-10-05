@@ -79,7 +79,7 @@ VIDEO_FORMAT = {
 FILE_FORMAT = AUDIO_FORMAT.union(VIDEO_FORMAT)
 EXPLAIN_ERROR = False
 CACHE = TempCache("mkpl", max_age=30)
-__version__ = "1.17.0"
+__version__ = "1.18.0"
 
 Playlist = namedtuple(
     "Playlist", ("files", "ext", "name", "encoding"), defaults=([], False, False, False)
@@ -96,7 +96,7 @@ PlaylistEntry = namedtuple(
 def get_args():
     """Get command-line arguments"""
 
-    global FILE_FORMAT, EXPLAIN_ERROR
+    global FILE_FORMAT, EXPLAIN_ERROR, CACHE
 
     parser = argparse.ArgumentParser(
         description="Command line tool to create playlist files in M3U format.",
@@ -451,9 +451,11 @@ def confirm(file, default="y"):
     return answer == "y"
 
 
-def file_in_playlist(playlist, file, root=None):
+def file_in_playlist(playlist: Playlist, file, root=None):
     """Check if file is in the playlist"""
-    for f in playlist:
+    for f in playlist.files:
+        # Get string path
+        f = f.file
         # Skip extended tags
         if f.startswith("#"):
             continue
@@ -475,7 +477,11 @@ def join_playlist(playlist: Playlist, *others):
             # open playlist, remove extensions and extend current playlist file
             lines = open(file).readlines()
             playlist.files.extend(
-                [line.rstrip() for line in lines if not line.startswith("#")]
+                [
+                    PlaylistEntry(line.rstrip())
+                    for line in lines
+                    if not line.startswith("#")
+                ]
             )
         except FileNotFoundError:
             print(f"warning: {file} file not found")
@@ -547,9 +553,12 @@ def get_year(file: PlaylistEntry):
     return "0000"
 
 
-def get_length(file: PlaylistEntry):
+def get_length(file):
     """Get file by length for sort"""
-    file = open_multimedia_file(file.file)
+    if isinstance(file, PlaylistEntry):
+        file = open_multimedia_file(file.file)
+    else:
+        file = open_multimedia_file(file)
     if file and hasattr(file, "info"):
         return file.info.length if hasattr(file.info, "length") else 0.1
     return 0.1
@@ -698,6 +707,8 @@ def make_playlist(
     windows=False,
     unix=False,
     interactive=False,
+    links=None,
+    other_files=None,
     verbose=False,
 ):
     """Make playlist list"""
@@ -780,6 +791,30 @@ def make_playlist(
                     make_extinf(file) if infos else infos,
                 )
                 filelist.files.append(entry)
+    # Add link
+    if links:
+        filelist.files.extend(
+            [
+                PlaylistEntry(
+                    link,
+                    image,
+                    False,
+                )
+                for link in links
+            ]
+        )
+    # Add other files
+    if other_files:
+        filelist.files.extend(
+            [
+                PlaylistEntry(
+                    other_file,
+                    image,
+                    make_extinf(other_file) if infos else infos,
+                )
+                for other_file in other_files
+            ]
+        )
     # Check sort
     if sortby_name:
         filelist.files.sort()
@@ -840,12 +875,15 @@ def main_cli():
                 windows=args.windows,
                 unix=args.unix,
                 interactive=args.interactive,
+                links=args.link,
+                other_files=args.file,
                 verbose=args.verbose,
             )
             if playlist.files:
                 vprint(args.verbose, f"write playlist {playlist_name}")
                 # Write playlist to file
-                write_playlist(playlist_name, args.open_mode, playlist)
+                extension = ".m3u" if args.encoding != "UNICODE" else ".m3u8"
+                write_playlist(playlist_name + extension, args.open_mode, playlist)
     # Make multimedia list
     playlist = make_playlist(
         args.directories,
@@ -876,18 +914,14 @@ def main_cli():
         windows=args.windows,
         unix=args.unix,
         interactive=args.interactive,
+        links=args.link,
+        other_files=args.file,
         verbose=args.verbose,
     )
 
     # Join other playlist files
     if args.join:
         join_playlist(playlist, *args.join)
-
-    # Add link
-    playlist.files.extend(args.link)
-
-    # Add other files
-    playlist.files.extend(args.file)
 
     if playlist.files:
         vprint(args.verbose, f"write playlist {args.playlist}")

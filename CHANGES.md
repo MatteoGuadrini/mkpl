@@ -1,5 +1,12 @@
 # Release notes
 
+## 1.18.0
+Oct 05, 2025
+
+- Some fixes, refs #19
+- Add Playslist and PlaylistEntry objects
+- Refactor some code for improvement
+
 ## 1.17.0
 Sep 14, 2025
 
