@@ -79,7 +79,7 @@ VIDEO_FORMAT = {
 FILE_FORMAT = AUDIO_FORMAT.union(VIDEO_FORMAT)
 EXPLAIN_ERROR = False
 CACHE = TempCache("mkpl", max_age=30)
-__version__ = "1.18.0"
+__version__ = "1.18.1"
 
 Playlist = namedtuple(
     "Playlist", ("files", "ext", "name", "encoding"), defaults=([], False, False, False)
