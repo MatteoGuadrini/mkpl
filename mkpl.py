@@ -644,7 +644,7 @@ def make_extinf(file):
         elif isinstance(file.tags, mp4.MP4Tags):
             artist = file.tags.get("\xa9ART", [""])[0]
             title = file.tags.get("\xa9nam", [""])[0]
-        return extinf_str.format(length, artist.replace(), title).replace("\n", " ")
+        return extinf_str.format(length, artist, title).replace("\n", " ")
     return "Unknown extra infos"
 
 
