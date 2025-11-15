@@ -79,7 +79,7 @@ VIDEO_FORMAT = {
 FILE_FORMAT = AUDIO_FORMAT.union(VIDEO_FORMAT)
 EXPLAIN_ERROR = False
 CACHE = TempCache("mkpl", max_age=30)
-__version__ = "1.18.0"
+__version__ = "1.18.1"
 
 Playlist = namedtuple(
     "Playlist", ("files", "ext", "name", "encoding"), defaults=([], False, False, False)
@@ -644,7 +644,7 @@ def make_extinf(file):
         elif isinstance(file.tags, mp4.MP4Tags):
             artist = file.tags.get("\xa9ART", [""])[0]
             title = file.tags.get("\xa9nam", [""])[0]
-        return extinf_str.format(length, artist.replace(), title).replace("\n", " ")
+        return extinf_str.format(length, artist, title).replace("\n", " ")
     return "Unknown extra infos"
 
 
