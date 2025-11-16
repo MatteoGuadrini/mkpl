@@ -30,7 +30,7 @@ import traceback
 from collections import namedtuple
 from filecmp import cmp
 from itertools import islice
-from os.path import basename, exists, getctime, getsize, isdir, join, normpath
+from os.path import abspath, basename, exists, getctime, getsize, isdir, join, normpath
 from pathlib import Path
 from random import shuffle
 from re import sub
@@ -121,7 +121,7 @@ def get_args():
         "--directories",
         help="Directories that contains multimedia file",
         nargs=argparse.ONE_OR_MORE,
-        default=[os.getcwd()],
+        default=[Path(".")],
     )
     parser.add_argument(
         "-e",
@@ -622,7 +622,7 @@ def unix_to_dos(path, viceversa=False):
     return sub(old_sep, new_sep, path)
 
 
-def normalize_file(string: str):
+def escape_newlines(string: str):
     """Escape newline character"""
     return string.replace("\n", "\\n")
 
@@ -783,7 +783,7 @@ def make_playlist(
                 if url_char:
                     file = url_chars(file)
                 # Normalize file path
-                file = normalize_file(file)
+                file = escape_newlines(file)
                 # Append entry file into playlist
                 entry = PlaylistEntry(
                     file,
@@ -929,7 +929,7 @@ def main_cli():
         write_playlist(args.playlist, args.open_mode, playlist, args.max_tracks)
     else:
         print(
-            f"warning: no multimedia files are found here: {','.join(args.directories)}"
+            f"warning: no multimedia files are found here: {','.join([abspath(dir) for dir in args.directories])}"
         )
 
     # Count files into playlist
