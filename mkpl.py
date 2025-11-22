@@ -89,6 +89,8 @@ PlaylistEntry = namedtuple(
     "PlaylistEntry", ("file", "image", "extinf"), defaults=(None, False, False)
 )
 
+PlaylistFilter = namedtuple("PlaylistFilter", ("key", "value"))
+
 # endregion
 
 
@@ -625,6 +627,18 @@ def unix_to_dos(path, viceversa=False):
 def escape_newlines(string: str):
     """Escape newline character"""
     return string.replace("\n", "\\n")
+
+
+def get_filter(filter: str) -> PlaylistFilter:
+    """Get filter from string
+
+    :param filter: filter string format, ex. key=value
+    """
+    key, value = filter.split("=", maxsplit=1)
+    return PlaylistFilter(
+        key.replace("'", "").replace('"', ""),
+        value.replace("'", "").replace('"', ""),
+    )
 
 
 def make_extinf(file):
