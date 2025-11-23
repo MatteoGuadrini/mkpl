@@ -314,8 +314,18 @@ def get_args():
         type=int,
         metavar="SECONDS",
     )
+    orderby_group.add_argument(
+        "-Y",
+        "--filter",
+        action="append",
+        help="Filter file by 'key' and 'value'",
+        metavar="KEY=VALUE",
+        nargs=argparse.ONE_OR_MORE,
+    )
 
     arguments = parser.parse_args()
+
+    print(arguments.filter)
 
     # Check explain error
     if arguments.explain_error:
@@ -407,6 +417,13 @@ def get_args():
         vprint(arguments.verbose, f"use cache {CACHE.path}")
         # Clean the cache
         CACHE.clear_items()
+
+    # Check filter
+    if arguments.filter:
+        arguments.filter = [
+            get_filter(f) for filter_ in arguments.filter for f in filter_ if "=" in f
+        ]
+        print(arguments.filter)
 
     return arguments
 
