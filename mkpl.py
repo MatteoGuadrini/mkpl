@@ -77,6 +77,7 @@ VIDEO_FORMAT = {
     "f4a",
 }
 FILE_FORMAT = AUDIO_FORMAT.union(VIDEO_FORMAT)
+TAG_FILTER = {"album", "artist", "genre", "title", "year"}
 EXPLAIN_ERROR = False
 CACHE = TempCache("mkpl", max_age=30)
 __version__ = "1.18.1"
@@ -325,8 +326,6 @@ def get_args():
 
     arguments = parser.parse_args()
 
-    print(arguments.filter)
-
     # Check explain error
     if arguments.explain_error:
         EXPLAIN_ERROR = True
@@ -421,9 +420,11 @@ def get_args():
     # Check filter
     if arguments.filter:
         arguments.filter = [
-            get_filter(f) for filter_ in arguments.filter for f in filter_ if "=" in f
+            get_filter(f)
+            for filter_ in arguments.filter
+            for f in filter_
+            if validate_filter(get_filter(f))
         ]
-        print(arguments.filter)
 
     return arguments
 
@@ -646,16 +647,35 @@ def escape_newlines(string: str):
     return string.replace("\n", "\\n")
 
 
-def get_filter(filter: str) -> PlaylistFilter:
+def get_filter(filter_: str) -> PlaylistFilter:
     """Get filter from string
 
     :param filter: filter string format, ex. key=value
+    :return: PlaylistFilter
     """
-    key, value = filter.split("=", maxsplit=1)
+    if "=" not in filter_:
+        print(f"warning: '{filter_}' is not a valid filter; valid form is 'key=value'")
+        return PlaylistFilter(filter_, None)
+    key, value = filter_.split("=", maxsplit=1)
     return PlaylistFilter(
-        key.replace("'", "").replace('"', ""),
-        value.replace("'", "").replace('"', ""),
+        key.replace("'", "").replace('"', "").lower(),
+        value.replace("'", "").replace('"', "").lower(),
     )
+
+
+def validate_filter(playlist_filter: PlaylistFilter) -> bool:
+    """Validate PlaylistFilter object
+
+    :param playlist_filter: PlaylistFilter object
+    :return: bool
+    """
+    ret = True
+    if playlist_filter.key not in TAG_FILTER:
+        print(
+            f"warning: '{playlist_filter.key}' is not a valid key for filter; valid keys are {TAG_FILTER}"
+        )
+        ret = False
+    return ret
 
 
 def make_extinf(file):
