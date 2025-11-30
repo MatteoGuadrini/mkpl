@@ -77,7 +77,13 @@ VIDEO_FORMAT = {
     "f4a",
 }
 FILE_FORMAT = AUDIO_FORMAT.union(VIDEO_FORMAT)
-TAG_FILTER = {"album", "artist", "genre", "title", "year"}
+TAG_FILTER = {
+    "album": ("TALB", "\xa9alb"),
+    "artist": ("TPE1", "\xa9ART"),
+    "genre": ("TCON", "\xa9gen"),
+    "title": ("TIT2", "\xa9nam"),
+    "year": ("TYER", "\xa9day"),
+}
 EXPLAIN_ERROR = False
 CACHE = TempCache("mkpl", max_age=30)
 __version__ = "1.18.1"
@@ -672,9 +678,30 @@ def validate_filter(playlist_filter: PlaylistFilter) -> bool:
     ret = True
     if playlist_filter.key not in TAG_FILTER:
         print(
-            f"warning: '{playlist_filter.key}' is not a valid key for filter; valid keys are {TAG_FILTER}"
+            f"warning: '{playlist_filter.key}' is not a valid key for filter; valid keys are {', '.join(TAG_FILTER.keys())}"
         )
         ret = False
+    return ret
+
+
+def check_filter(file, playlist_filter: PlaylistFilter) -> bool:
+    """Check if file match filter
+
+    :param file: multimedia file
+    :param playlist_filter: PlaylistFilter object
+    :return: bool
+    """
+    file = open_multimedia_file(file)
+    tags = None
+    ret = False
+    # Check supports of ID3Tags or MP4Tags
+    if isinstance(file.tags, id3.ID3Tags):
+        tags = file.tags.get(TAG_FILTER[playlist_filter.key][0]).text[0]
+    elif isinstance(file.tags, mp4.MP4Tags):
+        tags = file.tags.get(TAG_FILTER[playlist_filter.key][1])[0]
+    # Return True if filter match
+    if tags and re.match(playlist_filter.value, tags, re.IGNORECASE):
+        ret = True
     return ret
 
 
@@ -760,24 +787,29 @@ def make_playlist(
     interactive=False,
     links=None,
     other_files=None,
+    filters=None,
     verbose=False,
 ):
     """Make playlist list"""
     filelist = Playlist([], extension, title, encoding)
     exclude_dirs = [] if exclude_dirs is None else exclude_dirs
+    filters = [] if filters is None else filters
     for directory in directories:
         # Check if directory exists
         if not exists(directory):
             print(f"warning: {directory} does not exists")
-            return filelist
+            continue
         # Check if is a directory
         if not isdir(directory):
             print(f"warning: {directory} is not a directory")
-            return filelist
+            continue
         # Build a Path object
         path = Path(directory)
         root = path.parent
-        vprint(verbose, f"current directory={path}, root={root}")
+        vprint(
+            verbose,
+            f"current directory={path}, root={root}, exclude={','.join(exclude_dirs)}",
+        )
         for fmt in file_formats:
             # Check recursive
             folder = "**/*" if recursive else "*"
@@ -802,6 +834,15 @@ def make_playlist(
                 # Check if in exclude dirs
                 if any([e_path in file for e_path in exclude_dirs]):
                     continue
+                # Check filters
+                if filters:
+                    match_filter = False
+                    for filter_ in filters:
+                        if check_filter(file, filter_):
+                            match_filter = True
+                            break
+                    if not match_filter:
+                        continue
                 # Check if file is in playlist
                 if unique:
                     if file_in_playlist(
@@ -928,6 +969,7 @@ def main_cli():
                 interactive=args.interactive,
                 links=args.link,
                 other_files=args.file,
+                filters=args.filter,
                 verbose=args.verbose,
             )
             if playlist.files:
@@ -967,6 +1009,7 @@ def main_cli():
         interactive=args.interactive,
         links=args.link,
         other_files=args.file,
+        filters=args.filter,
         verbose=args.verbose,
     )
 
