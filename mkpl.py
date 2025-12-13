@@ -691,18 +691,37 @@ def check_filter(file, playlist_filter: PlaylistFilter) -> bool:
     :param playlist_filter: PlaylistFilter object
     :return: bool
     """
-    file = open_multimedia_file(file)
-    tags = None
     ret = False
     # Check supports of ID3Tags or MP4Tags
-    if isinstance(file.tags, id3.ID3Tags):
-        tags = file.tags.get(TAG_FILTER[playlist_filter.key][0]).text[0]
-    elif isinstance(file.tags, mp4.MP4Tags):
-        tags = file.tags.get(TAG_FILTER[playlist_filter.key][1])[0]
+    temp_file = open_multimedia_file(file)
+    tag = (
+        TAG_FILTER[playlist_filter.key][0]
+        if isinstance(temp_file.tags, id3.ID3Tags)
+        else TAG_FILTER[playlist_filter.key][1]
+    )
+    tags = get_tag(file, tag)
     # Return True if filter match
     if tags and re.match(playlist_filter.value, tags, re.IGNORECASE):
         ret = True
     return ret
+
+
+def get_tag(file, tag, default=None) -> str:
+    """Get tag of multimedia file
+
+    :param file: multimedia file
+    :param tag: string tag of ID3 or MP4 tags
+    :param default: default value to return
+    :return: str
+    """
+    file = open_multimedia_file(file)
+    tags = file.tags.get(tag, default)
+    # Check supports of ID3Tags or MP4Tags
+    if isinstance(file.tags, id3.ID3Tags):
+        tags = tags.text[0]
+    elif isinstance(file.tags, mp4.MP4Tags):
+        tags = tags[0]
+    return tags
 
 
 def make_extinf(file):
