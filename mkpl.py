@@ -82,7 +82,7 @@ TAG_FILTER = {
     "artist": ("TPE1", "\xa9ART"),
     "genre": ("TCON", "\xa9gen"),
     "title": ("TIT2", "\xa9nam"),
-    "year": ("TYER", "\xa9day"),
+    "year": ("TDOR", "\xa9day"),
 }
 EXPLAIN_ERROR = False
 CACHE = TempCache("mkpl", max_age=30)
@@ -275,6 +275,14 @@ def get_args():
         help="Explain error with traceback",
         action="store_true",
     )
+    parser.add_argument(
+        "-Y",
+        "--filter",
+        action="append",
+        help="Filter file by 'key' and 'value'",
+        metavar="KEY=VALUE",
+        nargs=argparse.ONE_OR_MORE,
+    )
     orderby_group.add_argument(
         "-s", "--shuffle", help="Casual order", action="store_true"
     )
@@ -320,14 +328,6 @@ def get_args():
         help="Cache playlist results",
         type=int,
         metavar="SECONDS",
-    )
-    orderby_group.add_argument(
-        "-Y",
-        "--filter",
-        action="append",
-        help="Filter file by 'key' and 'value'",
-        metavar="KEY=VALUE",
-        nargs=argparse.ONE_OR_MORE,
     )
 
     arguments = parser.parse_args()
@@ -717,11 +717,11 @@ def get_tag(file, tag, default=None) -> str:
     file = open_multimedia_file(file)
     tags = file.tags.get(tag, default)
     # Check supports of ID3Tags or MP4Tags
-    if isinstance(file.tags, id3.ID3Tags):
+    if isinstance(file.tags, id3.ID3Tags) and tags is not None:
         tags = tags.text[0]
-    elif isinstance(file.tags, mp4.MP4Tags):
+    elif isinstance(file.tags, mp4.MP4Tags) and tags is not None:
         tags = tags[0]
-    return tags
+    return str(tags)
 
 
 def make_extinf(file):
