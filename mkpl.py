@@ -547,35 +547,41 @@ def open_multimedia_file(path):
 
 def get_track(file: PlaylistEntry):
     """Get file by track for sort"""
-    file = open_multimedia_file(file.file)
+    path = file.file
+    file = open_multimedia_file(path)
     if file and hasattr(file, "tags"):
         if isinstance(file.tags, id3.ID3Tags):
-            default = id3.TRCK(text="0")
-            ret = file.tags.get("TRCK", default)[0]
+            ret = get_tag(path, "TRCK")
         elif isinstance(file.tags, mp4.MP4Tags):
-            ret = file.tags.get("trkn", [(0, 0)])[0][0]
-        if isinstance(ret, str) and ret.isdecimal():
-            return int(ret)
+            ret = get_tag(path, "trkn")
+        else:
+            ret = None
+        if isinstance(ret, (list, tuple)) and len(ret) > 0:
+            candidate = ret[0]
+        else:
+            candidate = ret
+        if isinstance(candidate, str) and candidate.isdecimal():
+            return int(candidate)
+        if isinstance(candidate, int):
+            return int(candidate)
     return 0
 
 
 def get_year(file: PlaylistEntry):
     """Get file by year for sort"""
-    file = open_multimedia_file(file.file)
+    path = file.file
+    file = open_multimedia_file(path)
     if file and hasattr(file, "tags"):
         if isinstance(file.tags, id3.ID3Tags):
-            default = id3.TDOR(text=["0000"])
-            tags = file.tags.get("TDOR", default)
-            if isinstance(tags, str):
-                return tags
-            elif isinstance(tags, (tuple, list)):
-                return tags[0]
+            tags = get_tag(path, "TDOR")
         elif isinstance(file.tags, mp4.MP4Tags):
-            tags = file.tags.get("\xa9day", ["0000"])
-            if isinstance(tags, str):
-                return tags
-            elif isinstance(tags, (tuple, list)):
-                return tags[0]
+            tags = get_tag(path, "\xa9day")
+        else:
+            tags = None
+        if isinstance(tags, (tuple, list)) and tags:
+            return tags[0]
+        if isinstance(tags, str):
+            return tags
     return "0000"
 
 
@@ -617,13 +623,9 @@ def find_pattern(pattern, path):
         # Check supports of ID3 tags add compiled pattern
         if file and hasattr(file, "ID3"):
             # Check pattern into title
-            if file.tags.get("TIT2"):
-                if pattern.findall(file.tags.get("TIT2")[0]):
-                    return True
-            # Check pattern into album
-            if file.tags.get("TALB"):
-                if pattern.findall(file.tags.get("TALB")[0]):
-                    return True
+            title = get_tag(path, "TIT2")
+            if title and pattern.findall(str(title)):
+                return True
     return False
 
 
@@ -714,14 +716,21 @@ def get_tag(file, tag, default=None) -> str:
     :param default: default value to return
     :return: str
     """
-    file = open_multimedia_file(file)
+    path = file
+    file = open_multimedia_file(path)
+    if not file or not hasattr(file, "tags"):
+        return default
     tags = file.tags.get(tag, default)
-    # Check supports of ID3Tags or MP4Tags
-    if isinstance(file.tags, id3.ID3Tags) and tags is not None:
-        tags = tags.text[0]
-    elif isinstance(file.tags, mp4.MP4Tags) and tags is not None:
-        tags = tags[0]
-    return str(tags)
+    # Check supports of ID3Tags or MP4Tags and return native value
+    if tags is None:
+        return default
+    if isinstance(file.tags, id3.ID3Tags):
+        return tags.text[0] if hasattr(tags, "text") and tags.text else default
+    if isinstance(file.tags, mp4.MP4Tags):
+        if isinstance(tags, (list, tuple)) and tags:
+            return tags[0]
+        return tags
+    return tags
 
 
 def make_extinf(file):
@@ -733,14 +742,15 @@ def make_extinf(file):
     # Check type of file
     ext = os.path.splitext(file)[1].replace(".", "").lower()
     if ext in AUDIO_FORMAT:
-        file = open_multimedia_file(file)
+        path = file
+        file = open_multimedia_file(path)
         length = int(file.info.length) if hasattr(file.info, "length") else -1
         if isinstance(file.tags, id3.ID3Tags):
-            artist = file.tags.get("TPE1", "")
-            title = file.tags.get("TIT2", "")
+            artist = get_tag(path, "TPE1") or ""
+            title = get_tag(path, "TIT2") or ""
         elif isinstance(file.tags, mp4.MP4Tags):
-            artist = file.tags.get("\xa9ART", [""])[0]
-            title = file.tags.get("\xa9nam", [""])[0]
+            artist = get_tag(path, "\xa9ART") or ""
+            title = get_tag(path, "\xa9nam") or ""
         return extinf_str.format(length, artist, title).replace("\n", " ")
     return "Unknown extra infos"
 
