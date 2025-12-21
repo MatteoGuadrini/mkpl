@@ -549,40 +549,24 @@ def get_track(file: PlaylistEntry):
     """Get file by track for sort"""
     path = file.file
     file = open_multimedia_file(path)
-    if file and hasattr(file, "tags"):
-        if isinstance(file.tags, id3.ID3Tags):
-            ret = get_tag(path, "TRCK")
-        elif isinstance(file.tags, mp4.MP4Tags):
-            ret = get_tag(path, "trkn")
-        else:
-            ret = None
-        if isinstance(ret, (list, tuple)) and len(ret) > 0:
-            candidate = ret[0]
-        else:
-            candidate = ret
-        if isinstance(candidate, str) and candidate.isdecimal():
-            return int(candidate)
-        if isinstance(candidate, int):
-            return int(candidate)
-    return 0
+    tag = "TRCK" if isinstance(file.tags, id3.ID3Tags) else "trkn"
+    tags = get_tag(path, tag, "0")
+    if "/" in tags:
+        tags = tags.split("/")[0]
+    return int(tags) if tags.isdecimal() else 0
 
 
 def get_year(file: PlaylistEntry):
     """Get file by year for sort"""
     path = file.file
     file = open_multimedia_file(path)
-    if file and hasattr(file, "tags"):
-        if isinstance(file.tags, id3.ID3Tags):
-            tags = get_tag(path, "TDOR")
-        elif isinstance(file.tags, mp4.MP4Tags):
-            tags = get_tag(path, "\xa9day")
-        else:
-            tags = None
-        if isinstance(tags, (tuple, list)) and tags:
-            return tags[0]
-        if isinstance(tags, str):
-            return tags
-    return "0000"
+    tag = (
+        TAG_FILTER["year"][0]
+        if isinstance(file.tags, id3.ID3Tags)
+        else TAG_FILTER["year"][1]
+    )
+    tags = get_tag(path, tag, "0000")
+    return tags
 
 
 def get_length(file):
@@ -620,12 +604,15 @@ def find_pattern(pattern, path):
     ext = os.path.splitext(path)[1].replace(".", "").lower()
     if ext in AUDIO_FORMAT:
         file = open_multimedia_file(path)
-        # Check supports of ID3 tags add compiled pattern
-        if file and hasattr(file, "ID3"):
-            # Check pattern into title
-            title = get_tag(path, "TIT2")
-            if title and pattern.findall(str(title)):
-                return True
+        tag = (
+            TAG_FILTER["title"][0]
+            if isinstance(file.tags, id3.ID3Tags)
+            else TAG_FILTER["title"][1]
+        )
+        # Check supports of tags add compiled pattern
+        title = get_tag(path, tag)
+        if title and pattern.findall(title):
+            return True
     return False
 
 
@@ -725,12 +712,12 @@ def get_tag(file, tag, default=None) -> str:
     if tags is None:
         return default
     if isinstance(file.tags, id3.ID3Tags):
-        return tags.text[0] if hasattr(tags, "text") and tags.text else default
+        ret = tags.text[0] if hasattr(tags, "text") and tags.text else default
     if isinstance(file.tags, mp4.MP4Tags):
         if isinstance(tags, (list, tuple)) and tags:
-            return tags[0]
-        return tags
-    return tags
+            ret = tags[0]
+        ret = tags
+    return str(ret)
 
 
 def make_extinf(file):
@@ -744,14 +731,20 @@ def make_extinf(file):
     if ext in AUDIO_FORMAT:
         path = file
         file = open_multimedia_file(path)
+        artist = (
+            TAG_FILTER["artist"][0]
+            if isinstance(file.tags, id3.ID3Tags)
+            else TAG_FILTER["artist"][1]
+        )
+        title = (
+            TAG_FILTER["title"][0]
+            if isinstance(file.tags, id3.ID3Tags)
+            else TAG_FILTER["title"][1]
+        )
+        artist_tags = get_tag(path, artist, "")
+        title_tags = get_tag(path, title, "")
         length = int(file.info.length) if hasattr(file.info, "length") else -1
-        if isinstance(file.tags, id3.ID3Tags):
-            artist = get_tag(path, "TPE1") or ""
-            title = get_tag(path, "TIT2") or ""
-        elif isinstance(file.tags, mp4.MP4Tags):
-            artist = get_tag(path, "\xa9ART") or ""
-            title = get_tag(path, "\xa9nam") or ""
-        return extinf_str.format(length, artist, title).replace("\n", " ")
+        return extinf_str.format(length, artist_tags, title_tags).replace("\n", " ")
     return "Unknown extra infos"
 
 
