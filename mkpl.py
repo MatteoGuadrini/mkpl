@@ -52,15 +52,28 @@ AUDIO_FORMAT = {
     "wav",
     "wma",
     "m4a",
+    "m4b",
     "aiff",
     "flac",
     "alac",
     "opus",
     "ape",
     "webm",
+    "wv",
+    "tta",
+    "dsf",
+    "dff",
+    "mka",
+    "mid",
+    "midi",
+    "kar",
+    "spx",
+    "amr",
 }
 VIDEO_FORMAT = {
     "mp4",
+    "mp4v",
+    "m4v",
     "avi",
     "xvid",
     "divx",
@@ -70,16 +83,39 @@ VIDEO_FORMAT = {
     "mov",
     "wmv",
     "flv",
+    "f4v",
     "vob",
     "asf",
     "m4v",
     "3gp",
-    "f4a",
+    "3g2",
+    "3gp2",
+    "ogv",
+    "ogm",
+    "webm",
+    "m2ts",
+    "mts",
+    "ts",
+    "m2v",
+    "rm",
+    "rmvb",
+    "mxf",
 }
 FILE_FORMAT = AUDIO_FORMAT.union(VIDEO_FORMAT)
+TAG_FILTER = {
+    "album": ("TALB", "\xa9alb"),
+    "artist": ("TPE1", "\xa9ART"),
+    "genre": ("TCON", "\xa9gen"),
+    "title": ("TIT2", "\xa9nam"),
+    "year": ("TDOR", "\xa9day"),
+}
 EXPLAIN_ERROR = False
 CACHE = TempCache("mkpl", max_age=30)
-__version__ = "1.18.1"
+__version__ = "1.19.0"
+__all__ = [
+    "make_playlist",
+    "write_playlist",
+]
 
 Playlist = namedtuple(
     "Playlist", ("files", "ext", "name", "encoding"), defaults=([], False, False, False)
@@ -88,6 +124,8 @@ Playlist = namedtuple(
 PlaylistEntry = namedtuple(
     "PlaylistEntry", ("file", "image", "extinf"), defaults=(None, False, False)
 )
+
+PlaylistFilter = namedtuple("PlaylistFilter", ("key", "value"))
 
 # endregion
 
@@ -266,6 +304,14 @@ def get_args():
         help="Explain error with traceback",
         action="store_true",
     )
+    parser.add_argument(
+        "-Y",
+        "--filter",
+        action="append",
+        help="Filter file by 'key' and 'value'",
+        metavar="KEY=VALUE",
+        nargs=argparse.ONE_OR_MORE,
+    )
     orderby_group.add_argument(
         "-s", "--shuffle", help="Casual order", action="store_true"
     )
@@ -406,6 +452,15 @@ def get_args():
         # Clean the cache
         CACHE.clear_items()
 
+    # Check filter
+    if arguments.filter:
+        arguments.filter = [
+            get_filter(f)
+            for filter_ in arguments.filter
+            for f in filter_
+            if validate_filter(get_filter(f))
+        ]
+
     return arguments
 
 
@@ -521,36 +576,26 @@ def open_multimedia_file(path):
 
 def get_track(file: PlaylistEntry):
     """Get file by track for sort"""
-    file = open_multimedia_file(file.file)
-    if file and hasattr(file, "tags"):
-        if isinstance(file.tags, id3.ID3Tags):
-            default = id3.TRCK(text="0")
-            ret = file.tags.get("TRCK", default)[0]
-        elif isinstance(file.tags, mp4.MP4Tags):
-            ret = file.tags.get("trkn", [(0, 0)])[0][0]
-        if isinstance(ret, str) and ret.isdecimal():
-            return int(ret)
-    return 0
+    path = file.file
+    file = open_multimedia_file(path)
+    tag = "TRCK" if isinstance(file.tags, id3.ID3Tags) else "trkn"
+    tags = get_tag(path, tag, "0")
+    if "/" in tags:
+        tags = tags.split("/")[0]
+    return int(tags) if tags.isdecimal() else 0
 
 
 def get_year(file: PlaylistEntry):
     """Get file by year for sort"""
-    file = open_multimedia_file(file.file)
-    if file and hasattr(file, "tags"):
-        if isinstance(file.tags, id3.ID3Tags):
-            default = id3.TDOR(text=["0000"])
-            tags = file.tags.get("TDOR", default)
-            if isinstance(tags, str):
-                return tags
-            elif isinstance(tags, (tuple, list)):
-                return tags[0]
-        elif isinstance(file.tags, mp4.MP4Tags):
-            tags = file.tags.get("\xa9day", ["0000"])
-            if isinstance(tags, str):
-                return tags
-            elif isinstance(tags, (tuple, list)):
-                return tags[0]
-    return "0000"
+    path = file.file
+    file = open_multimedia_file(path)
+    tag = (
+        TAG_FILTER["year"][0]
+        if isinstance(file.tags, id3.ID3Tags)
+        else TAG_FILTER["year"][1]
+    )
+    tags = get_tag(path, tag, "0000")
+    return tags
 
 
 def get_length(file):
@@ -588,16 +633,15 @@ def find_pattern(pattern, path):
     ext = os.path.splitext(path)[1].replace(".", "").lower()
     if ext in AUDIO_FORMAT:
         file = open_multimedia_file(path)
-        # Check supports of ID3 tags add compiled pattern
-        if file and hasattr(file, "ID3"):
-            # Check pattern into title
-            if file.tags.get("TIT2"):
-                if pattern.findall(file.tags.get("TIT2")[0]):
-                    return True
-            # Check pattern into album
-            if file.tags.get("TALB"):
-                if pattern.findall(file.tags.get("TALB")[0]):
-                    return True
+        tag = (
+            TAG_FILTER["title"][0]
+            if isinstance(file.tags, id3.ID3Tags)
+            else TAG_FILTER["title"][1]
+        )
+        # Check supports of tags add compiled pattern
+        title = get_tag(path, tag)
+        if title and pattern.findall(title):
+            return True
     return False
 
 
@@ -627,6 +671,84 @@ def escape_newlines(string: str):
     return string.replace("\n", "\\n")
 
 
+def get_filter(filter_: str) -> PlaylistFilter:
+    """Get filter from string
+
+    :param filter: filter string format, ex. key=value
+    :return: PlaylistFilter
+    """
+    if "=" not in filter_:
+        print(f"warning: '{filter_}' is not a valid filter; valid form is 'key=value'")
+        return PlaylistFilter(filter_, None)
+    key, value = filter_.split("=", maxsplit=1)
+    return PlaylistFilter(
+        key.replace("'", "").replace('"', "").lower(),
+        value.replace("'", "").replace('"', "").lower(),
+    )
+
+
+def validate_filter(playlist_filter: PlaylistFilter) -> bool:
+    """Validate PlaylistFilter object
+
+    :param playlist_filter: PlaylistFilter object
+    :return: bool
+    """
+    ret = True
+    if playlist_filter.key not in TAG_FILTER:
+        print(
+            f"warning: '{playlist_filter.key}' is not a valid key for filter; valid keys are {', '.join(TAG_FILTER.keys())}"
+        )
+        ret = False
+    return ret
+
+
+def check_filter(file, playlist_filter: PlaylistFilter) -> bool:
+    """Check if file match filter
+
+    :param file: multimedia file
+    :param playlist_filter: PlaylistFilter object
+    :return: bool
+    """
+    ret = False
+    # Check supports of ID3Tags or MP4Tags
+    temp_file = open_multimedia_file(file)
+    tag = (
+        TAG_FILTER[playlist_filter.key][0]
+        if isinstance(temp_file.tags, id3.ID3Tags)
+        else TAG_FILTER[playlist_filter.key][1]
+    )
+    tags = get_tag(file, tag)
+    # Return True if filter match
+    if tags and re.match(playlist_filter.value, tags, re.IGNORECASE):
+        ret = True
+    return ret
+
+
+def get_tag(file, tag, default=None) -> str:
+    """Get tag of multimedia file
+
+    :param file: multimedia file
+    :param tag: string tag of ID3 or MP4 tags
+    :param default: default value to return
+    :return: str
+    """
+    path = file
+    file = open_multimedia_file(path)
+    if not file or not hasattr(file, "tags"):
+        return default
+    tags = file.tags.get(tag, default)
+    # Check supports of ID3Tags or MP4Tags and return native value
+    if tags is None:
+        return default
+    if isinstance(file.tags, id3.ID3Tags):
+        ret = tags.text[0] if hasattr(tags, "text") and tags.text else default
+    if isinstance(file.tags, mp4.MP4Tags):
+        if isinstance(tags, (list, tuple)) and tags:
+            ret = tags[0]
+        ret = tags
+    return str(ret)
+
+
 def make_extinf(file):
     """Compose EXTINF attribute"""
     global AUDIO_FORMAT
@@ -636,15 +758,22 @@ def make_extinf(file):
     # Check type of file
     ext = os.path.splitext(file)[1].replace(".", "").lower()
     if ext in AUDIO_FORMAT:
-        file = open_multimedia_file(file)
+        path = file
+        file = open_multimedia_file(path)
+        artist = (
+            TAG_FILTER["artist"][0]
+            if isinstance(file.tags, id3.ID3Tags)
+            else TAG_FILTER["artist"][1]
+        )
+        title = (
+            TAG_FILTER["title"][0]
+            if isinstance(file.tags, id3.ID3Tags)
+            else TAG_FILTER["title"][1]
+        )
+        artist_tags = get_tag(path, artist, "")
+        title_tags = get_tag(path, title, "")
         length = int(file.info.length) if hasattr(file.info, "length") else -1
-        if isinstance(file.tags, id3.ID3Tags):
-            artist = file.tags.get("TPE1", "")
-            title = file.tags.get("TIT2", "")
-        elif isinstance(file.tags, mp4.MP4Tags):
-            artist = file.tags.get("\xa9ART", [""])[0]
-            title = file.tags.get("\xa9nam", [""])[0]
-        return extinf_str.format(length, artist, title).replace("\n", " ")
+        return extinf_str.format(length, artist_tags, title_tags).replace("\n", " ")
     return "Unknown extra infos"
 
 
@@ -654,7 +783,13 @@ def write_playlist(
     playlist: Playlist,
     max_tracks: int = None,
 ):
-    """Write playlist into file"""
+    """Write Playlist object to a file
+
+    :param playlist_file: path of playlist file
+    :param open_mode: open mode of playlist file ('wt' or 'at+')
+    :param playlist: Playlist object (see make_playlist function)
+    :param max_tracks: maximum number of tracks to write, defaults to None
+    """
     encoding = playlist.encoding if playlist.encoding else None
     with open(
         playlist_file,
@@ -709,28 +844,68 @@ def make_playlist(
     interactive=False,
     links=None,
     other_files=None,
+    filters=None,
     verbose=False,
 ):
-    """Make playlist list"""
+    """Make playlist object
+
+    :param directories: list of directories
+    :param file_formats: iterable of formats
+    :param extension: enable M3U extension, defaults to False
+    :param title: add title of playlist, defaults to False
+    :param encoding: encoding of playlist, defaults to False
+    :param pattern: regular expression pattern to filter files, defaults to False
+    :param image: image of playlist, defaults to False
+    :param infos: additional info of files, defaults to False
+    :param exclude_pattern: list of path to exlude, defaults to None
+    :param sortby_name: sort by name, defaults to False
+    :param sortby_date: sort by date, defaults to False
+    :param sortby_track: sort by track, defaults to False
+    :param sortby_year: sort by year, defaults to False
+    :param sortby_size: sort by size, defaults to False
+    :param sortby_length: sort by length, defaults to False
+    :param sortby_shuffle: shuffle files, defaults to False
+    :param recursive: recursively search directories, defaults to False
+    :param exclude_dirs: list of directories to exclude, defaults to None
+    :param unique: keep only unique files, defaults to False
+    :param absolute: use absolute paths, defaults to False
+    :param min_size: minimum file size, defaults to 0
+    :param max_size: maximum file size, defaults to 0
+    :param min_length: minimum file length, defaults to 0
+    :param max_length: maximum file length, defaults to 0
+    :param url_char: encode URL characters, defaults to False
+    :param windows: force to use Windows path separator, defaults to False
+    :param unix: force to use Unix path separator, defaults to False
+    :param interactive: interactive mode, defaults to False
+    :param links: add additional links to playlist (http or https), defaults to None
+    :param other_files: add additional files to playlist, defaults to None
+    :param filters: filter by meatadata file attributes (year, title, genre, album, artist), defaults to None
+    :param verbose: enable verbosity, defaults to False
+    :return: Playlist object
+    """
     filelist = Playlist([], extension, title, encoding)
     exclude_dirs = [] if exclude_dirs is None else exclude_dirs
+    filters = [] if filters is None else filters
     for directory in directories:
         # Check if directory exists
         if not exists(directory):
             print(f"warning: {directory} does not exists")
-            return filelist
+            continue
         # Check if is a directory
         if not isdir(directory):
             print(f"warning: {directory} is not a directory")
-            return filelist
+            continue
         # Build a Path object
         path = Path(directory)
         root = path.parent
-        vprint(verbose, f"current directory={path}, root={root}")
+        vprint(
+            verbose,
+            f"current directory={path}, root={root}, exclude={','.join(exclude_dirs)}",
+        )
         for fmt in file_formats:
             # Check recursive
             folder = "**/*" if recursive else "*"
-            files = path.glob(folder + f".{fmt}")
+            files = path.glob(folder + f".{fmt}", case_sensitive=False)
             # Process found files
             for file in files:
                 # Get size of file
@@ -751,6 +926,15 @@ def make_playlist(
                 # Check if in exclude dirs
                 if any([e_path in file for e_path in exclude_dirs]):
                     continue
+                # Check filters
+                if filters:
+                    match_filter = False
+                    for filter_ in filters:
+                        if check_filter(file, filter_):
+                            match_filter = True
+                            break
+                    if not match_filter:
+                        continue
                 # Check if file is in playlist
                 if unique:
                     if file_in_playlist(
@@ -877,6 +1061,7 @@ def main_cli():
                 interactive=args.interactive,
                 links=args.link,
                 other_files=args.file,
+                filters=args.filter,
                 verbose=args.verbose,
             )
             if playlist.files:
@@ -916,6 +1101,7 @@ def main_cli():
         interactive=args.interactive,
         links=args.link,
         other_files=args.file,
+        filters=args.filter,
         verbose=args.verbose,
     )
 

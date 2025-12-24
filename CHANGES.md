@@ -1,10 +1,19 @@
 # Release notes
 
+## 1.19.0
+Dec 24, 2025
+
+- Add **get_tag** function
+- Add `filter` argument, refs #20
+- Add **PlaylistFilter** objects
+- Add **validate_filter** function
+- Add **check_filter** function
+
 ## 1.18.0
 Oct 05, 2025
 
 - Some fixes, refs #19
-- Add Playslist and PlaylistEntry objects
+- Add **Playslist** and **PlaylistEntry** objects
 - Refactor some code for improvement
 
 ## 1.17.0
