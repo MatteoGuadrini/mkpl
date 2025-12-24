@@ -38,6 +38,7 @@ $ pip install .                           # for others
 | -F    | --file            | Add files                                     | Files                     |
 | -j    | --join            | Join one or more other playlist files         | Playlist files            |
 | -n    | --cache           | Cache playlist results                        | Seconds                   |
+| -Y    | --filter          | Filter file by 'key' and 'value'              | key=value | "key"="value" |
 | -U    | --url-chars       | Substitute some chars with URL Encoding       |                           |
 | -r    | --recursive       | Recursive search                              |                           |
 | -a    | --absolute        | Absolute file name                            |                           |
@@ -233,23 +234,70 @@ $ pip install .                           # for others
     HeavyMetal/Master Of Puppets/04 - Welcome Home (Sanitarium).mp3
     ```
 
+22. Filter by `artist`, `album`, `genre`, `year` or `title`:
+
+    ```bash
+    mkpl -d "HeavyMetal" -Y artist=Metallica -Y album="Master of Puppets" -- "MoP"
+    # mkpl -d "HeavyMetal" -Y artist=Metallica album="Master of Puppets" -- "MoP"
+    cat "MoP.m3u"
+    HeavyMetal/Master Of Puppets/02 - Master Of Puppets.mp3
+    HeavyMetal/Master Of Puppets/01 - Battery.mp3
+    HeavyMetal/Master Of Puppets/03 - The Thing That Should Not Be.mp3
+    HeavyMetal/Master Of Puppets/07 - Orion (Instrumental).mp3
+    HeavyMetal/Master Of Puppets/05 - Disposable Heroes.mp3
+    HeavyMetal/Master Of Puppets/08 - Damage, Inc..mp3
+    HeavyMetal/Master Of Puppets/06 - Leper Messiah.mp3
+    HeavyMetal/Master Of Puppets/04 - Welcome Home (Sanitarium).mp3
+    ```
+
 ## Use it like Python module
 
-`mkpl` can also be used as a Python module to customize your scripts.
+You can use `mkpl` programmatically from Python to build and write playlists. The main helpers are `make_playlist` (to collect files) and `write_playlist` (to write an M3U file).
+
+Import the functions:
 
 ```python
-from make_playlist import *
+from make_playlist import make_playlist, write_playlist
+```
 
-# Prepare playlist list: find multimedia files with name starts between a and f
+Basic usage — create a playlist from a directory and write it to disk:
+
+```python
+# find multimedia files whose names start with a..f
 playlist = make_playlist('/Music/collections',
                          ('mp3', 'mp4', 'aac'),
                          '^[a-f].*',
                          recursive=True,
                          unique=True)
 
-# Write playlist to file
 write_playlist('/Music/AtoF.m3u', 'wt', playlist)
 ```
+
+Notes and tips:
+
+- The object returned by `make_playlist` is an iterable of `PlaylistEntry` (`Playlist[PlaylistEntry]` equals of `tuple[tuple]). You can iterate it, filter it further, or convert it to a `list` before writing.
+- Most common CLI flags are exposed as keyword arguments to `make_playlist` and `write_playlist` — for example `recursive`, `unique`, `add_info`, `encoding`, `title`, `image`, `absolute`, `windows`, `shuffle`, and various size/length filters. Check the functions' docstrings for the exact parameter names.
+- Use `encoding='utf-8'` (or other encodings) when calling `write_playlist` to control the output text encoding.
+- You may pass `Path` objects from `pathlib`; they will be handled as paths (convert with `str()` if you need plain strings).
+
+Examples:
+
+1. Write UTF-8 playlist with a title and image
+```python
+from pathlib import Path
+
+plist = make_playlist(Path('/Music/collections'), ('mp3',), recursive=True)
+write_playlist(Path('/Music/AtoF.m3u'), 'wt', plist, encoding='utf-8', title='A–F Collection', image=Path('/Music/cover.jpg'))
+```
+
+2. Iterate and inspect results before writing
+```python
+results = make_playlist('/Music/collections', ('mp3', 'flac'), recursive=True)
+for p in results:
+    print(p)
+```
+
+If you need behavior not covered here, inspect the `make_playlist` and `write_playlist` docstrings or use the CLI flags as a reference — their names map closely to the module keyword arguments.
    
 ## Open source
 _mkpl_ is an open source project. Any contribute, It's welcome.

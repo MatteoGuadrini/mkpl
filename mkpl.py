@@ -52,15 +52,28 @@ AUDIO_FORMAT = {
     "wav",
     "wma",
     "m4a",
+    "m4b",
     "aiff",
     "flac",
     "alac",
     "opus",
     "ape",
     "webm",
+    "wv",
+    "tta",
+    "dsf",
+    "dff",
+    "mka",
+    "mid",
+    "midi",
+    "kar",
+    "spx",
+    "amr",
 }
 VIDEO_FORMAT = {
     "mp4",
+    "mp4v",
+    "m4v",
     "avi",
     "xvid",
     "divx",
@@ -70,11 +83,23 @@ VIDEO_FORMAT = {
     "mov",
     "wmv",
     "flv",
+    "f4v",
     "vob",
     "asf",
     "m4v",
     "3gp",
-    "f4a",
+    "3g2",
+    "3gp2",
+    "ogv",
+    "ogm",
+    "webm",
+    "m2ts",
+    "mts",
+    "ts",
+    "m2v",
+    "rm",
+    "rmvb",
+    "mxf",
 }
 FILE_FORMAT = AUDIO_FORMAT.union(VIDEO_FORMAT)
 TAG_FILTER = {
@@ -86,7 +111,11 @@ TAG_FILTER = {
 }
 EXPLAIN_ERROR = False
 CACHE = TempCache("mkpl", max_age=30)
-__version__ = "1.18.1"
+__version__ = "1.19.0"
+__all__ = [
+    "make_playlist",
+    "write_playlist",
+]
 
 Playlist = namedtuple(
     "Playlist", ("files", "ext", "name", "encoding"), defaults=([], False, False, False)
@@ -754,7 +783,13 @@ def write_playlist(
     playlist: Playlist,
     max_tracks: int = None,
 ):
-    """Write playlist into file"""
+    """Write Playlist object to a file
+
+    :param playlist_file: path of playlist file
+    :param open_mode: open mode of playlist file ('wt' or 'at+')
+    :param playlist: Playlist object (see make_playlist function)
+    :param max_tracks: maximum number of tracks to write, defaults to None
+    """
     encoding = playlist.encoding if playlist.encoding else None
     with open(
         playlist_file,
@@ -812,7 +847,42 @@ def make_playlist(
     filters=None,
     verbose=False,
 ):
-    """Make playlist list"""
+    """Make playlist object
+
+    :param directories: list of directories
+    :param file_formats: iterable of formats
+    :param extension: enable M3U extension, defaults to False
+    :param title: add title of playlist, defaults to False
+    :param encoding: encoding of playlist, defaults to False
+    :param pattern: regular expression pattern to filter files, defaults to False
+    :param image: image of playlist, defaults to False
+    :param infos: additional info of files, defaults to False
+    :param exclude_pattern: list of path to exlude, defaults to None
+    :param sortby_name: sort by name, defaults to False
+    :param sortby_date: sort by date, defaults to False
+    :param sortby_track: sort by track, defaults to False
+    :param sortby_year: sort by year, defaults to False
+    :param sortby_size: sort by size, defaults to False
+    :param sortby_length: sort by length, defaults to False
+    :param sortby_shuffle: shuffle files, defaults to False
+    :param recursive: recursively search directories, defaults to False
+    :param exclude_dirs: list of directories to exclude, defaults to None
+    :param unique: keep only unique files, defaults to False
+    :param absolute: use absolute paths, defaults to False
+    :param min_size: minimum file size, defaults to 0
+    :param max_size: maximum file size, defaults to 0
+    :param min_length: minimum file length, defaults to 0
+    :param max_length: maximum file length, defaults to 0
+    :param url_char: encode URL characters, defaults to False
+    :param windows: force to use Windows path separator, defaults to False
+    :param unix: force to use Unix path separator, defaults to False
+    :param interactive: interactive mode, defaults to False
+    :param links: add additional links to playlist (http or https), defaults to None
+    :param other_files: add additional files to playlist, defaults to None
+    :param filters: filter by meatadata file attributes (year, title, genre, album, artist), defaults to None
+    :param verbose: enable verbosity, defaults to False
+    :return: Playlist object
+    """
     filelist = Playlist([], extension, title, encoding)
     exclude_dirs = [] if exclude_dirs is None else exclude_dirs
     filters = [] if filters is None else filters
@@ -835,7 +905,7 @@ def make_playlist(
         for fmt in file_formats:
             # Check recursive
             folder = "**/*" if recursive else "*"
-            files = path.glob(folder + f".{fmt}")
+            files = path.glob(folder + f".{fmt}", case_sensitive=False)
             # Process found files
             for file in files:
                 # Get size of file
