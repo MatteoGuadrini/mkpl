@@ -275,7 +275,7 @@ write_playlist('/Music/AtoF.m3u', 'wt', playlist)
 
 Notes and tips:
 
-- The object returned by `make_playlist` is an iterable of `PlaylistEntry` (`Playlist[PlaylistEntry]` equals of `tuple[tuple]). You can iterate it, filter it further, or convert it to a `list` before writing.
+- The object returned by `make_playlist` is an iterable of `PlaylistEntry` (`Playlist[PlaylistEntry]` equals of `tuple[tuple]`). You can iterate it, filter it further, or convert it to a `list` before writing.
 - Most common CLI flags are exposed as keyword arguments to `make_playlist` and `write_playlist` — for example `recursive`, `unique`, `add_info`, `encoding`, `title`, `image`, `absolute`, `windows`, `shuffle`, and various size/length filters. Check the functions' docstrings for the exact parameter names.
 - Use `encoding='utf-8'` (or other encodings) when calling `write_playlist` to control the output text encoding.
 - You may pass `Path` objects from `pathlib`; they will be handled as paths (convert with `str()` if you need plain strings).
