@@ -110,7 +110,6 @@ TAG_FILTER = {
     "year": ("TDOR", "\xa9day"),
 }
 EXPLAIN_ERROR = False
-CACHE = TempCache("mkpl", max_age=30)
 __version__ = "1.19.0"
 __all__ = [
     "make_playlist",
@@ -444,13 +443,6 @@ def get_args():
         parser.error("minimum and maximum length must not has the same values")
     elif arguments.max_length and arguments.length >= arguments.max_length:
         parser.error("minimum length is upper of maximum length")
-
-    # Define cache
-    if arguments.cache:
-        CACHE = TempCache("mkpl", max_age=arguments.cache)
-        vprint(arguments.verbose, f"use cache {CACHE.path}")
-        # Clean the cache
-        CACHE.clear_items()
 
     # Check filter
     if arguments.filter:
@@ -812,7 +804,6 @@ def write_playlist(
             pl.write(file.file + "\n")
 
 
-@CACHE
 def make_playlist(
     directories,
     file_formats,
@@ -1026,11 +1017,20 @@ def main_cli():
         f"formats={FILE_FORMAT}, recursive={args.recursive}, "
         f"pattern={args.pattern}, split={args.split}",
     )
+    # If cache has been specified, wrap make_playlist function
+    if args.cache:
+        cache = TempCache("mkpl", max_age=args.cache)
+        vprint(args.verbose, f"use cache {cache.path}")
+        # Clean the cache
+        cache.clear_items()
+        fn_make_playlist = cache(make_playlist)
+    else:
+        fn_make_playlist = make_playlist
     if args.split:
         for directory in args.directories:
             playlist_name = basename(normpath(directory))
             # Make multimedia list
-            playlist = make_playlist(
+            playlist = fn_make_playlist(
                 [directory],
                 FILE_FORMAT,
                 pattern=args.pattern,
@@ -1070,7 +1070,7 @@ def main_cli():
                 extension = ".m3u" if args.encoding != "UNICODE" else ".m3u8"
                 write_playlist(playlist_name + extension, args.open_mode, playlist)
     # Make multimedia list
-    playlist = make_playlist(
+    playlist = fn_make_playlist(
         args.directories,
         FILE_FORMAT,
         pattern=args.pattern,
