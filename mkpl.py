@@ -521,7 +521,7 @@ def join_playlist(playlist: Playlist, *others):
     """Join current playlist with others"""
     for file in others:
         try:
-            # open playlist, remove extensions and extend current playlist file
+            # Open playlist, remove extensions and extend current playlist file
             lines = open(file).readlines()
             playlist.files.extend(
                 [
@@ -558,11 +558,16 @@ def open_multimedia_file(path):
 
     :param path: multimedia file to open
     """
-    try:
-        file = File(path)
-    except MutagenError:
-        print(f"warning: file '{path}' loading failed")
-        return False
+    global AUDIO_FORMAT
+
+    ext = os.path.splitext(path)[1].replace(".", "").lower()
+    file = None
+    if ext in AUDIO_FORMAT:
+        try:
+            file = File(path)
+        except MutagenError:
+            print(f"warning: file '{path}' loading failed")
+        return file
     return file
 
 
@@ -570,6 +575,8 @@ def get_track(file: PlaylistEntry):
     """Get file by track for sort"""
     path = file.file
     file = open_multimedia_file(path)
+    if file is None and not hasattr(file, "tags"):
+        return 0
     tag = "TRCK" if isinstance(file.tags, id3.ID3Tags) else "trkn"
     tags = get_tag(path, tag, "0")
     if "/" in tags:
@@ -581,6 +588,8 @@ def get_year(file: PlaylistEntry):
     """Get file by year for sort"""
     path = file.file
     file = open_multimedia_file(path)
+    if file is None and not hasattr(file, "tags"):
+        return "0000"
     tag = (
         TAG_FILTER["year"][0]
         if isinstance(file.tags, id3.ID3Tags)
@@ -603,12 +612,16 @@ def get_length(file):
 
 def get_ctime(file: PlaylistEntry):
     """Get file by creation time for sort"""
-    return getctime(file.file)
+    if os.path.exists(file.file):
+        return getctime(file.file)
+    return 0
 
 
 def get_size(file: PlaylistEntry):
     """Get file by size for sort"""
-    return os.path.getsize(file.file)
+    if os.path.exists(file.file):
+        return os.path.getsize(file.file)
+    return 0
 
 
 def find_pattern(pattern, path):
@@ -704,6 +717,8 @@ def check_filter(file, playlist_filter: PlaylistFilter) -> bool:
     ret = False
     # Check supports of ID3Tags or MP4Tags
     temp_file = open_multimedia_file(file)
+    if temp_file is None or not hasattr(temp_file, "tags"):
+        return ret
     tag = (
         TAG_FILTER[playlist_filter.key][0]
         if isinstance(temp_file.tags, id3.ID3Tags)
