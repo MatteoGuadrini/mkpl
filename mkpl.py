@@ -344,18 +344,24 @@ def get_args():
         help="Order playlist files by length",
         action="store_true",
     )
-    orderby_group.add_argument(
+    parser.add_argument(
         "-U",
         "--url-chars",
         help="Substitute some chars with URL Encoding (Percent Encoding)",
         action="store_true",
     )
-    orderby_group.add_argument(
+    parser.add_argument(
         "-n",
         "--cache",
         help="Cache playlist results",
         type=int,
         metavar="SECONDS",
+    )
+    parser.add_argument(
+        "-D",
+        "--descending",
+        help="Descending order",
+        action="store_true",
     )
 
     arguments = parser.parse_args()
@@ -851,6 +857,7 @@ def make_playlist(
     links=None,
     other_files=None,
     filters=None,
+    descending=False,
     verbose=False,
 ):
     """Make playlist object
@@ -886,6 +893,7 @@ def make_playlist(
     :param links: add additional links to playlist (http or https), defaults to None
     :param other_files: add additional files to playlist, defaults to None
     :param filters: filter by meatadata file attributes (year, title, genre, album, artist), defaults to None
+    :param descending: sort in descending order, defaults to False
     :param verbose: enable verbosity, defaults to False
     :return: Playlist object
     """
@@ -1009,16 +1017,18 @@ def make_playlist(
     if sortby_name:
         filelist.files.sort()
     elif sortby_date:
-        filelist.files.sort(key=get_ctime)
+        filelist.files.sort(key=get_ctime, reverse=descending)
     elif sortby_track:
-        filelist.files.sort(key=get_track)
+        filelist.files.sort(key=get_track, reverse=descending)
     elif sortby_year:
-        filelist.files.sort(key=get_year)
+        filelist.files.sort(key=get_year, reverse=descending)
     elif sortby_size:
-        filelist.files.sort(key=get_size)
+        filelist.files.sort(key=get_size, reverse=descending)
     elif sortby_length:
-        filelist.files.sort(key=get_length)
+        filelist.files.sort(key=get_length, reverse=descending)
     elif sortby_shuffle:
+        if descending:
+            print("warning: descending flag is ignored with shuffle")
         shuffle(filelist.files)
     return filelist
 
@@ -1077,6 +1087,7 @@ def main_cli():
                 links=args.link,
                 other_files=args.file,
                 filters=args.filter,
+                descending=args.descending,
                 verbose=args.verbose,
             )
             if playlist.files:
@@ -1117,6 +1128,7 @@ def main_cli():
         links=args.link,
         other_files=args.file,
         filters=args.filter,
+        descending=args.descending,
         verbose=args.verbose,
     )
 
