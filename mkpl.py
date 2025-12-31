@@ -110,8 +110,7 @@ TAG_FILTER = {
     "year": ("TDOR", "\xa9day"),
 }
 EXPLAIN_ERROR = False
-CACHE = TempCache("mkpl", max_age=30)
-__version__ = "1.19.0"
+__version__ = "1.20.0"
 __all__ = [
     "make_playlist",
     "write_playlist",
@@ -345,18 +344,24 @@ def get_args():
         help="Order playlist files by length",
         action="store_true",
     )
-    orderby_group.add_argument(
+    parser.add_argument(
         "-U",
         "--url-chars",
         help="Substitute some chars with URL Encoding (Percent Encoding)",
         action="store_true",
     )
-    orderby_group.add_argument(
+    parser.add_argument(
         "-n",
         "--cache",
         help="Cache playlist results",
         type=int,
         metavar="SECONDS",
+    )
+    parser.add_argument(
+        "-D",
+        "--descending",
+        help="Descending order",
+        action="store_true",
     )
 
     arguments = parser.parse_args()
@@ -445,13 +450,6 @@ def get_args():
     elif arguments.max_length and arguments.length >= arguments.max_length:
         parser.error("minimum length is upper of maximum length")
 
-    # Define cache
-    if arguments.cache:
-        CACHE = TempCache("mkpl", max_age=arguments.cache)
-        vprint(arguments.verbose, f"use cache {CACHE.path}")
-        # Clean the cache
-        CACHE.clear_items()
-
     # Check filter
     if arguments.filter:
         arguments.filter = [
@@ -529,7 +527,7 @@ def join_playlist(playlist: Playlist, *others):
     """Join current playlist with others"""
     for file in others:
         try:
-            # open playlist, remove extensions and extend current playlist file
+            # Open playlist, remove extensions and extend current playlist file
             lines = open(file).readlines()
             playlist.files.extend(
                 [
@@ -566,11 +564,16 @@ def open_multimedia_file(path):
 
     :param path: multimedia file to open
     """
-    try:
-        file = File(path)
-    except MutagenError:
-        print(f"warning: file '{path}' loading failed")
-        return False
+    global AUDIO_FORMAT
+
+    ext = os.path.splitext(path)[1].replace(".", "").lower()
+    file = None
+    if ext in AUDIO_FORMAT:
+        try:
+            file = File(path)
+        except MutagenError:
+            print(f"warning: file '{path}' loading failed")
+        return file
     return file
 
 
@@ -578,6 +581,8 @@ def get_track(file: PlaylistEntry):
     """Get file by track for sort"""
     path = file.file
     file = open_multimedia_file(path)
+    if file is None and not hasattr(file, "tags"):
+        return 0
     tag = "TRCK" if isinstance(file.tags, id3.ID3Tags) else "trkn"
     tags = get_tag(path, tag, "0")
     if "/" in tags:
@@ -589,6 +594,8 @@ def get_year(file: PlaylistEntry):
     """Get file by year for sort"""
     path = file.file
     file = open_multimedia_file(path)
+    if file is None and not hasattr(file, "tags"):
+        return "0000"
     tag = (
         TAG_FILTER["year"][0]
         if isinstance(file.tags, id3.ID3Tags)
@@ -611,12 +618,16 @@ def get_length(file):
 
 def get_ctime(file: PlaylistEntry):
     """Get file by creation time for sort"""
-    return getctime(file.file)
+    if os.path.exists(file.file):
+        return getctime(file.file)
+    return 0
 
 
 def get_size(file: PlaylistEntry):
     """Get file by size for sort"""
-    return os.path.getsize(file.file)
+    if os.path.exists(file.file):
+        return os.path.getsize(file.file)
+    return 0
 
 
 def find_pattern(pattern, path):
@@ -712,6 +723,8 @@ def check_filter(file, playlist_filter: PlaylistFilter) -> bool:
     ret = False
     # Check supports of ID3Tags or MP4Tags
     temp_file = open_multimedia_file(file)
+    if temp_file is None or not hasattr(temp_file, "tags"):
+        return ret
     tag = (
         TAG_FILTER[playlist_filter.key][0]
         if isinstance(temp_file.tags, id3.ID3Tags)
@@ -812,7 +825,6 @@ def write_playlist(
             pl.write(file.file + "\n")
 
 
-@CACHE
 def make_playlist(
     directories,
     file_formats,
@@ -845,6 +857,7 @@ def make_playlist(
     links=None,
     other_files=None,
     filters=None,
+    descending=False,
     verbose=False,
 ):
     """Make playlist object
@@ -880,6 +893,7 @@ def make_playlist(
     :param links: add additional links to playlist (http or https), defaults to None
     :param other_files: add additional files to playlist, defaults to None
     :param filters: filter by meatadata file attributes (year, title, genre, album, artist), defaults to None
+    :param descending: sort in descending order, defaults to False
     :param verbose: enable verbosity, defaults to False
     :return: Playlist object
     """
@@ -1003,16 +1017,18 @@ def make_playlist(
     if sortby_name:
         filelist.files.sort()
     elif sortby_date:
-        filelist.files.sort(key=get_ctime)
+        filelist.files.sort(key=get_ctime, reverse=descending)
     elif sortby_track:
-        filelist.files.sort(key=get_track)
+        filelist.files.sort(key=get_track, reverse=descending)
     elif sortby_year:
-        filelist.files.sort(key=get_year)
+        filelist.files.sort(key=get_year, reverse=descending)
     elif sortby_size:
-        filelist.files.sort(key=get_size)
+        filelist.files.sort(key=get_size, reverse=descending)
     elif sortby_length:
-        filelist.files.sort(key=get_length)
+        filelist.files.sort(key=get_length, reverse=descending)
     elif sortby_shuffle:
+        if descending:
+            print("warning: descending flag is ignored with shuffle")
         shuffle(filelist.files)
     return filelist
 
@@ -1026,11 +1042,20 @@ def main_cli():
         f"formats={FILE_FORMAT}, recursive={args.recursive}, "
         f"pattern={args.pattern}, split={args.split}",
     )
+    # If cache has been specified, wrap make_playlist function
+    if args.cache:
+        cache = TempCache("mkpl", max_age=args.cache)
+        vprint(args.verbose, f"use cache {cache.path}")
+        # Clean the cache
+        cache.clear_items()
+        fn_make_playlist = cache(make_playlist)
+    else:
+        fn_make_playlist = make_playlist
     if args.split:
         for directory in args.directories:
             playlist_name = basename(normpath(directory))
             # Make multimedia list
-            playlist = make_playlist(
+            playlist = fn_make_playlist(
                 [directory],
                 FILE_FORMAT,
                 pattern=args.pattern,
@@ -1062,6 +1087,7 @@ def main_cli():
                 links=args.link,
                 other_files=args.file,
                 filters=args.filter,
+                descending=args.descending,
                 verbose=args.verbose,
             )
             if playlist.files:
@@ -1070,7 +1096,7 @@ def main_cli():
                 extension = ".m3u" if args.encoding != "UNICODE" else ".m3u8"
                 write_playlist(playlist_name + extension, args.open_mode, playlist)
     # Make multimedia list
-    playlist = make_playlist(
+    playlist = fn_make_playlist(
         args.directories,
         FILE_FORMAT,
         pattern=args.pattern,
@@ -1102,6 +1128,7 @@ def main_cli():
         links=args.link,
         other_files=args.file,
         filters=args.filter,
+        descending=args.descending,
         verbose=args.verbose,
     )
 

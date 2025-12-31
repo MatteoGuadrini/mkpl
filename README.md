@@ -58,6 +58,7 @@ $ pip install .                           # for others
 | -y    | --orderby-year    | Order playlist files by year                  |                           |
 | -Z    | --orderby-size    | Order playlist files by size                  |                           |
 | -L    | --orderby-length  | Order playlist files by length                |                           |
+| -D    | --descending      | Descending order                              |                           |
 | -N    | --add-info        | Add file information to playlist              |                           |
 
 ## Examples
@@ -168,7 +169,7 @@ $ pip install .                           # for others
     ...
     ```
 
-16. Sort playlist files by name (`-o`), by creation date (`-O`), by track number (`-T`), by year (`-y`), by size (`-Z`) or by length (`-L`):
+16. Sort playlist files by name (`-o`), by creation date (`-O`), by track number (`-T`), by year (`-y`), by size (`-Z`) or by length (`-L`) (`-D` for _descending_ order):
 
     ```bash
     mkpl -d "new_collection" -r "my music.m3u" -o
@@ -177,6 +178,8 @@ $ pip install .                           # for others
     mkpl -d "new_collection" -r "my music.m3u" -y
     mkpl -d "new_collection" -r "my music.m3u" -Z
     mkpl -d "new_collection" -r "my music.m3u" -L
+    # Add -D or --descending for reverse order
+    mkpl -d "new_collection" -r "my music.m3u" -L -D
     ```
 
 17. Join the _"First playlist.m3u"_ and  _"Second playlist.m3u8"_ with new **"Third playlist.m3u"**:
@@ -275,7 +278,7 @@ write_playlist('/Music/AtoF.m3u', 'wt', playlist)
 
 Notes and tips:
 
-- The object returned by `make_playlist` is an iterable of `PlaylistEntry` (`Playlist[PlaylistEntry]` equals of `tuple[tuple]). You can iterate it, filter it further, or convert it to a `list` before writing.
+- The object returned by `make_playlist` is an iterable of `PlaylistEntry` (`Playlist[PlaylistEntry]` equals of `tuple[tuple]`). You can iterate it, filter it further, or convert it to a `list` before writing.
 - Most common CLI flags are exposed as keyword arguments to `make_playlist` and `write_playlist` — for example `recursive`, `unique`, `add_info`, `encoding`, `title`, `image`, `absolute`, `windows`, `shuffle`, and various size/length filters. Check the functions' docstrings for the exact parameter names.
 - Use `encoding='utf-8'` (or other encodings) when calling `write_playlist` to control the output text encoding.
 - You may pass `Path` objects from `pathlib`; they will be handled as paths (convert with `str()` if you need plain strings).
