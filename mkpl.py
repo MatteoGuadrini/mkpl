@@ -110,7 +110,7 @@ TAG_FILTER = {
     "year": ("TDOR", "\xa9day"),
 }
 EXPLAIN_ERROR = False
-__version__ = "1.19.0"
+__version__ = "1.20.0"
 __all__ = [
     "make_playlist",
     "write_playlist",

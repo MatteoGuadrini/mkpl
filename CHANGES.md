@@ -1,5 +1,10 @@
 # Release notes
 
+## 1.20.0
+Dec 31, 2025
+
+- Add `descending` argument
+
 ## 1.19.0
 Dec 24, 2025
 
