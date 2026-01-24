@@ -363,6 +363,14 @@ def get_args():
         help="Descending order",
         action="store_true",
     )
+    parser.add_argument(
+        "-k",
+        "--other-playlists",
+        action="append",
+        help="Include other playlists files",
+        metavar="PLAYLIST",
+        nargs=argparse.ONE_OR_MORE,
+    )
 
     arguments = parser.parse_args()
 
