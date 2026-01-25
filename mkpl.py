@@ -366,10 +366,10 @@ def get_args():
     parser.add_argument(
         "-k",
         "--other-playlists",
-        action="append",
-        help="Include other playlists files",
-        metavar="PLAYLIST",
+        help="Include other playlist files",
         nargs=argparse.ONE_OR_MORE,
+        metavar="PLAYLISTS",
+        default=[],
     )
 
     arguments = parser.parse_args()
@@ -866,6 +866,7 @@ def make_playlist(
     other_files=None,
     filters=None,
     descending=False,
+    other_playlists=None,
     verbose=False,
 ):
     """Make playlist object
@@ -902,12 +903,19 @@ def make_playlist(
     :param other_files: add additional files to playlist, defaults to None
     :param filters: filter by meatadata file attributes (year, title, genre, album, artist), defaults to None
     :param descending: sort in descending order, defaults to False
+    :param other_playlists: other playlists to include, defaults to None
     :param verbose: enable verbosity, defaults to False
     :return: Playlist object
     """
     filelist = Playlist([], extension, title, encoding)
     exclude_dirs = [] if exclude_dirs is None else exclude_dirs
+    other_files = [] if other_files is None else other_files
+    other_playlists = [] if other_playlists is None else other_playlists
     filters = [] if filters is None else filters
+    # Add other playlists
+    if other_playlists:
+        join_playlist(filelist, *other_playlists)
+    # Process directories
     for directory in directories:
         # Check if directory exists
         if not exists(directory):
@@ -1096,6 +1104,7 @@ def main_cli():
                 other_files=args.file,
                 filters=args.filter,
                 descending=args.descending,
+                other_playlists=args.other_playlists,
                 verbose=args.verbose,
             )
             if playlist.files:
@@ -1137,6 +1146,7 @@ def main_cli():
         other_files=args.file,
         filters=args.filter,
         descending=args.descending,
+        other_playlists=args.other_playlists,
         verbose=args.verbose,
     )
 

@@ -36,7 +36,8 @@ $ pip install .                           # for others
 | -I    | --image           | Playlist image                                | Image path                |
 | -l    | --link            | Add remote file links                         | Http links                |
 | -F    | --file            | Add files                                     | Files                     |
-| -j    | --join            | Join one or more other playlist files         | Playlist files            |
+| -j    | --join            | Join other playlist files                     | Playlist files            |
+| -k    | --other-playlists | Include other playlist files                  | Playlist files            |
 | -n    | --cache           | Cache playlist results                        | Seconds                   |
 | -Y    | --filter          | Filter file by 'key' and 'value'              | key=value | "key"="value" |
 | -U    | --url-chars       | Substitute some chars with URL Encoding       |                           |
@@ -251,6 +252,20 @@ $ pip install .                           # for others
     HeavyMetal/Master Of Puppets/08 - Damage, Inc..mp3
     HeavyMetal/Master Of Puppets/06 - Leper Messiah.mp3
     HeavyMetal/Master Of Puppets/04 - Welcome Home (Sanitarium).mp3
+    ```
+
+23. Mix with other playlists:
+
+    ```bash
+    # Continue to write a current playlist
+    mkpl -d "Rock'n'Roll" -- "Rock.m3u"
+    mkpl -d "Hard Rock" -c -- "Rock.m3u"
+    # Join other playlists
+    mkpl -d "Rock'n'Roll" -- "RockNRoll.m3u"
+    mkpl -d "Hard Rock" -j "RockNRoll.m3u" -- "Rock.m3u"
+    # Include a playlist files into another
+    mkpl -d "Rock'n'Roll" -- "RockNRoll.m3u"
+    mkpl -d "Hard Rock" -k "RockNRoll.m3u" -- "Rock.m3u"
     ```
 
 ## Use it like Python module
