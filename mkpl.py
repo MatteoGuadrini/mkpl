@@ -5,7 +5,7 @@
 # created by: matteo.guadrini
 # mkpl -- mkpl
 #
-#     Copyright (C) 2025 Matteo Guadrini <matteo.guadrini@hotmail.it>
+#     Copyright (C) 2026 Matteo Guadrini <matteo.guadrini@hotmail.it>
 #
 #     This program is free software: you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
@@ -110,10 +110,13 @@ TAG_FILTER = {
     "year": ("TDOR", "\xa9day"),
 }
 EXPLAIN_ERROR = False
-__version__ = "1.20.0"
+__version__ = "1.21.0"
 __all__ = [
     "make_playlist",
     "write_playlist",
+    "Playlist",
+    "PlaylistEntry",
+    "PlaylistFilter",
 ]
 
 Playlist = namedtuple(

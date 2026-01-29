@@ -3,218 +3,203 @@
 
 ``mkpl`` is a _command line tool_ to create playlist files (**[M3U](https://en.wikipedia.org/wiki/M3U) format**), automatically.
 
+## Table of Contents
+
+- [Installation](#installation)
+- [Command Arguments](#command-arguments)
+- [Examples](#examples)
+- [Python Module Usage](#use-it-like-python-module)
+- [Contributing](#open-source)
+- [License & Acknowledgments](#acknowledgments)
+
 ## Installation
 
-To install ``mkpl``, see here:
+To install ``mkpl``, choose one of the following methods:
+
+### Option 1: PyPI Installation (Recommended)
 
 ```console
-$ pip install make_playlist               # for python enviroment
-
-$ git clone https://github.com/MatteoGuadrini/mkpl.git && cd mkpl
-$ pip install .                           # for others
+$ pip install make_playlist
 ```
 
-## Command arguments
+### Option 2: From Source
 
-``mkpl`` have many command line arguments. They are explained in this table:
+```console
+$ git clone https://github.com/MatteoGuadrini/mkpl.git
+$ cd mkpl
+$ pip install .
+```
 
-| short | long              | description                                   | args                      |
-|-------|-------------------|-----------------------------------------------|---------------------------|
-| -d    | --directories     | Directories that contains multimedia file     | Path of directories       |
-| -e    | --exclude-dirs    | Exclude directory paths                       | Path of directories       |
-| -i    | --include         | Include other file format                     | Format of file. ex. mp3   |
-| -p    | --pattern         | Regular expression inclusion pattern          | Regular expression string |
-| -P    | --exclude-pattern | Regular expression exclusion pattern          | Regular expression string |
-| -f    | --format          | Select only a file format                     | Format of file. ex. mp3   |
-| -s    | --size            | Minimum size (bytes, kb, mb, ...)             | Bytes (kb, mb, gb, ...)   |
-| -A    | --max-size        | Maximum size (bytes, kb, mb, ...)             | Bytes (kb, mb, gb, ...)   |
-| -M    | --length          | Minimum length                                | Seconds                   |
-| -X    | --max-length      | Maximum length                                | Seconds                   |
-| -m    | --max-tracks      | Maximum number of tracks                      | Number                    |
-| -t    | --title           | Playlist title                                | Title string              |
-| -g    | --encoding        | Text encoding                                 | UTF-8,ASCII,UNICODE       |
-| -I    | --image           | Playlist image                                | Image path                |
-| -l    | --link            | Add remote file links                         | Http links                |
-| -F    | --file            | Add files                                     | Files                     |
-| -j    | --join            | Join other playlist files                     | Playlist files            |
-| -k    | --other-playlists | Include other playlist files                  | Playlist files            |
-| -n    | --cache           | Cache playlist results                        | Seconds                   |
-| -Y    | --filter          | Filter file by 'key' and 'value'              | key=value | "key"="value" |
-| -U    | --url-chars       | Substitute some chars with URL Encoding       |                           |
-| -r    | --recursive       | Recursive search                              |                           |
-| -a    | --absolute        | Absolute file name                            |                           |
-| -s    | --shuffle         | Casual order                                  |                           |
-| -u    | --unique          | The same files are not placed in the playlist |                           |
-| -c    | --append          | Continue playlist instead of override it      |                           |
-| -w    | --windows         | Windows style folder separator                |                           |
-| -x    | --unix            | Unix style folder separator                   |                           |
-| -v    | --verbose         | Enable verbosity (debug mode)                 |                           |
-| -S    | --split           | Split playlist by directories                 |                           |
-| -R    | --interactive     | Asks each file for confirmation               |                           |
-| -C    | --count           | Count elements into playlist                  |                           |
-| -E    | --explain-error   | Explain error with traceback                  |                           |
-| -o    | --orderby-name    | Order playlist files by name                  |                           |
-| -O    | --orderby-date    | Order playlist files by creation date         |                           |
-| -T    | --orderby-track   | Order playlist files by track                 |                           |
-| -y    | --orderby-year    | Order playlist files by year                  |                           |
-| -Z    | --orderby-size    | Order playlist files by size                  |                           |
-| -L    | --orderby-length  | Order playlist files by length                |                           |
-| -D    | --descending      | Descending order                              |                           |
-| -N    | --add-info        | Add file information to playlist              |                           |
+## Command Arguments
+
+``mkpl`` supports numerous command-line arguments for flexible playlist creation. Below is a comprehensive reference:
+
+### Basic Options
+
+| Short | Long | Description | Arguments |
+|-------|------|-------------|-----------|
+| -d | --directories | Directories containing multimedia files | Path of directories |
+| -e | --exclude-dirs | Exclude specific directory paths | Path of directories |
+| -r | --recursive | Recursively search directories | — |
+
+### File Format Options
+
+| Short | Long | Description | Arguments |
+|-------|------|-------------|-----------|
+| -f | --format | Select only a specific file format | Format (e.g., mp3, mkv) |
+| -i | --include | Include additional file formats | Format list (e.g., mp3 mp4) |
+| -p | --pattern | Include files matching regex pattern | Regular expression |
+| -P | --exclude-pattern | Exclude files matching regex pattern | Regular expression |
+
+### File Size & Duration Filters
+
+| Short | Long | Description | Arguments |
+|-------|------|-------------|-----------|
+| -z | --size | Minimum file size | Bytes, kb, mb, gb (e.g., 2mb) |
+| -A | --max-size | Maximum file size | Bytes, kb, mb, gb (e.g., 4mb) |
+| -M | --length | Minimum track length | Seconds |
+| -X | --max-length | Maximum track length | Seconds |
+
+### Playlist Configuration
+
+| Short | Long | Description | Arguments |
+|-------|------|-------------|-----------|
+| -t | --title | Set playlist title | Title string |
+| -g | --encoding | Set text encoding | UTF-8, ASCII, UNICODE |
+| -I | --image | Set playlist cover image | Image file path |
+| -m | --max-tracks | Limit number of tracks | Number |
+
+### File Management
+
+| Short | Long | Description | Arguments |
+|-------|------|-------------|-----------|
+| -F | --file | Add additional files | File paths |
+| -l | --link | Add remote file links | HTTP/HTTPS URLs |
+| -j | --join | Join other playlist files | Playlist file paths |
+| -k | --other-playlists | Include other playlists | Playlist file paths |
+
+### Sorting & Ordering
+
+| Short | Long | Description |
+|-------|------|-------------|
+| -o | --orderby-name | Sort by filename |
+| -O | --orderby-date | Sort by creation date |
+| -T | --orderby-track | Sort by track number |
+| -y | --orderby-year | Sort by year metadata |
+| -Z | --orderby-size | Sort by file size |
+| -L | --orderby-length | Sort by track duration |
+| -s | --shuffle | Randomize track order |
+| -D | --descending | Reverse sort order |
+
+### Output & Processing
+
+| Short | Long | Description |
+|-------|------|-------------|
+| -a | --absolute | Use absolute file paths |
+| -u | --unique | Remove duplicate files |
+| -c | --append | Append to existing playlist |
+| -w | --windows | Use Windows path separators |
+| -x | --unix | Use Unix path separators |
+| -U | --url-chars | Apply URL encoding to paths |
+| -N | --add-info | Include file metadata (#EXTINF) |
+
+### Interactive & Utility Options
+
+| Short | Long | Description |
+|-------|------|-------------|
+| -R | --interactive | Confirm each file before adding |
+| -C | --count | Count files without creating playlist |
+| -S | --split | Split into separate playlists by directory |
+| -Y | --filter | Filter by metadata (artist, album, etc.) |
+| -n | --cache | Cache results (seconds) |
+| -v | --verbose | Enable debug output |
+| -E | --explain-error | Show detailed error traceback |
+| -V | --version | Display version information |
 
 ## Examples
 
-1. Create a playlist for one music album:
+### Basic Usage
+
+1. **Create a playlist for one music album:**
 
     ```bash
     cd myalbum
     mkpl myalbum.m3u
-    # or
+    # or use default naming
     mkpl
     ```
-   
-2. Create a playlist for one music album and add other multimedia files (`-F` option):
+
+### Directory & Format Filtering
+
+2. **Create playlist from specific format:**
+
+    ```bash
+    mkpl -d HarryPotter -f mkv HP_saga.m3u
+    ```
+
+3. **Create shuffled playlist with size filters:**
+
+    ```bash
+    mkpl -d "my_mp3_collection" "my_mp4_collection" -rs -z 2mb -A 4mb "my music.m3u"
+    ```
+
+4. **Exclude specific directories:**
+
+    ```bash
+    mkpl -d "my_mp3_collection" "my_mp4_collection" -r -s -e "my_mp3_collection/metallica" "my_mp3_collection/dk" -- "my music.m3u"
+    ```
+
+### Advanced Filtering
+
+5. **Limit by track count:**
+
+    ```bash
+    mkpl -d "my_series/GOT" -m 15 "got_first_15.m3u"
+    ```
+
+6. **Filter by track number with regex:**
+
+    ```bash
+    mkpl -d "my_mp3_collection" -r -p "^[12]|[012]{2}" "my music.m3u"
+    ```
+
+7. **Filter by duration range:**
+
+    ```bash
+    mkpl -d "music_collection" -M 42 -X 300 "My new collection"
+    ```
+
+### File Management
+
+8. **Add external files to playlist:**
 
     ```bash
     cd myalbum_special
     mkpl myalbum_special.m3u -F music_video.mp4 other_stuff/song1.mp3 other_stuff/song2.mp3
     ```
 
-3. Create a playlist of a film saga
+9. **Add remote file links:**
 
     ```bash
-    mkpl -d HarryPotter -f mkv HP_saga.m3u
+    mkpl -d "new_collection" -r "my music.m3u" -l http://192.168.1.123/mp3/song1.mp3 http://192.168.1.123/mp3/song2.mp4
     ```
 
-4. Create a shuffled playlist with my music collection; include only files with minimum size of 2 Megabyte...and with range
+10. **Merge playlists:**
 
     ```bash
-    mkpl -d "my_mp3_collection" "my_mp4_collection" -rs -z 2mb "my music.m3u"
-    # Range between 2 and 4 Megabytes
-    mkpl -d "my_mp3_collection" "my_mp4_collection" -rs -z 2mb -A 4Mb "my music.m3u"
+    mkpl -d "Rock'n'Roll" -- "RockNRoll.m3u"
+    mkpl -d "Hard Rock" -j "RockNRoll.m3u" -- "Rock.m3u"
     ```
-   
-5. Create a shuffled playlist with my music collection and exclude dirs
+
+### Metadata & Formatting
+
+11. **Add playlist metadata:**
 
     ```bash
-    mkpl -d "my_mp3_collection" "my_mp4_collection" -r -s -e "my_mp3_collection/metallica" "my_mp3_collection/dk" -- "my music.m3u"
-    ```
-   
-6. Create a TV series playlist with max 15 tracks
-
-    ```bash
-    mkpl -d "my_series/GOT" -m 15 "got_first_15.m3u"
-    ```
-   
-7. Add into _my music_ playlist new songs and don't add same file
-
-    ```bash
-    mkpl -d "new_collection" -rsu "my music.m3u" -a
-    ```
-   
-8. Create playlist with music and video files if files is greater then 10MB
-
-    ```bash
-    mkpl -d "my_files" -r -z 10485760 "multimedia.m3u"
-    ```
-   
-9. Create playlist with only number one and two tracks with regular expression
-
-    ```bash
-    mkpl -d "my_mp3_collection" -r -p "^[12]|[012]{2}" "my music.m3u"
+    mkpl -d "new_collection" -r "my music.m3u" -t "My Collection" -g "UTF-8" -I "new_collection/cover.jpg"
     ```
 
-10. Create a playlist for one music album and set the title:
-
-     ```bash
-     cd myalbum
-     mkpl myalbum.m3u -t "My Album"
-     ```
-   
-11. Create a playlist and add _UTF-8_ encoding
-
-    ```bash
-    mkpl -d "new_collection" -r "my music.m3u" -g "UTF-8"
-    ```
-
-12. Create a playlist and set image
-
-    ```bash
-    mkpl -d "new_collection" -r "my music.m3u" -I "new_collection/playlist_cover.jpg"
-    ```
-
-13. Create a playlist and add remote file links
-
-    ```bash
-    mkpl -d "new_collection" -r "my music.m3u" -l http://192.168.1.123/mp3/song1.mp3, http://192.168.1.123/mp3/song2.mp4
-    ```
-    
-14. Create a playlist and set Windows backslash (\\) folder separator (for Windows OS)
-
-    ```bash
-    mkpl -d "new_collection" -r "my music.m3u" -w
-    ```
-
-15. Split playlist into _N_ playlists fon _N_ directories
-
-    ```bash
-    mkpl -d "folder1" "folder2" "folder3" -r "my_music.m3u" -S
-    ```
-    Result:
-    ```console
-    $> ls
-    my_music.m3u
-    folder1.m3u
-    folder2.m3u
-    folder3.m3u
-    ...
-    ```
-
-16. Sort playlist files by name (`-o`), by creation date (`-O`), by track number (`-T`), by year (`-y`), by size (`-Z`) or by length (`-L`) (`-D` for _descending_ order):
-
-    ```bash
-    mkpl -d "new_collection" -r "my music.m3u" -o
-    mkpl -d "new_collection" -r "my music.m3u" -O
-    mkpl -d "new_collection" -r "my music.m3u" -T
-    mkpl -d "new_collection" -r "my music.m3u" -y
-    mkpl -d "new_collection" -r "my music.m3u" -Z
-    mkpl -d "new_collection" -r "my music.m3u" -L
-    # Add -D or --descending for reverse order
-    mkpl -d "new_collection" -r "my music.m3u" -L -D
-    ```
-
-17. Join the _"First playlist.m3u"_ and  _"Second playlist.m3u8"_ with new **"Third playlist.m3u"**:
-
-    ```bash
-    mkpl -d "new_collection" -r "Third playlist" -j "First playlist.m3u" "Second playlist.m3u8"
-    ```
-
-18. Counts the multimedia files:
-
-    ```console
-    mkpl -d "new_collection" -r "My new collection" -C
-    4023
-    ```
-
-19. Asks confirmation for every file into folders:
-
-    ```console
-    mkpl -d "new_collection" -r "My new collection" -R
-    Add file new_collection/sample1.mp3 to playlist? [Y/n]:y
-    Add file new_collection/sample2.mp3 to playlist? [Y/n]:Y
-    Add file new_collection/sample3.mp3 to playlist? [Y/n]:n
-    Add file new_collection/sample4.mp3 to playlist? [Y/n]:N
-    ```
-
-20. Includes mp3 files with minimum length of 42 seconds...and range:
-
-    ```bash
-    mkpl -d "music_collection" -M 42 "My new collection"
-    # Range of minimum of 42 seconds and maximum of 300 seonds
-    mkpl -d "music_collection" -M 42 -X 300 "My new collection"
-    ```
-
-21. Add file infos to playlist with [#EXTINF](https://en.wikipedia.org/wiki/M3U#Extended_M3U) tag:
+12. **Include track information (#EXTINF):**
 
     ```bash
     mkpl -d "HeavyMetal/Master of Puppets" -N "master"
@@ -222,100 +207,156 @@ $ pip install .                           # for others
     #EXTM3U
     #EXTINF:516,Metallica - Master of Puppets
     HeavyMetal/Master Of Puppets/02 - Master Of Puppets.mp3
-    #EXTINF:312,Metallica - Battery
-    HeavyMetal/Master Of Puppets/01 - Battery.mp3
-    #EXTINF:397,Metallica - The Thing That Should Not Be
-    HeavyMetal/Master Of Puppets/03 - The Thing That Should Not Be.mp3
-    #EXTINF:508,Metallica - Orion
-    HeavyMetal/Master Of Puppets/07 - Orion (Instrumental).mp3
-    #EXTINF:497,Metallica - Disposable Heroes
-    HeavyMetal/Master Of Puppets/05 - Disposable Heroes.mp3
-    #EXTINF:330,Metallica - Damage, Inc.
-    HeavyMetal/Master Of Puppets/08 - Damage, Inc..mp3
-    #EXTINF:340,Metallica - Leper Messiah
-    HeavyMetal/Master Of Puppets/06 - Leper Messiah.mp3
-    #EXTINF:387,Metallica - Welcome Home (Sanitarium)
-    HeavyMetal/Master Of Puppets/04 - Welcome Home (Sanitarium).mp3
     ```
 
-22. Filter by `artist`, `album`, `genre`, `year` or `title`:
+### Sorting & Organization
+
+13. **Sort by various criteria:**
 
     ```bash
-    mkpl -d "HeavyMetal" -Y artist=Metallica -Y album="Master of Puppets" -- "MoP"
-    # mkpl -d "HeavyMetal" -Y artist=Metallica album="Master of Puppets" -- "MoP"
-    cat "MoP.m3u"
-    HeavyMetal/Master Of Puppets/02 - Master Of Puppets.mp3
-    HeavyMetal/Master Of Puppets/01 - Battery.mp3
-    HeavyMetal/Master Of Puppets/03 - The Thing That Should Not Be.mp3
-    HeavyMetal/Master Of Puppets/07 - Orion (Instrumental).mp3
-    HeavyMetal/Master Of Puppets/05 - Disposable Heroes.mp3
-    HeavyMetal/Master Of Puppets/08 - Damage, Inc..mp3
-    HeavyMetal/Master Of Puppets/06 - Leper Messiah.mp3
-    HeavyMetal/Master Of Puppets/04 - Welcome Home (Sanitarium).mp3
+    mkpl -d "new_collection" -r "my music.m3u" -o        # by name
+    mkpl -d "new_collection" -r "my music.m3u" -O        # by date
+    mkpl -d "new_collection" -r "my music.m3u" -T        # by track
+    mkpl -d "new_collection" -r "my music.m3u" -y        # by year
+    mkpl -d "new_collection" -r "my music.m3u" -Z        # by size
+    mkpl -d "new_collection" -r "my music.m3u" -L -D     # by length (descending)
     ```
 
-23. Mix with other playlists:
+14. **Split into multiple playlists:**
 
     ```bash
-    # Continue to write a current playlist
-    mkpl -d "Rock'n'Roll" -- "Rock.m3u"
-    mkpl -d "Hard Rock" -c -- "Rock.m3u"
-    # Join other playlists
-    mkpl -d "Rock'n'Roll" -- "RockNRoll.m3u"
-    mkpl -d "Hard Rock" -j "RockNRoll.m3u" -- "Rock.m3u"
-    # Include a playlist files into another
-    mkpl -d "Rock'n'Roll" -- "RockNRoll.m3u"
-    mkpl -d "Hard Rock" -k "RockNRoll.m3u" -- "Rock.m3u"
+    mkpl -d "folder1" "folder2" "folder3" -r "my_music.m3u" -S
+    # Results in: my_music.m3u, folder1.m3u, folder2.m3u, folder3.m3u
+    ```
+
+### Metadata Filtering
+
+15. **Filter by artist and album:**
+
+    ```bash
+    mkpl -d "HeavyMetal" -Y artist=Metallica -Y album="Master of Puppets" -- "MoP.m3u"
+    ```
+
+### Interactive & Utility Operations
+
+16. **Count files:**
+
+    ```bash
+    mkpl -d "new_collection" -r -C
+    # Output: 4023
+    ```
+
+17. **Interactive confirmation for each file:**
+
+    ```bash
+    mkpl -d "new_collection" -r -R
+    Add file new_collection/sample1.mp3 to playlist? [Y/n]: y
+    ```
+
+18. **Append to existing playlist without duplicates:**
+
+    ```bash
+    mkpl -d "new_collection" -rsu "my music.m3u" -a
     ```
 
 ## Use it like Python module
 
-You can use `mkpl` programmatically from Python to build and write playlists. The main helpers are `make_playlist` (to collect files) and `write_playlist` (to write an M3U file).
+You can use `mkpl` programmatically in your Python projects to build and write playlists dynamically.
 
-Import the functions:
+### Quick Start
+
+Import the main functions:
 
 ```python
 from make_playlist import make_playlist, write_playlist
 ```
 
-Basic usage — create a playlist from a directory and write it to disk:
+Basic example — create and write a playlist:
 
 ```python
-# find multimedia files whose names start with a..f
-playlist = make_playlist('/Music/collections',
-                         ('mp3', 'mp4', 'aac'),
-                         '^[a-f].*',
-                         recursive=True,
-                         unique=True)
+# Find multimedia files whose names start with a-f
+playlist = make_playlist(
+    '/Music/collections',
+    ('mp3', 'mp4', 'aac'),
+    pattern='^[a-f].*',
+    recursive=True,
+    unique=True
+)
 
 write_playlist('/Music/AtoF.m3u', 'wt', playlist)
 ```
 
-Notes and tips:
+### Important Notes
 
-- The object returned by `make_playlist` is an iterable of `PlaylistEntry` (`Playlist[PlaylistEntry]` equals of `tuple[tuple]`). You can iterate it, filter it further, or convert it to a `list` before writing.
-- Most common CLI flags are exposed as keyword arguments to `make_playlist` and `write_playlist` — for example `recursive`, `unique`, `add_info`, `encoding`, `title`, `image`, `absolute`, `windows`, `shuffle`, and various size/length filters. Check the functions' docstrings for the exact parameter names.
-- Use `encoding='utf-8'` (or other encodings) when calling `write_playlist` to control the output text encoding.
-- You may pass `Path` objects from `pathlib`; they will be handled as paths (convert with `str()` if you need plain strings).
+- `make_playlist()` returns a `Playlist` object containing `PlaylistEntry` items
+- You can iterate, filter, or convert results to a list before writing
+- Most CLI flags are exposed as keyword arguments (e.g., `recursive`, `unique`, `add_info`, `encoding`, `title`, `image`)
+- Use `encoding='utf-8'` parameter for UTF-8 encoded output
+- `pathlib.Path` objects are fully supported
 
-Examples:
+### Python Examples
 
-1. Write UTF-8 playlist with a title and image
+**Example 1: Write UTF-8 playlist with metadata**
+
 ```python
 from pathlib import Path
 
-plist = make_playlist(Path('/Music/collections'), ('mp3',), recursive=True)
-write_playlist(Path('/Music/AtoF.m3u'), 'wt', plist, encoding='utf-8', title='A–F Collection', image=Path('/Music/cover.jpg'))
+plist = make_playlist(
+    Path('/Music/collections'),
+    ('mp3',),
+    recursive=True
+)
+
+write_playlist(
+    Path('/Music/AtoF.m3u'),
+    'wt',
+    plist,
+    encoding='utf-8',
+    title='A–F Collection',
+    image=Path('/Music/cover.jpg')
+)
 ```
 
-2. Iterate and inspect results before writing
+**Example 2: Inspect and filter results**
+
 ```python
-results = make_playlist('/Music/collections', ('mp3', 'flac'), recursive=True)
-for p in results:
-    print(p)
+results = make_playlist(
+    '/Music/collections',
+    ('mp3', 'flac'),
+    recursive=True
+)
+
+for entry in results:
+    print(f"File: {entry.file}")
+    if entry.extinf:
+        print(f"Info: {entry.extinf}")
 ```
 
-If you need behavior not covered here, inspect the `make_playlist` and `write_playlist` docstrings or use the CLI flags as a reference — their names map closely to the module keyword arguments.
+**Example 3: Advanced filtering with metadata**
+
+```python
+playlist = make_playlist(
+    '/Music/HeavyMetal',
+    ('mp3',),
+    recursive=True,
+    filters=[
+        ('artist', 'Metallica'),
+        ('album', 'Master of Puppets')
+    ],
+    add_info=True
+)
+
+write_playlist('/Music/MoP.m3u', 'wt', playlist)
+```
+
+### API Reference
+
+See function docstrings for complete parameter documentation:
+
+```python
+help(make_playlist)
+help(write_playlist)
+```
    
 ## Open source
 _mkpl_ is an open source project. Any contribute, It's welcome.
@@ -348,13 +389,11 @@ By contributing to the Treeware forest you’ll be creating employment for local
 
 ## Acknowledgments
 
-Thanks to Mark Lutz for writing the _Learning Python_ and _Programming Python_ books that make up my python foundation.
+Special thanks to:
 
-Thanks to Kenneth Reitz and Tanya Schlusser for writing the _The Hitchhiker’s Guide to Python_ books.
-
-Thanks to Dane Hillard for writing the _Practices of the Python Pro_ books.
-
-Special thanks go to my wife, who understood the hours of absence for this development. 
-Thanks to my children, for the daily inspiration they give me and to make me realize, that life must be simple.
+- **Mark Lutz** — _Learning Python_ and _Programming Python_ books
+- **Kenneth Reitz & Tanya Schlusser** — _The Hitchhiker's Guide to Python_
+- **Dane Hillard** — _Practices of the Python Pro_
+- **My family** — For continuous support and inspiration
 
 Thanks, Python!
