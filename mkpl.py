@@ -5,7 +5,7 @@
 # created by: matteo.guadrini
 # mkpl -- mkpl
 #
-#     Copyright (C) 2025 Matteo Guadrini <matteo.guadrini@hotmail.it>
+#     Copyright (C) 2026 Matteo Guadrini <matteo.guadrini@hotmail.it>
 #
 #     This program is free software: you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
@@ -110,10 +110,13 @@ TAG_FILTER = {
     "year": ("TDOR", "\xa9day"),
 }
 EXPLAIN_ERROR = False
-__version__ = "1.20.0"
+__version__ = "1.21.0"
 __all__ = [
     "make_playlist",
     "write_playlist",
+    "Playlist",
+    "PlaylistEntry",
+    "PlaylistFilter",
 ]
 
 Playlist = namedtuple(
@@ -362,6 +365,14 @@ def get_args():
         "--descending",
         help="Descending order",
         action="store_true",
+    )
+    parser.add_argument(
+        "-k",
+        "--other-playlists",
+        help="Include other playlist files",
+        nargs=argparse.ONE_OR_MORE,
+        metavar="PLAYLISTS",
+        default=[],
     )
 
     arguments = parser.parse_args()
@@ -858,6 +869,7 @@ def make_playlist(
     other_files=None,
     filters=None,
     descending=False,
+    other_playlists=None,
     verbose=False,
 ):
     """Make playlist object
@@ -894,12 +906,19 @@ def make_playlist(
     :param other_files: add additional files to playlist, defaults to None
     :param filters: filter by meatadata file attributes (year, title, genre, album, artist), defaults to None
     :param descending: sort in descending order, defaults to False
+    :param other_playlists: other playlists to include, defaults to None
     :param verbose: enable verbosity, defaults to False
     :return: Playlist object
     """
     filelist = Playlist([], extension, title, encoding)
     exclude_dirs = [] if exclude_dirs is None else exclude_dirs
+    other_files = [] if other_files is None else other_files
+    other_playlists = [] if other_playlists is None else other_playlists
     filters = [] if filters is None else filters
+    # Add other playlists
+    if other_playlists:
+        join_playlist(filelist, *other_playlists)
+    # Process directories
     for directory in directories:
         # Check if directory exists
         if not exists(directory):
@@ -1088,6 +1107,7 @@ def main_cli():
                 other_files=args.file,
                 filters=args.filter,
                 descending=args.descending,
+                other_playlists=args.other_playlists,
                 verbose=args.verbose,
             )
             if playlist.files:
@@ -1129,6 +1149,7 @@ def main_cli():
         other_files=args.file,
         filters=args.filter,
         descending=args.descending,
+        other_playlists=args.other_playlists,
         verbose=args.verbose,
     )
 

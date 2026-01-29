@@ -1,5 +1,10 @@
 # Release notes
 
+## 1.21.0
+Jan 29, 2026
+
+- Add `other-playlists` argument
+
 ## 1.20.0
 Dec 31, 2025
 
