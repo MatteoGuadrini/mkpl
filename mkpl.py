@@ -194,6 +194,12 @@ def get_args():
         choices=FILE_FORMAT,
     )
     parser.add_argument(
+        "-b",
+        "--bpm",
+        help="Minimum beats per minute",
+        metavar="BPM",
+    )
+    parser.add_argument(
         "-z",
         "--size",
         help="Minimum size (bytes, kb, mb, ...)",
