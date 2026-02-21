@@ -201,6 +201,13 @@ def get_args():
         type=int,
     )
     parser.add_argument(
+        "-B",
+        "--max-bpm",
+        help="Maximum beats per minute",
+        metavar="BPM",
+        type=int,
+    )
+    parser.add_argument(
         "-z",
         "--size",
         help="Minimum size (bytes, kb, mb, ...)",
@@ -876,6 +883,7 @@ def make_playlist(
     unique=False,
     absolute=False,
     min_bpm=0,
+    max_bpm=0,
     min_size=0,
     max_size=0,
     min_length=0,
@@ -914,6 +922,7 @@ def make_playlist(
     :param unique: keep only unique files, defaults to False
     :param absolute: use absolute paths, defaults to False
     :param min_bpm: minimum BPM, defaults to 0
+    :param max_bpm: maximum BPM, defaults to 0
     :param min_size: minimum file size, defaults to 0
     :param max_size: maximum file size, defaults to 0
     :param min_length: minimum file length, defaults to 0
@@ -996,6 +1005,9 @@ def make_playlist(
                         continue
                 # Check minimum BPM
                 if min_bpm and get_bpm(file) <= min_bpm:
+                    continue
+                # Check maximum BPM
+                if max_bpm and get_bpm(file) >= max_bpm:
                     continue
                 # Check minimum file size
                 if min_size and size <= min_size:
@@ -1119,6 +1131,7 @@ def main_cli():
                 unique=args.unique,
                 absolute=args.absolute,
                 min_bpm=args.bpm,
+                max_bpm=args.max_bpm,
                 min_size=args.size,
                 max_size=args.max_size,
                 min_length=args.length,
@@ -1162,6 +1175,7 @@ def main_cli():
         unique=args.unique,
         absolute=args.absolute,
         min_bpm=args.bpm,
+        max_bpm=args.max_bpm,
         min_size=args.size,
         max_size=args.max_size,
         min_length=args.length,
