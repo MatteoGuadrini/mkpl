@@ -110,7 +110,7 @@ TAG_FILTER = {
     "year": ("TDOR", "\xa9day"),
 }
 EXPLAIN_ERROR = False
-__version__ = "1.21.0"
+__version__ = "1.22.0"
 __all__ = [
     "make_playlist",
     "write_playlist",
@@ -192,6 +192,20 @@ def get_args():
         help="Select only a file format",
         type=str,
         choices=FILE_FORMAT,
+    )
+    parser.add_argument(
+        "-b",
+        "--bpm",
+        help="Minimum beats per minute",
+        metavar="BPM",
+        type=int,
+    )
+    parser.add_argument(
+        "-B",
+        "--max-bpm",
+        help="Maximum beats per minute",
+        metavar="BPM",
+        type=int,
     )
     parser.add_argument(
         "-z",
@@ -641,6 +655,17 @@ def get_size(file: PlaylistEntry):
     return 0
 
 
+def get_bpm(file):
+    """Get file by BPM"""
+    path = file
+    file = open_multimedia_file(file)
+    if file is None and not hasattr(file, "tags"):
+        return 0
+    tag = "TBPM" if isinstance(file.tags, id3.ID3Tags) else "tmpo"
+    tags = get_tag(path, tag, "0")
+    return int(tags) if tags.isdecimal() else 0
+
+
 def find_pattern(pattern, path):
     """Find patter in a file and tags"""
     global AUDIO_FORMAT
@@ -857,6 +882,8 @@ def make_playlist(
     exclude_dirs=None,
     unique=False,
     absolute=False,
+    min_bpm=0,
+    max_bpm=0,
     min_size=0,
     max_size=0,
     min_length=0,
@@ -894,6 +921,8 @@ def make_playlist(
     :param exclude_dirs: list of directories to exclude, defaults to None
     :param unique: keep only unique files, defaults to False
     :param absolute: use absolute paths, defaults to False
+    :param min_bpm: minimum BPM, defaults to 0
+    :param max_bpm: maximum BPM, defaults to 0
     :param min_size: minimum file size, defaults to 0
     :param max_size: maximum file size, defaults to 0
     :param min_length: minimum file length, defaults to 0
@@ -974,6 +1003,12 @@ def make_playlist(
                         filelist, file, root=root if not absolute else None
                     ):
                         continue
+                # Check minimum BPM
+                if min_bpm and get_bpm(file) <= min_bpm:
+                    continue
+                # Check maximum BPM
+                if max_bpm and get_bpm(file) >= max_bpm:
+                    continue
                 # Check minimum file size
                 if min_size and size <= min_size:
                     continue
@@ -1095,6 +1130,8 @@ def main_cli():
                 exclude_dirs=args.exclude_dirs,
                 unique=args.unique,
                 absolute=args.absolute,
+                min_bpm=args.bpm,
+                max_bpm=args.max_bpm,
                 min_size=args.size,
                 max_size=args.max_size,
                 min_length=args.length,
@@ -1137,6 +1174,8 @@ def main_cli():
         exclude_dirs=args.exclude_dirs,
         unique=args.unique,
         absolute=args.absolute,
+        min_bpm=args.bpm,
+        max_bpm=args.max_bpm,
         min_size=args.size,
         max_size=args.max_size,
         min_length=args.length,

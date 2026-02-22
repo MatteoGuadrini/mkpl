@@ -51,7 +51,7 @@ $ pip install .
 | -p | --pattern | Include files matching regex pattern | Regular expression |
 | -P | --exclude-pattern | Exclude files matching regex pattern | Regular expression |
 
-### File Size & Duration Filters
+### File Size, BPM & Duration Filters
 
 | Short | Long | Description | Arguments |
 |-------|------|-------------|-----------|
@@ -59,6 +59,8 @@ $ pip install .
 | -A | --max-size | Maximum file size | Bytes, kb, mb, gb (e.g., 4mb) |
 | -M | --length | Minimum track length | Seconds |
 | -X | --max-length | Maximum track length | Seconds |
+| -b | --bpm | Minimum beats per minute | BPM |
+| -B | --max-bpm | Maximum beats per minute | BPM |
 
 ### Playlist Configuration
 
@@ -169,22 +171,28 @@ $ pip install .
     mkpl -d "music_collection" -M 42 -X 300 "My new collection"
     ```
 
+8. **Filter by BPM range:**
+
+    ```bash
+    mkpl -d "music_collection" -r -b 120 -B 140 "upbeat_tracks.m3u"
+    ```
+
 ### File Management
 
-8. **Add external files to playlist:**
+9. **Add external files to playlist:**
 
     ```bash
     cd myalbum_special
     mkpl myalbum_special.m3u -F music_video.mp4 other_stuff/song1.mp3 other_stuff/song2.mp3
     ```
 
-9. **Add remote file links:**
+10. **Add remote file links:**
 
     ```bash
     mkpl -d "new_collection" -r "my music.m3u" -l http://192.168.1.123/mp3/song1.mp3 http://192.168.1.123/mp3/song2.mp4
     ```
 
-10. **Merge playlists:**
+11. **Merge playlists:**
 
     ```bash
     mkpl -d "Rock'n'Roll" -- "RockNRoll.m3u"
@@ -193,13 +201,13 @@ $ pip install .
 
 ### Metadata & Formatting
 
-11. **Add playlist metadata:**
+12. **Add playlist metadata:**
 
     ```bash
     mkpl -d "new_collection" -r "my music.m3u" -t "My Collection" -g "UTF-8" -I "new_collection/cover.jpg"
     ```
 
-12. **Include track information (#EXTINF):**
+13. **Include track information (#EXTINF):**
 
     ```bash
     mkpl -d "HeavyMetal/Master of Puppets" -N "master"
@@ -211,7 +219,7 @@ $ pip install .
 
 ### Sorting & Organization
 
-13. **Sort by various criteria:**
+14. **Sort by various criteria:**
 
     ```bash
     mkpl -d "new_collection" -r "my music.m3u" -o        # by name
@@ -222,7 +230,7 @@ $ pip install .
     mkpl -d "new_collection" -r "my music.m3u" -L -D     # by length (descending)
     ```
 
-14. **Split into multiple playlists:**
+15. **Split into multiple playlists:**
 
     ```bash
     mkpl -d "folder1" "folder2" "folder3" -r "my_music.m3u" -S
@@ -231,7 +239,7 @@ $ pip install .
 
 ### Metadata Filtering
 
-15. **Filter by artist and album:**
+16. **Filter by artist and album:**
 
     ```bash
     mkpl -d "HeavyMetal" -Y artist=Metallica -Y album="Master of Puppets" -- "MoP.m3u"
@@ -239,21 +247,21 @@ $ pip install .
 
 ### Interactive & Utility Operations
 
-16. **Count files:**
+17. **Count files:**
 
     ```bash
     mkpl -d "new_collection" -r -C
     # Output: 4023
     ```
 
-17. **Interactive confirmation for each file:**
+18. **Interactive confirmation for each file:**
 
     ```bash
     mkpl -d "new_collection" -r -R
     Add file new_collection/sample1.mp3 to playlist? [Y/n]: y
     ```
 
-18. **Append to existing playlist without duplicates:**
+19. **Append to existing playlist without duplicates:**
 
     ```bash
     mkpl -d "new_collection" -rsu "my music.m3u" -a

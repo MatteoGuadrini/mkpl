@@ -1,5 +1,11 @@
 # Release notes
 
+## 1.22.0
+Jan 29, 2026
+
+- Add `bpm` argument
+- Add `max-bpm` argument
+
 ## 1.21.0
 Jan 29, 2026
 
