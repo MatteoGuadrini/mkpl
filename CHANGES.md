@@ -1,7 +1,12 @@
 # Release notes
 
+## 1.23.0
+Mar 1, 2026
+
+- Add `orderby-bpm` argument
+
 ## 1.22.0
-Jan 29, 2026
+Feb 22, 2026
 
 - Add `bpm` argument
 - Add `max-bpm` argument

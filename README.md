@@ -90,6 +90,7 @@ $ pip install .
 | -y | --orderby-year | Sort by year metadata |
 | -Z | --orderby-size | Sort by file size |
 | -L | --orderby-length | Sort by track duration |
+| -G | --orderby-bpm | Sort by BPM (beat per minute) |
 | -s | --shuffle | Randomize track order |
 | -D | --descending | Reverse sort order |
 
@@ -227,6 +228,7 @@ $ pip install .
     mkpl -d "new_collection" -r "my music.m3u" -T        # by track
     mkpl -d "new_collection" -r "my music.m3u" -y        # by year
     mkpl -d "new_collection" -r "my music.m3u" -Z        # by size
+    mkpl -d "new_collection" -r "my music.m3u" -G        # by bpm
     mkpl -d "new_collection" -r "my music.m3u" -L -D     # by length (descending)
     ```
 
@@ -265,6 +267,12 @@ $ pip install .
 
     ```bash
     mkpl -d "new_collection" -rsu "my music.m3u" -a
+    ```
+
+20. **Speed process with cache:**
+
+    ```bash
+    mkpl -d "new_collection" -r -n 300 "my music.m3u" -a # for 5 minutes read the cache if playlist is same
     ```
 
 ## Use it like Python module

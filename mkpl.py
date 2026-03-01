@@ -110,7 +110,7 @@ TAG_FILTER = {
     "year": ("TDOR", "\xa9day"),
 }
 EXPLAIN_ERROR = False
-__version__ = "1.22.0"
+__version__ = "1.23.0"
 __all__ = [
     "make_playlist",
     "write_playlist",
@@ -353,6 +353,12 @@ def get_args():
         "-Z",
         "--orderby-size",
         help="Order playlist files by size",
+        action="store_true",
+    )
+    orderby_group.add_argument(
+        "-G",
+        "--orderby-bpm",
+        help="Order playlist files by BPM",
         action="store_true",
     )
     orderby_group.add_argument(
@@ -657,8 +663,12 @@ def get_size(file: PlaylistEntry):
 
 def get_bpm(file):
     """Get file by BPM"""
-    path = file
-    file = open_multimedia_file(file)
+    if isinstance(file, PlaylistEntry):
+        path = file.file
+        file = open_multimedia_file(file.file)
+    else:
+        path = file
+        file = open_multimedia_file(file)
     if file is None and not hasattr(file, "tags"):
         return 0
     tag = "TBPM" if isinstance(file.tags, id3.ID3Tags) else "tmpo"
@@ -878,6 +888,7 @@ def make_playlist(
     sortby_size=False,
     sortby_length=False,
     sortby_shuffle=False,
+    sortby_bpm=False,
     recursive=False,
     exclude_dirs=None,
     unique=False,
@@ -917,6 +928,7 @@ def make_playlist(
     :param sortby_size: sort by size, defaults to False
     :param sortby_length: sort by length, defaults to False
     :param sortby_shuffle: shuffle files, defaults to False
+    :param sortby_bpm: sort by BPM, defaults to False
     :param recursive: recursively search directories, defaults to False
     :param exclude_dirs: list of directories to exclude, defaults to None
     :param unique: keep only unique files, defaults to False
@@ -1080,6 +1092,8 @@ def make_playlist(
         filelist.files.sort(key=get_size, reverse=descending)
     elif sortby_length:
         filelist.files.sort(key=get_length, reverse=descending)
+    elif sortby_bpm:
+        filelist.files.sort(key=get_bpm, reverse=descending)
     elif sortby_shuffle:
         if descending:
             print("warning: descending flag is ignored with shuffle")
@@ -1125,6 +1139,7 @@ def main_cli():
                 sortby_year=args.orderby_year,
                 sortby_size=args.orderby_size,
                 sortby_length=args.orderby_length,
+                sortby_bpm=args.orderby_bpm,
                 sortby_shuffle=args.shuffle,
                 recursive=args.recursive,
                 exclude_dirs=args.exclude_dirs,
@@ -1170,6 +1185,7 @@ def main_cli():
         sortby_size=args.orderby_size,
         sortby_length=args.orderby_length,
         sortby_shuffle=args.shuffle,
+        sortby_bpm=args.orderby_bpm,
         recursive=args.recursive,
         exclude_dirs=args.exclude_dirs,
         unique=args.unique,
