@@ -144,6 +144,7 @@ def get_args():
     )
     orderby_group = parser.add_mutually_exclusive_group()
     separator_group = parser.add_mutually_exclusive_group()
+    media_group = parser.add_mutually_exclusive_group()
 
     parser.add_argument(
         "playlist",
@@ -151,6 +152,9 @@ def get_args():
         type=str,
         default=os.path.join(os.getcwd(), os.path.split(os.getcwd())[1]),
         nargs=argparse.OPTIONAL,
+    )
+    media_group.add_argument(
+        "-Q", "--audio", help="Include only audio files", action="store_true"
     )
     parser.add_argument("-v", "--verbose", help="Enable verbosity", action="store_true")
     parser.add_argument(
