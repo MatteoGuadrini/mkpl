@@ -156,6 +156,9 @@ def get_args():
     media_group.add_argument(
         "-Q", "--audio", help="Include only audio files", action="store_true"
     )
+    media_group.add_argument(
+        "-W", "--video", help="Include only video files", action="store_true"
+    )
     parser.add_argument("-v", "--verbose", help="Enable verbosity", action="store_true")
     parser.add_argument(
         "-V", "--version", help="Print version", action="version", version=__version__
