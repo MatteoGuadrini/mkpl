@@ -136,7 +136,7 @@ PlaylistFilter = namedtuple("PlaylistFilter", ("key", "value"))
 def get_args():
     """Get command-line arguments"""
 
-    global FILE_FORMAT, EXPLAIN_ERROR, CACHE
+    global FILE_FORMAT, EXPLAIN_ERROR
 
     parser = argparse.ArgumentParser(
         description="Command line tool to create playlist files in M3U format.",
@@ -407,6 +407,12 @@ def get_args():
     # Check explain error
     if arguments.explain_error:
         EXPLAIN_ERROR = True
+
+    # Check audio/video format
+    if arguments.audio:
+        FILE_FORMAT = AUDIO_FORMAT
+    elif arguments.video:
+        FILE_FORMAT = VIDEO_FORMAT
 
     # Check extension of playlist file
     if not arguments.playlist.endswith(".m3u"):
