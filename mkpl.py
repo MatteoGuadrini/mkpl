@@ -110,7 +110,7 @@ TAG_FILTER = {
     "year": ("TDOR", "\xa9day"),
 }
 EXPLAIN_ERROR = False
-__version__ = "1.23.0"
+__version__ = "1.24.0"
 __all__ = [
     "make_playlist",
     "write_playlist",
@@ -136,7 +136,7 @@ PlaylistFilter = namedtuple("PlaylistFilter", ("key", "value"))
 def get_args():
     """Get command-line arguments"""
 
-    global FILE_FORMAT, EXPLAIN_ERROR, CACHE
+    global FILE_FORMAT, EXPLAIN_ERROR
 
     parser = argparse.ArgumentParser(
         description="Command line tool to create playlist files in M3U format.",
@@ -144,6 +144,7 @@ def get_args():
     )
     orderby_group = parser.add_mutually_exclusive_group()
     separator_group = parser.add_mutually_exclusive_group()
+    media_group = parser.add_mutually_exclusive_group()
 
     parser.add_argument(
         "playlist",
@@ -151,6 +152,12 @@ def get_args():
         type=str,
         default=os.path.join(os.getcwd(), os.path.split(os.getcwd())[1]),
         nargs=argparse.OPTIONAL,
+    )
+    media_group.add_argument(
+        "-Q", "--audio", help="Include only audio files", action="store_true"
+    )
+    media_group.add_argument(
+        "-W", "--video", help="Include only video files", action="store_true"
     )
     parser.add_argument("-v", "--verbose", help="Enable verbosity", action="store_true")
     parser.add_argument(
@@ -400,6 +407,12 @@ def get_args():
     # Check explain error
     if arguments.explain_error:
         EXPLAIN_ERROR = True
+
+    # Check audio/video format
+    if arguments.audio:
+        FILE_FORMAT = AUDIO_FORMAT
+    elif arguments.video:
+        FILE_FORMAT = VIDEO_FORMAT
 
     # Check extension of playlist file
     if not arguments.playlist.endswith(".m3u"):

@@ -1,6 +1,12 @@
 # Release notes
 
 ## 1.23.0
+Mar 15, 2026
+
+- Add `audio` filter argument
+- Add `video` filter argument
+
+## 1.23.0
 Mar 1, 2026
 
 - Add `orderby-bpm` argument

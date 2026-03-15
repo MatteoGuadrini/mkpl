@@ -76,6 +76,8 @@ $ pip install .
 | Short | Long | Description | Arguments |
 |-------|------|-------------|-----------|
 | -F | --file | Add additional files | File paths |
+| -Q | --audio | Include only audio files | |
+| -W | --video | Include only video files | |
 | -l | --link | Add remote file links | HTTP/HTTPS URLs |
 | -j | --join | Join other playlist files | Playlist file paths |
 | -k | --other-playlists | Include other playlists | Playlist file paths |
