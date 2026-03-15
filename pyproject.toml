@@ -7,7 +7,7 @@ py-modules = ["mkpl"]
 
 [project]
 name = "make_playlist"
-version = "1.23.0"
+version = "1.24.0"
 readme = "README.md"
 keywords = [
     "playlist",
