@@ -37,7 +37,7 @@ from re import sub
 from string import capwords
 from urllib import parse
 
-from mutagen import File, MutagenError, id3, mp4
+from mutagen import File, MutagenError, id3, mp4, flac, _vorbis
 from tempcache import TempCache
 
 # endregion
@@ -103,11 +103,11 @@ VIDEO_FORMAT = {
 }
 FILE_FORMAT = AUDIO_FORMAT.union(VIDEO_FORMAT)
 TAG_FILTER = {
-    "album": ("TALB", "\xa9alb"),
-    "artist": ("TPE1", "\xa9ART"),
-    "genre": ("TCON", "\xa9gen"),
-    "title": ("TIT2", "\xa9nam"),
-    "year": ("TDOR", "\xa9day"),
+    "album": ("TALB", "\xa9alb", "album"),
+    "artist": ("TPE1", "\xa9ART", "artist"),
+    "genre": ("TCON", "\xa9gen", "genre"),
+    "title": ("TIT2", "\xa9nam", "title"),
+    "year": ("TDOR", "\xa9day", "year"),
 }
 EXPLAIN_ERROR = False
 __version__ = "1.24.0"
@@ -800,7 +800,7 @@ def get_tag(file, tag, default=None) -> str:
     """Get tag of multimedia file
 
     :param file: multimedia file
-    :param tag: string tag of ID3 or MP4 tags
+    :param tag: string tag of ID3, MP4 or VorbisComment-like tags
     :param default: default value to return
     :return: str
     """
@@ -809,15 +809,23 @@ def get_tag(file, tag, default=None) -> str:
     if not file or not hasattr(file, "tags"):
         return default
     tags = file.tags.get(tag, default)
-    # Check supports of ID3Tags or MP4Tags and return native value
-    if tags is None:
-        return default
     if isinstance(file.tags, id3.ID3Tags):
         ret = tags.text[0] if hasattr(tags, "text") and tags.text else default
-    if isinstance(file.tags, mp4.MP4Tags):
+    elif isinstance(file.tags, mp4.MP4Tags):
         if isinstance(tags, (list, tuple)) and tags:
             ret = tags[0]
-        ret = tags
+        else:
+            ret = tags
+    elif isinstance(file.tags, (flac.VCFLACDict, _vorbis.VCommentDict)):
+        if isinstance(tags, (list, tuple)) and tags:
+            ret = tags[0]
+        else:
+            ret = tags
+    else:
+        if isinstance(tags, (list, tuple)) and tags:
+            ret = tags[0]
+        else:
+            ret = tags
     return str(ret)
 
 
@@ -832,16 +840,15 @@ def make_extinf(file):
     if ext in AUDIO_FORMAT:
         path = file
         file = open_multimedia_file(path)
-        artist = (
-            TAG_FILTER["artist"][0]
-            if isinstance(file.tags, id3.ID3Tags)
-            else TAG_FILTER["artist"][1]
-        )
-        title = (
-            TAG_FILTER["title"][0]
-            if isinstance(file.tags, id3.ID3Tags)
-            else TAG_FILTER["title"][1]
-        )
+        if isinstance(file.tags, id3.ID3Tags):
+            artist = TAG_FILTER["artist"][0]
+            title = TAG_FILTER["title"][0]
+        elif isinstance(file.tags, mp4.MP4Tags):
+            artist = TAG_FILTER["artist"][1]
+            title = TAG_FILTER["title"][1]
+        elif isinstance(file.tags, (flac.VCFLACDict, _vorbis.VCommentDict)):
+            artist = TAG_FILTER["artist"][2]
+            title = TAG_FILTER["title"][2]
         artist_tags = get_tag(path, artist, "")
         title_tags = get_tag(path, title, "")
         length = int(file.info.length) if hasattr(file.info, "length") else -1
