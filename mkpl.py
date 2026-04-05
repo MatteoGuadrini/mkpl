@@ -102,13 +102,6 @@ VIDEO_FORMAT = {
     "mxf",
 }
 FILE_FORMAT = AUDIO_FORMAT.union(VIDEO_FORMAT)
-TAG_FILTER = {
-    "album": ("TALB", "\xa9alb", "album"),
-    "artist": ("TPE1", "\xa9ART", "artist"),
-    "genre": ("TCON", "\xa9gen", "genre"),
-    "title": ("TIT2", "\xa9nam", "title"),
-    "year": ("TDOR", "\xa9day", "year"),
-}
 EXPLAIN_ERROR = False
 __version__ = "1.24.0"
 __all__ = [
@@ -128,6 +121,17 @@ PlaylistEntry = namedtuple(
 )
 
 PlaylistFilter = namedtuple("PlaylistFilter", ("key", "value"))
+
+FileTags = namedtuple("FileTags", ("mp3", "mp4", "flac"))
+
+TAG_FILTER = {
+    "album": FileTags(mp3="TALB", mp4="\xa9alb", flac="album"),
+    "artist": FileTags(mp3="TPE1", mp4="\xa9ART", flac="artist"),
+    "genre": FileTags(mp3="TCON", mp4="\xa9gen", flac="genre"),
+    "title": FileTags(mp3="TIT2", mp4="\xa9nam", flac="title"),
+    "year": FileTags(mp3="TDOR", mp4="\xa9day", flac="year"),
+    "track": FileTags(mp3="TRCK", mp4="\trkn", flac="tracknumber"),
+}
 
 # endregion
 
@@ -627,7 +631,12 @@ def get_track(file: PlaylistEntry):
     file = open_multimedia_file(path)
     if file is None and not hasattr(file, "tags"):
         return 0
-    tag = "TRCK" if isinstance(file.tags, id3.ID3Tags) else "trkn"
+    if isinstance(file.tags, id3.ID3Tags):
+        tag = TAG_FILTER["track"].mp3
+    elif isinstance(file.tags, mp4.MP4Tags):
+        tag = TAG_FILTER["track"].mp4
+    elif isinstance(file.tags, (flac.VCFLACDict, _vorbis.VCommentDict)):
+        tag = TAG_FILTER["track"].flac
     tags = get_tag(path, tag, "0")
     if "/" in tags:
         tags = tags.split("/")[0]
@@ -640,11 +649,12 @@ def get_year(file: PlaylistEntry):
     file = open_multimedia_file(path)
     if file is None and not hasattr(file, "tags"):
         return "0000"
-    tag = (
-        TAG_FILTER["year"][0]
-        if isinstance(file.tags, id3.ID3Tags)
-        else TAG_FILTER["year"][1]
-    )
+    if isinstance(file.tags, id3.ID3Tags):
+        tag = TAG_FILTER["year"].mp3
+    elif isinstance(file.tags, mp4.MP4Tags):
+        tag = TAG_FILTER["year"].mp4
+    elif isinstance(file.tags, (flac.VCFLACDict, _vorbis.VCommentDict)):
+        tag = TAG_FILTER["year"].flac
     tags = get_tag(path, tag, "0000")
     return tags
 
@@ -703,11 +713,12 @@ def find_pattern(pattern, path):
     ext = os.path.splitext(path)[1].replace(".", "").lower()
     if ext in AUDIO_FORMAT:
         file = open_multimedia_file(path)
-        tag = (
-            TAG_FILTER["title"][0]
-            if isinstance(file.tags, id3.ID3Tags)
-            else TAG_FILTER["title"][1]
-        )
+        if isinstance(file.tags, id3.ID3Tags):
+            tag = TAG_FILTER["title"].mp3
+        elif isinstance(file.tags, mp4.MP4Tags):
+            tag = TAG_FILTER["title"].mp4
+        elif isinstance(file.tags, (flac.VCFLACDict, _vorbis.VCommentDict)):
+            tag = TAG_FILTER["title"].flac
         # Check supports of tags add compiled pattern
         title = get_tag(path, tag)
         if title and pattern.findall(title):
@@ -841,14 +852,14 @@ def make_extinf(file):
         path = file
         file = open_multimedia_file(path)
         if isinstance(file.tags, id3.ID3Tags):
-            artist = TAG_FILTER["artist"][0]
-            title = TAG_FILTER["title"][0]
+            artist = TAG_FILTER["artist"].mp3
+            title = TAG_FILTER["title"].mp3
         elif isinstance(file.tags, mp4.MP4Tags):
-            artist = TAG_FILTER["artist"][1]
-            title = TAG_FILTER["title"][1]
+            artist = TAG_FILTER["artist"].mp4
+            title = TAG_FILTER["title"].mp4
         elif isinstance(file.tags, (flac.VCFLACDict, _vorbis.VCommentDict)):
-            artist = TAG_FILTER["artist"][2]
-            title = TAG_FILTER["title"][2]
+            artist = TAG_FILTER["artist"].flac
+            title = TAG_FILTER["title"].flac
         artist_tags = get_tag(path, artist, "")
         title_tags = get_tag(path, title, "")
         length = int(file.info.length) if hasattr(file.info, "length") else -1
