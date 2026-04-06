@@ -1,6 +1,13 @@
 # Release notes
 
-## 1.23.0
+## 1.25.0
+Apr 6, 2026
+
+- Add **FileTag** object
+- Fix FLAC extra infos
+- Fix search extension case
+
+## 1.24.0
 Mar 15, 2026
 
 - Add `audio` filter argument

@@ -37,7 +37,7 @@ from re import sub
 from string import capwords
 from urllib import parse
 
-from mutagen import File, MutagenError, id3, mp4
+from mutagen import File, MutagenError, id3, mp4, flac, _vorbis
 from tempcache import TempCache
 
 # endregion
@@ -102,15 +102,8 @@ VIDEO_FORMAT = {
     "mxf",
 }
 FILE_FORMAT = AUDIO_FORMAT.union(VIDEO_FORMAT)
-TAG_FILTER = {
-    "album": ("TALB", "\xa9alb"),
-    "artist": ("TPE1", "\xa9ART"),
-    "genre": ("TCON", "\xa9gen"),
-    "title": ("TIT2", "\xa9nam"),
-    "year": ("TDOR", "\xa9day"),
-}
 EXPLAIN_ERROR = False
-__version__ = "1.24.0"
+__version__ = "1.25.0"
 __all__ = [
     "make_playlist",
     "write_playlist",
@@ -128,6 +121,18 @@ PlaylistEntry = namedtuple(
 )
 
 PlaylistFilter = namedtuple("PlaylistFilter", ("key", "value"))
+
+FileTags = namedtuple("FileTags", ("mp3", "mp4", "flac"))
+
+TAG_FILTER = {
+    "album": FileTags(mp3="TALB", mp4="\xa9alb", flac="album"),
+    "artist": FileTags(mp3="TPE1", mp4="\xa9ART", flac="artist"),
+    "genre": FileTags(mp3="TCON", mp4="\xa9gen", flac="genre"),
+    "title": FileTags(mp3="TIT2", mp4="\xa9nam", flac="title"),
+    "year": FileTags(mp3="TDOR", mp4="\xa9day", flac="year"),
+    "track": FileTags(mp3="TRCK", mp4="trkn", flac="tracknumber"),
+    "bpm": FileTags(mp3="TBPM", mp4="tmpo", flac="bpm"),
+}
 
 # endregion
 
@@ -612,7 +617,7 @@ def open_multimedia_file(path):
 
     ext = os.path.splitext(path)[1].replace(".", "").lower()
     file = None
-    if ext in AUDIO_FORMAT:
+    if ext.lower() in AUDIO_FORMAT:
         try:
             file = File(path)
         except MutagenError:
@@ -627,7 +632,12 @@ def get_track(file: PlaylistEntry):
     file = open_multimedia_file(path)
     if file is None and not hasattr(file, "tags"):
         return 0
-    tag = "TRCK" if isinstance(file.tags, id3.ID3Tags) else "trkn"
+    if isinstance(file.tags, id3.ID3Tags):
+        tag = TAG_FILTER["track"].mp3
+    elif isinstance(file.tags, mp4.MP4Tags):
+        tag = TAG_FILTER["track"].mp4
+    elif isinstance(file.tags, (flac.VCFLACDict, _vorbis.VCommentDict)):
+        tag = TAG_FILTER["track"].flac
     tags = get_tag(path, tag, "0")
     if "/" in tags:
         tags = tags.split("/")[0]
@@ -640,11 +650,12 @@ def get_year(file: PlaylistEntry):
     file = open_multimedia_file(path)
     if file is None and not hasattr(file, "tags"):
         return "0000"
-    tag = (
-        TAG_FILTER["year"][0]
-        if isinstance(file.tags, id3.ID3Tags)
-        else TAG_FILTER["year"][1]
-    )
+    if isinstance(file.tags, id3.ID3Tags):
+        tag = TAG_FILTER["year"].mp3
+    elif isinstance(file.tags, mp4.MP4Tags):
+        tag = TAG_FILTER["year"].mp4
+    elif isinstance(file.tags, (flac.VCFLACDict, _vorbis.VCommentDict)):
+        tag = TAG_FILTER["year"].flac
     tags = get_tag(path, tag, "0000")
     return tags
 
@@ -685,6 +696,12 @@ def get_bpm(file):
     if file is None and not hasattr(file, "tags"):
         return 0
     tag = "TBPM" if isinstance(file.tags, id3.ID3Tags) else "tmpo"
+    if isinstance(file.tags, id3.ID3Tags):
+        tag = TAG_FILTER["title"].mp3
+    elif isinstance(file.tags, mp4.MP4Tags):
+        tag = TAG_FILTER["title"].mp4
+    elif isinstance(file.tags, (flac.VCFLACDict, _vorbis.VCommentDict)):
+        tag = TAG_FILTER["title"].flac
     tags = get_tag(path, tag, "0")
     return int(tags) if tags.isdecimal() else 0
 
@@ -701,13 +718,14 @@ def find_pattern(pattern, path):
         return True
     # Check type of file
     ext = os.path.splitext(path)[1].replace(".", "").lower()
-    if ext in AUDIO_FORMAT:
+    if ext.lower() in AUDIO_FORMAT:
         file = open_multimedia_file(path)
-        tag = (
-            TAG_FILTER["title"][0]
-            if isinstance(file.tags, id3.ID3Tags)
-            else TAG_FILTER["title"][1]
-        )
+        if isinstance(file.tags, id3.ID3Tags):
+            tag = TAG_FILTER["title"].mp3
+        elif isinstance(file.tags, mp4.MP4Tags):
+            tag = TAG_FILTER["title"].mp4
+        elif isinstance(file.tags, (flac.VCFLACDict, _vorbis.VCommentDict)):
+            tag = TAG_FILTER["title"].flac
         # Check supports of tags add compiled pattern
         title = get_tag(path, tag)
         if title and pattern.findall(title):
@@ -784,11 +802,12 @@ def check_filter(file, playlist_filter: PlaylistFilter) -> bool:
     temp_file = open_multimedia_file(file)
     if temp_file is None or not hasattr(temp_file, "tags"):
         return ret
-    tag = (
-        TAG_FILTER[playlist_filter.key][0]
-        if isinstance(temp_file.tags, id3.ID3Tags)
-        else TAG_FILTER[playlist_filter.key][1]
-    )
+    if isinstance(temp_file.tags, id3.ID3Tags):
+        tag = TAG_FILTER[playlist_filter.key].mp3
+    elif isinstance(temp_file.tags, mp4.MP4Tags):
+        tag = TAG_FILTER[playlist_filter.key].mp4
+    elif isinstance(temp_file.tags, (flac.VCFLACDict, _vorbis.VCommentDict)):
+        tag = TAG_FILTER[playlist_filter.key].flac
     tags = get_tag(file, tag)
     # Return True if filter match
     if tags and re.match(playlist_filter.value, tags, re.IGNORECASE):
@@ -800,7 +819,7 @@ def get_tag(file, tag, default=None) -> str:
     """Get tag of multimedia file
 
     :param file: multimedia file
-    :param tag: string tag of ID3 or MP4 tags
+    :param tag: string tag of ID3, MP4 or VorbisComment-like tags
     :param default: default value to return
     :return: str
     """
@@ -809,15 +828,23 @@ def get_tag(file, tag, default=None) -> str:
     if not file or not hasattr(file, "tags"):
         return default
     tags = file.tags.get(tag, default)
-    # Check supports of ID3Tags or MP4Tags and return native value
-    if tags is None:
-        return default
     if isinstance(file.tags, id3.ID3Tags):
         ret = tags.text[0] if hasattr(tags, "text") and tags.text else default
-    if isinstance(file.tags, mp4.MP4Tags):
+    elif isinstance(file.tags, mp4.MP4Tags):
         if isinstance(tags, (list, tuple)) and tags:
             ret = tags[0]
-        ret = tags
+        else:
+            ret = tags
+    elif isinstance(file.tags, (flac.VCFLACDict, _vorbis.VCommentDict)):
+        if isinstance(tags, (list, tuple)) and tags:
+            ret = tags[0]
+        else:
+            ret = tags
+    else:
+        if isinstance(tags, (list, tuple)) and tags:
+            ret = tags[0]
+        else:
+            ret = tags
     return str(ret)
 
 
@@ -829,19 +856,18 @@ def make_extinf(file):
     extinf_str = "{},{} - {}"
     # Check type of file
     ext = os.path.splitext(file)[1].replace(".", "").lower()
-    if ext in AUDIO_FORMAT:
+    if ext.lower() in AUDIO_FORMAT:
         path = file
         file = open_multimedia_file(path)
-        artist = (
-            TAG_FILTER["artist"][0]
-            if isinstance(file.tags, id3.ID3Tags)
-            else TAG_FILTER["artist"][1]
-        )
-        title = (
-            TAG_FILTER["title"][0]
-            if isinstance(file.tags, id3.ID3Tags)
-            else TAG_FILTER["title"][1]
-        )
+        if isinstance(file.tags, id3.ID3Tags):
+            artist = TAG_FILTER["artist"].mp3
+            title = TAG_FILTER["title"].mp3
+        elif isinstance(file.tags, mp4.MP4Tags):
+            artist = TAG_FILTER["artist"].mp4
+            title = TAG_FILTER["title"].mp4
+        elif isinstance(file.tags, (flac.VCFLACDict, _vorbis.VCommentDict)):
+            artist = TAG_FILTER["artist"].flac
+            title = TAG_FILTER["title"].flac
         artist_tags = get_tag(path, artist, "")
         title_tags = get_tag(path, title, "")
         length = int(file.info.length) if hasattr(file.info, "length") else -1
@@ -1049,7 +1075,6 @@ def make_playlist(
                 if interactive:
                     if not confirm(file):
                         continue
-                vprint(verbose, f"add multimedia file {file}")
                 # Substitute with Windows separator
                 if windows:
                     file = unix_to_dos(file)
@@ -1068,6 +1093,7 @@ def make_playlist(
                     make_extinf(file) if infos else infos,
                 )
                 filelist.files.append(entry)
+                vprint(verbose, f"add multimedia file {file}")
     # Add link
     if links:
         filelist.files.extend(
