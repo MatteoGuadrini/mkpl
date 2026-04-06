@@ -103,7 +103,7 @@ VIDEO_FORMAT = {
 }
 FILE_FORMAT = AUDIO_FORMAT.union(VIDEO_FORMAT)
 EXPLAIN_ERROR = False
-__version__ = "1.24.0"
+__version__ = "1.25.0"
 __all__ = [
     "make_playlist",
     "write_playlist",
@@ -130,7 +130,8 @@ TAG_FILTER = {
     "genre": FileTags(mp3="TCON", mp4="\xa9gen", flac="genre"),
     "title": FileTags(mp3="TIT2", mp4="\xa9nam", flac="title"),
     "year": FileTags(mp3="TDOR", mp4="\xa9day", flac="year"),
-    "track": FileTags(mp3="TRCK", mp4="\trkn", flac="tracknumber"),
+    "track": FileTags(mp3="TRCK", mp4="trkn", flac="tracknumber"),
+    "bpm": FileTags(mp3="TBPM", mp4="tmpo", flac="bpm"),
 }
 
 # endregion
@@ -616,7 +617,7 @@ def open_multimedia_file(path):
 
     ext = os.path.splitext(path)[1].replace(".", "").lower()
     file = None
-    if ext in AUDIO_FORMAT:
+    if ext.lower() in AUDIO_FORMAT:
         try:
             file = File(path)
         except MutagenError:
@@ -695,6 +696,12 @@ def get_bpm(file):
     if file is None and not hasattr(file, "tags"):
         return 0
     tag = "TBPM" if isinstance(file.tags, id3.ID3Tags) else "tmpo"
+    if isinstance(file.tags, id3.ID3Tags):
+        tag = TAG_FILTER["title"].mp3
+    elif isinstance(file.tags, mp4.MP4Tags):
+        tag = TAG_FILTER["title"].mp4
+    elif isinstance(file.tags, (flac.VCFLACDict, _vorbis.VCommentDict)):
+        tag = TAG_FILTER["title"].flac
     tags = get_tag(path, tag, "0")
     return int(tags) if tags.isdecimal() else 0
 
@@ -711,7 +718,7 @@ def find_pattern(pattern, path):
         return True
     # Check type of file
     ext = os.path.splitext(path)[1].replace(".", "").lower()
-    if ext in AUDIO_FORMAT:
+    if ext.lower() in AUDIO_FORMAT:
         file = open_multimedia_file(path)
         if isinstance(file.tags, id3.ID3Tags):
             tag = TAG_FILTER["title"].mp3
@@ -795,11 +802,12 @@ def check_filter(file, playlist_filter: PlaylistFilter) -> bool:
     temp_file = open_multimedia_file(file)
     if temp_file is None or not hasattr(temp_file, "tags"):
         return ret
-    tag = (
-        TAG_FILTER[playlist_filter.key][0]
-        if isinstance(temp_file.tags, id3.ID3Tags)
-        else TAG_FILTER[playlist_filter.key][1]
-    )
+    if isinstance(temp_file.tags, id3.ID3Tags):
+        tag = TAG_FILTER[playlist_filter.key].mp3
+    elif isinstance(temp_file.tags, mp4.MP4Tags):
+        tag = TAG_FILTER[playlist_filter.key].mp4
+    elif isinstance(temp_file.tags, (flac.VCFLACDict, _vorbis.VCommentDict)):
+        tag = TAG_FILTER[playlist_filter.key].flac
     tags = get_tag(file, tag)
     # Return True if filter match
     if tags and re.match(playlist_filter.value, tags, re.IGNORECASE):
@@ -848,7 +856,7 @@ def make_extinf(file):
     extinf_str = "{},{} - {}"
     # Check type of file
     ext = os.path.splitext(file)[1].replace(".", "").lower()
-    if ext in AUDIO_FORMAT:
+    if ext.lower() in AUDIO_FORMAT:
         path = file
         file = open_multimedia_file(path)
         if isinstance(file.tags, id3.ID3Tags):
@@ -1067,7 +1075,6 @@ def make_playlist(
                 if interactive:
                     if not confirm(file):
                         continue
-                vprint(verbose, f"add multimedia file {file}")
                 # Substitute with Windows separator
                 if windows:
                     file = unix_to_dos(file)
@@ -1086,6 +1093,7 @@ def make_playlist(
                     make_extinf(file) if infos else infos,
                 )
                 filelist.files.append(entry)
+                vprint(verbose, f"add multimedia file {file}")
     # Add link
     if links:
         filelist.files.extend(
