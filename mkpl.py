@@ -823,29 +823,34 @@ def get_tag(file, tag, default=None) -> str:
     :param default: default value to return
     :return: str
     """
-    path = file
-    file = open_multimedia_file(path)
-    if not file or not hasattr(file, "tags"):
-        return default
-    tags = file.tags.get(tag, default)
-    if isinstance(file.tags, id3.ID3Tags):
-        ret = tags.text[0] if hasattr(tags, "text") and tags.text else default
-    elif isinstance(file.tags, mp4.MP4Tags):
-        if isinstance(tags, (list, tuple)) and tags:
-            ret = tags[0]
+    global AUDIO_FORMAT
+
+    ext = os.path.splitext(file)[1].replace(".", "").lower()
+    if ext in AUDIO_FORMAT:
+        path = file
+        file = open_multimedia_file(path)
+        if not file or not hasattr(file, "tags"):
+            return default
+        tags = file.tags.get(tag, default)
+        if isinstance(file.tags, id3.ID3Tags):
+            ret = tags.text[0] if hasattr(tags, "text") and tags.text else default
+        elif isinstance(file.tags, mp4.MP4Tags):
+            if isinstance(tags, (list, tuple)) and tags:
+                ret = tags[0]
+            else:
+                ret = tags
+        elif isinstance(file.tags, (flac.VCFLACDict, _vorbis.VCommentDict)):
+            if isinstance(tags, (list, tuple)) and tags:
+                ret = tags[0]
+            else:
+                ret = tags
         else:
-            ret = tags
-    elif isinstance(file.tags, (flac.VCFLACDict, _vorbis.VCommentDict)):
-        if isinstance(tags, (list, tuple)) and tags:
-            ret = tags[0]
-        else:
-            ret = tags
-    else:
-        if isinstance(tags, (list, tuple)) and tags:
-            ret = tags[0]
-        else:
-            ret = tags
-    return str(ret)
+            if isinstance(tags, (list, tuple)) and tags:
+                ret = tags[0]
+            else:
+                ret = tags
+        return str(ret)
+    return default
 
 
 def make_extinf(file):
