@@ -708,8 +708,6 @@ def get_bpm(file):
 
 def find_pattern(pattern, path):
     """Find patter in a file and tags"""
-    global AUDIO_FORMAT
-
     # Create compiled pattern
     if not isinstance(pattern, re.Pattern):
         pattern = re.compile(pattern)
@@ -717,19 +715,17 @@ def find_pattern(pattern, path):
     if pattern.findall(path):
         return True
     # Check type of file
-    ext = os.path.splitext(path)[1].replace(".", "").lower()
-    if ext.lower() in AUDIO_FORMAT:
-        file = open_multimedia_file(path)
-        if isinstance(file.tags, id3.ID3Tags):
-            tag = TAG_FILTER["title"].mp3
-        elif isinstance(file.tags, mp4.MP4Tags):
-            tag = TAG_FILTER["title"].mp4
-        elif isinstance(file.tags, (flac.VCFLACDict, _vorbis.VCommentDict)):
-            tag = TAG_FILTER["title"].flac
-        # Check supports of tags add compiled pattern
-        title = get_tag(path, tag)
-        if title and pattern.findall(title):
-            return True
+    file = open_multimedia_file(path)
+    if isinstance(file.tags, id3.ID3Tags):
+        tag = TAG_FILTER["title"].mp3
+    elif isinstance(file.tags, mp4.MP4Tags):
+        tag = TAG_FILTER["title"].mp4
+    elif isinstance(file.tags, (flac.VCFLACDict, _vorbis.VCommentDict)):
+        tag = TAG_FILTER["title"].flac
+    # Check supports of tags add compiled pattern
+    title = get_tag(path, tag)
+    if title and pattern.findall(title):
+        return True
     return False
 
 
@@ -855,29 +851,26 @@ def get_tag(file, tag, default=None) -> str:
 
 def make_extinf(file):
     """Compose EXTINF attribute"""
-    global AUDIO_FORMAT
-
     # String format EXTINF attribute: %seconds%,"%artist% - %title%"
     extinf_str = "{},{} - {}"
     # Check type of file
-    ext = os.path.splitext(file)[1].replace(".", "").lower()
-    if ext.lower() in AUDIO_FORMAT:
-        path = file
-        file = open_multimedia_file(path)
-        if isinstance(file.tags, id3.ID3Tags):
-            artist = TAG_FILTER["artist"].mp3
-            title = TAG_FILTER["title"].mp3
-        elif isinstance(file.tags, mp4.MP4Tags):
-            artist = TAG_FILTER["artist"].mp4
-            title = TAG_FILTER["title"].mp4
-        elif isinstance(file.tags, (flac.VCFLACDict, _vorbis.VCommentDict)):
-            artist = TAG_FILTER["artist"].flac
-            title = TAG_FILTER["title"].flac
-        artist_tags = get_tag(path, artist, "")
-        title_tags = get_tag(path, title, "")
-        length = int(file.info.length) if hasattr(file.info, "length") else -1
-        return extinf_str.format(length, artist_tags, title_tags).replace("\n", " ")
-    return "Unknown extra infos"
+    path = file
+    file = open_multimedia_file(path)
+    if file is None and not hasattr(file, "tags"):
+        return extinf_str.format(-1, "", "")
+    if isinstance(file.tags, id3.ID3Tags):
+        artist = TAG_FILTER["artist"].mp3
+        title = TAG_FILTER["title"].mp3
+    elif isinstance(file.tags, mp4.MP4Tags):
+        artist = TAG_FILTER["artist"].mp4
+        title = TAG_FILTER["title"].mp4
+    elif isinstance(file.tags, (flac.VCFLACDict, _vorbis.VCommentDict)):
+        artist = TAG_FILTER["artist"].flac
+        title = TAG_FILTER["title"].flac
+    artist_tags = get_tag(path, artist, "")
+    title_tags = get_tag(path, title, "")
+    length = int(file.info.length) if hasattr(file.info, "length") else -1
+    return extinf_str.format(length, artist_tags, title_tags).replace("\n", " ")
 
 
 def write_playlist(
