@@ -629,15 +629,7 @@ def open_multimedia_file(path):
 def get_track(file: PlaylistEntry):
     """Get file by track for sort"""
     path = file.file
-    file = open_multimedia_file(path)
-    if file is None and not hasattr(file, "tags"):
-        return 0
-    if isinstance(file.tags, id3.ID3Tags):
-        tag = TAG_FILTER["track"].mp3
-    elif isinstance(file.tags, mp4.MP4Tags):
-        tag = TAG_FILTER["track"].mp4
-    elif isinstance(file.tags, (flac.VCFLACDict, _vorbis.VCommentDict)):
-        tag = TAG_FILTER["track"].flac
+    tag = tag_type(path, "track")
     tags = get_tag(path, tag, "0")
     if "/" in tags:
         tags = tags.split("/")[0]
@@ -794,7 +786,7 @@ def check_filter(file, playlist_filter: PlaylistFilter) -> bool:
     :return: bool
     """
     ret = False
-    # Check supports of ID3Tags or MP4Tags
+    # Check supports of tags
     temp_file = open_multimedia_file(file)
     if temp_file is None or not hasattr(temp_file, "tags"):
         return ret
@@ -811,6 +803,25 @@ def check_filter(file, playlist_filter: PlaylistFilter) -> bool:
     return ret
 
 
+def tag_type(file, tag):
+    """Get type of tags of multimedia file
+
+    :param file: multimedia file
+    :param tag: tag of multimedia file
+    :return: type of tags
+    """
+    file = open_multimedia_file(file)
+    tag_value = TAG_FILTER.get(tag, None)
+    if file and hasattr(file, "tags"):
+        if isinstance(file.tags, id3.ID3Tags):
+            tag_value = tag_value.mp3 if tag_value else None
+        elif isinstance(file.tags, mp4.MP4Tags):
+            tag_value = tag_value.mp4 if tag_value else None
+        elif isinstance(file.tags, (flac.VCFLACDict, _vorbis.VCommentDict)):
+            tag_value = tag_value.flac if tag_value else None
+    return tag_value
+
+
 def get_tag(file, tag, default=None) -> str:
     """Get tag of multimedia file
 
@@ -825,7 +836,7 @@ def get_tag(file, tag, default=None) -> str:
     if ext in AUDIO_FORMAT:
         path = file
         file = open_multimedia_file(path)
-        if not file or not hasattr(file, "tags"):
+        if not file or not hasattr(file, "tags") or tag is None:
             return default
         tags = file.tags.get(tag, default)
         if isinstance(file.tags, id3.ID3Tags):
