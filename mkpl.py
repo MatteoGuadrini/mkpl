@@ -639,15 +639,7 @@ def get_track(file: PlaylistEntry):
 def get_year(file: PlaylistEntry):
     """Get file by year for sort"""
     path = file.file
-    file = open_multimedia_file(path)
-    if file is None and not hasattr(file, "tags"):
-        return "0000"
-    if isinstance(file.tags, id3.ID3Tags):
-        tag = TAG_FILTER["year"].mp3
-    elif isinstance(file.tags, mp4.MP4Tags):
-        tag = TAG_FILTER["year"].mp4
-    elif isinstance(file.tags, (flac.VCFLACDict, _vorbis.VCommentDict)):
-        tag = TAG_FILTER["year"].flac
+    tag = tag_type(path, "year")
     tags = get_tag(path, tag, "0000")
     return tags
 
@@ -681,19 +673,9 @@ def get_bpm(file):
     """Get file by BPM"""
     if isinstance(file, PlaylistEntry):
         path = file.file
-        file = open_multimedia_file(file.file)
     else:
         path = file
-        file = open_multimedia_file(file)
-    if file is None and not hasattr(file, "tags"):
-        return 0
-    tag = "TBPM" if isinstance(file.tags, id3.ID3Tags) else "tmpo"
-    if isinstance(file.tags, id3.ID3Tags):
-        tag = TAG_FILTER["title"].mp3
-    elif isinstance(file.tags, mp4.MP4Tags):
-        tag = TAG_FILTER["title"].mp4
-    elif isinstance(file.tags, (flac.VCFLACDict, _vorbis.VCommentDict)):
-        tag = TAG_FILTER["title"].flac
+    tag = tag_type(path, "bpm")
     tags = get_tag(path, tag, "0")
     return int(tags) if tags.isdecimal() else 0
 
@@ -707,13 +689,7 @@ def find_pattern(pattern, path):
     if pattern.findall(path):
         return True
     # Check type of file
-    file = open_multimedia_file(path)
-    if isinstance(file.tags, id3.ID3Tags):
-        tag = TAG_FILTER["title"].mp3
-    elif isinstance(file.tags, mp4.MP4Tags):
-        tag = TAG_FILTER["title"].mp4
-    elif isinstance(file.tags, (flac.VCFLACDict, _vorbis.VCommentDict)):
-        tag = TAG_FILTER["title"].flac
+    tag = tag_type(path, "title")
     # Check supports of tags add compiled pattern
     title = get_tag(path, tag)
     if title and pattern.findall(title):
@@ -787,15 +763,7 @@ def check_filter(file, playlist_filter: PlaylistFilter) -> bool:
     """
     ret = False
     # Check supports of tags
-    temp_file = open_multimedia_file(file)
-    if temp_file is None or not hasattr(temp_file, "tags"):
-        return ret
-    if isinstance(temp_file.tags, id3.ID3Tags):
-        tag = TAG_FILTER[playlist_filter.key].mp3
-    elif isinstance(temp_file.tags, mp4.MP4Tags):
-        tag = TAG_FILTER[playlist_filter.key].mp4
-    elif isinstance(temp_file.tags, (flac.VCFLACDict, _vorbis.VCommentDict)):
-        tag = TAG_FILTER[playlist_filter.key].flac
+    tag = tag_type(file, playlist_filter.key)
     tags = get_tag(file, tag)
     # Return True if filter match
     if tags and re.match(playlist_filter.value, tags, re.IGNORECASE):
@@ -867,17 +835,10 @@ def make_extinf(file):
     # Check type of file
     path = file
     file = open_multimedia_file(path)
-    if file is None and not hasattr(file, "tags"):
-        return extinf_str.format(-1, "", "")
-    if isinstance(file.tags, id3.ID3Tags):
-        artist = TAG_FILTER["artist"].mp3
-        title = TAG_FILTER["title"].mp3
-    elif isinstance(file.tags, mp4.MP4Tags):
-        artist = TAG_FILTER["artist"].mp4
-        title = TAG_FILTER["title"].mp4
-    elif isinstance(file.tags, (flac.VCFLACDict, _vorbis.VCommentDict)):
-        artist = TAG_FILTER["artist"].flac
-        title = TAG_FILTER["title"].flac
+    if not file or not hasattr(file, "info"):
+        return extinf_str.format(-1, "N/A", "N/A")
+    artist = tag_type(path, "artist")
+    title = tag_type(path, "title")
     artist_tags = get_tag(path, artist, "")
     title_tags = get_tag(path, title, "")
     length = int(file.info.length) if hasattr(file.info, "length") else -1
