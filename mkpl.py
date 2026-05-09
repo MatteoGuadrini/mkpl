@@ -539,13 +539,13 @@ def confirm(file, default="y"):
     :return: True if the answer is Y.
     :rtype: bool
     """
-    while (
-        answer := input(
-            "Add file {0} to playlist? {1}:".format(
-                file, "[Y/n]" if default == "y" else "[y/N]"
-            )
-        ).lower()
-    ) not in ("y", "n"):
+    printed_message = "Add file {0} to playlist".format(file)
+    artist = get_tag(file, tag_type(file, "artist"), "")
+    title = get_tag(file, tag_type(file, "title"), "")
+    if artist and title:
+        printed_message += " ({0} - {1})".format(artist, title)
+    printed_message += "? {0}:".format("[Y/n]" if default == "y" else "[y/N]")
+    while (answer := input(printed_message).lower()) not in ("y", "n"):
         # Check if default
         if not answer:
             answer = default
