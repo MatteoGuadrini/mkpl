@@ -546,6 +546,13 @@ def confirm(file, default="y"):
         printed_message += " ({0} - {1})".format(artist, title)
     printed_message += "? {0}:".format("[Y/n]" if default == "y" else "[y/N]")
     while (answer := input(printed_message).lower()) not in ("y", "n"):
+        # Check if similar word
+        if answer in ("yes", "ye", "yep", "yeah"):
+            answer = "y"
+            break
+        elif answer in ("no", "nop", "nope"):
+            answer = "n"
+            break
         # Check if default
         if not answer:
             answer = default
