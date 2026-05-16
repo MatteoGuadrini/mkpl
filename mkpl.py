@@ -122,6 +122,8 @@ PlaylistEntry = namedtuple(
 
 PlaylistFilter = namedtuple("PlaylistFilter", ("key", "value"))
 
+PlaylistExtensions = namedtuple("PlaylistExtensions", ("length", "artist", "title"))
+
 FileTags = namedtuple("FileTags", ("mp3", "mp4", "flac"))
 
 TAG_FILTER = {
