@@ -851,7 +851,10 @@ def make_extinf(file):
     artist_tags = get_tag(path, artist, "")
     title_tags = get_tag(path, title, "")
     length = int(file.info.length) if hasattr(file.info, "length") else -1
-    return extinf_str.format(length, artist_tags, title_tags).replace("\n", " ")
+    extensions = PlaylistExtensions(length, artist_tags, title_tags)
+    return extinf_str.format(
+        extensions.length, extensions.artist, extensions.title
+    ).replace("\n", " ")
 
 
 def write_playlist(
