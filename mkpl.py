@@ -124,7 +124,7 @@ PlaylistFilter = namedtuple("PlaylistFilter", ("key", "value"))
 
 PlaylistExtensions = namedtuple("PlaylistExtensions", ("length", "artist", "title"))
 
-FileTags = namedtuple("FileTags", ("mp3", "mp4", "flac"))
+FileTags = namedtuple("FileTags", ("mp3", "mp4", "flac"), defaults=(None, None, None))
 
 TAG_FILTER = {
     "album": FileTags(mp3="TALB", mp4="\xa9alb", flac="album"),
@@ -640,8 +640,10 @@ def get_track(file: PlaylistEntry):
     path = file.file
     tag = tag_type(path, "track")
     tags = get_tag(path, tag, "0")
-    if "/" in tags:
-        tags = tags.split("/")[0]
+    for sep in ("/", ",", "-", " ", ".", "_", ":", ";", "|", "\\"):
+        if sep in tags:
+            tags = tags.split(sep)[0]
+            break
     return int(tags) if tags.isdecimal() else 0
 
 
