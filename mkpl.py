@@ -124,16 +124,21 @@ PlaylistFilter = namedtuple("PlaylistFilter", ("key", "value"))
 
 PlaylistExtensions = namedtuple("PlaylistExtensions", ("length", "artist", "title"))
 
-FileTags = namedtuple("FileTags", ("mp3", "mp4", "flac"), defaults=(None, None, None))
+FileTags = namedtuple(
+    "FileTags", ("mp3", "mp4", "flac", "wm"), defaults=(None, None, None, None)
+)
 
 TAG_FILTER = {
-    "album": FileTags(mp3="TALB", mp4="\xa9alb", flac="album"),
-    "artist": FileTags(mp3="TPE1", mp4="\xa9ART", flac="artist"),
-    "genre": FileTags(mp3="TCON", mp4="\xa9gen", flac="genre"),
-    "title": FileTags(mp3="TIT2", mp4="\xa9nam", flac="title"),
-    "year": FileTags(mp3="TDOR", mp4="\xa9day", flac="year"),
-    "track": FileTags(mp3="TRCK", mp4="trkn", flac="tracknumber"),
-    "bpm": FileTags(mp3="TBPM", mp4="tmpo", flac="bpm"),
+    "album": FileTags(mp3="TALB", mp4="\xa9alb", flac="album", wm="WM/AlbumTitle"),
+    "artist": FileTags(mp3="TPE1", mp4="\xa9ART", flac="artist", wm="WM/Artist"),
+    "genre": FileTags(mp3="TCON", mp4="\xa9gen", flac="genre", wm="WM/Genre"),
+    "title": FileTags(mp3="TIT2", mp4="\xa9nam", flac="title", wm="WM/Title"),
+    "year": FileTags(mp3="TDOR", mp4="\xa9day", flac="year", wm="WM/Year"),
+    "track": FileTags(mp3="TRCK", mp4="trkn", flac="tracknumber", wm="WM/TrackNumber"),
+    "bpm": FileTags(mp3="TBPM", mp4="tmpo", flac="bpm", wm="WM/BeatsPerMinute"),
+    "publisher": FileTags(
+        mp3="TPUB", mp4="\xa9pub", flac="publisher", wm="WM/Publisher"
+    ),
 }
 
 # endregion
