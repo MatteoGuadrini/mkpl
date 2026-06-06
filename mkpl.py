@@ -386,6 +386,12 @@ def get_args():
         help="Order playlist files by length",
         action="store_true",
     )
+    orderby_group.add_argument(
+        "-H",
+        "--orderby-publisher",
+        help="Order playlist files by publisher",
+        action="store_true",
+    )
     parser.add_argument(
         "-U",
         "--url-chars",

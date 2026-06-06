@@ -93,6 +93,7 @@ $ pip install .
 | -Z | --orderby-size | Sort by file size |
 | -L | --orderby-length | Sort by track duration |
 | -G | --orderby-bpm | Sort by BPM (beat per minute) |
+| -H | --orderby-publisher | Sort by publisher |
 | -s | --shuffle | Randomize track order |
 | -D | --descending | Reverse sort order |
 
@@ -113,7 +114,7 @@ $ pip install .
 | Short | Long | Description |
 |-------|------|-------------|
 | -R | --interactive | Confirm each file before adding |
-| -C | --count | Count files without creating playlist |
+| -C | --count | Count files when creating playlist |
 | -S | --split | Split into separate playlists by directory |
 | -Y | --filter | Filter by metadata (artist, album, etc.) |
 | -n | --cache | Cache results (seconds) |
@@ -231,6 +232,7 @@ $ pip install .
     mkpl -d "new_collection" -r "my music.m3u" -y        # by year
     mkpl -d "new_collection" -r "my music.m3u" -Z        # by size
     mkpl -d "new_collection" -r "my music.m3u" -G        # by bpm
+    mkpl -d "new_collection" -r "my music.m3u" -H        # by publisher
     mkpl -d "new_collection" -r "my music.m3u" -L -D     # by length (descending)
     ```
 
@@ -276,6 +278,19 @@ $ pip install .
     ```bash
     mkpl -d "new_collection" -r -n 300 "my music.m3u" -a # for 5 minutes read the cache if playlist is same
     ```
+
+### List of filter tags
+
+| Name | Supported |
+|------|-----------|
+| album | mp3, mp4, flac, wma |
+| artist | mp3, mp4, flac, wma |
+| genre | mp3, mp4, flac, wma |
+| title | mp3, mp4, flac, wma |
+| year | mp3, mp4, flac, wma |
+| track | mp3, mp4, flac, wma |
+| bpm | mp3, mp4, flac, wma |
+| publisher | mp3, mp4, flac, wma |
 
 ## Use it like Python module
 
