@@ -646,9 +646,16 @@ def open_multimedia_file(path):
     return file
 
 
+def get_playlist_file(file):
+    """Get file path from playlist entry"""
+    if isinstance(file, PlaylistEntry):
+        return file.file
+    return file
+
+
 def get_track(file: PlaylistEntry):
     """Get file by track for sort"""
-    path = file.file
+    path = get_playlist_file(file)
     tag = tag_type(path, "track")
     tags = get_tag(path, tag, "0")
     for sep in ("/", ",", "-", " ", ".", "_", ":", ";", "|", "\\"):
@@ -660,7 +667,7 @@ def get_track(file: PlaylistEntry):
 
 def get_year(file: PlaylistEntry):
     """Get file by year for sort"""
-    path = file.file
+    path = get_playlist_file(file)
     tag = tag_type(path, "year")
     tags = get_tag(path, tag, "0000")
     return tags
@@ -668,10 +675,7 @@ def get_year(file: PlaylistEntry):
 
 def get_length(file):
     """Get file by length for sort"""
-    if isinstance(file, PlaylistEntry):
-        file = open_multimedia_file(file.file)
-    else:
-        file = open_multimedia_file(file)
+    file = open_multimedia_file(get_playlist_file(file))
     if file and hasattr(file, "info"):
         return file.info.length if hasattr(file.info, "length") else 0.1
     return 0.1
@@ -679,27 +683,34 @@ def get_length(file):
 
 def get_ctime(file: PlaylistEntry):
     """Get file by creation time for sort"""
-    if os.path.exists(file.file):
-        return getctime(file.file)
+    file = get_playlist_file(file)
+    if os.path.exists(file):
+        return getctime(file)
     return 0
 
 
 def get_size(file: PlaylistEntry):
     """Get file by size for sort"""
-    if os.path.exists(file.file):
-        return os.path.getsize(file.file)
+    file = get_playlist_file(file)
+    if os.path.exists(file):
+        return os.path.getsize(file)
     return 0
 
 
 def get_bpm(file):
     """Get file by BPM"""
-    if isinstance(file, PlaylistEntry):
-        path = file.file
-    else:
-        path = file
+    path = get_playlist_file(file)
     tag = tag_type(path, "bpm")
     tags = get_tag(path, tag, "0")
     return int(tags) if tags.isdecimal() else 0
+
+
+def get_publisher(file):
+    """Get file by publisher"""
+    path = get_playlist_file(file)
+    tag = tag_type(path, "publisher")
+    tags = get_tag(path, tag)
+    return tags.lower() if tags else ""
 
 
 def find_pattern(pattern, path):
