@@ -34,7 +34,7 @@ from os.path import abspath, basename, exists, getctime, getsize, isdir, join, n
 from pathlib import Path
 from random import shuffle
 from re import sub
-from string import capwords
+from string import capwords, punctuation
 from urllib import parse
 
 from mutagen import File, MutagenError, id3, mp4, flac, _vorbis
@@ -660,7 +660,7 @@ def get_track(file: PlaylistEntry):
     tags = get_tag(path, tag, "0")
     for sep in ("/", ",", "-", " ", ".", "_", ":", ";", "|", "\\"):
         if sep in tags:
-            tags = tags.split(sep)[0]
+            tags = tags.split(sep)[0].strip(punctuation)
             break
     return int(tags) if tags.isdecimal() else 0
 
