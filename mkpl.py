@@ -34,7 +34,7 @@ from os.path import abspath, basename, exists, getctime, getsize, isdir, join, n
 from pathlib import Path
 from random import shuffle
 from re import sub
-from string import capwords
+from string import capwords, punctuation
 from urllib import parse
 
 from mutagen import File, MutagenError, id3, mp4, flac, _vorbis
@@ -103,7 +103,7 @@ VIDEO_FORMAT = {
 }
 FILE_FORMAT = AUDIO_FORMAT.union(VIDEO_FORMAT)
 EXPLAIN_ERROR = False
-__version__ = "1.25.0"
+__version__ = "1.26.0"
 __all__ = [
     "make_playlist",
     "write_playlist",
@@ -122,16 +122,23 @@ PlaylistEntry = namedtuple(
 
 PlaylistFilter = namedtuple("PlaylistFilter", ("key", "value"))
 
-FileTags = namedtuple("FileTags", ("mp3", "mp4", "flac"))
+PlaylistExtensions = namedtuple("PlaylistExtensions", ("length", "artist", "title"))
+
+FileTags = namedtuple(
+    "FileTags", ("mp3", "mp4", "flac", "wm"), defaults=(None, None, None, None)
+)
 
 TAG_FILTER = {
-    "album": FileTags(mp3="TALB", mp4="\xa9alb", flac="album"),
-    "artist": FileTags(mp3="TPE1", mp4="\xa9ART", flac="artist"),
-    "genre": FileTags(mp3="TCON", mp4="\xa9gen", flac="genre"),
-    "title": FileTags(mp3="TIT2", mp4="\xa9nam", flac="title"),
-    "year": FileTags(mp3="TDOR", mp4="\xa9day", flac="year"),
-    "track": FileTags(mp3="TRCK", mp4="trkn", flac="tracknumber"),
-    "bpm": FileTags(mp3="TBPM", mp4="tmpo", flac="bpm"),
+    "album": FileTags(mp3="TALB", mp4="\xa9alb", flac="album", wm="WM/AlbumTitle"),
+    "artist": FileTags(mp3="TPE1", mp4="\xa9ART", flac="artist", wm="WM/Artist"),
+    "genre": FileTags(mp3="TCON", mp4="\xa9gen", flac="genre", wm="WM/Genre"),
+    "title": FileTags(mp3="TIT2", mp4="\xa9nam", flac="title", wm="WM/Title"),
+    "year": FileTags(mp3="TDOR", mp4="\xa9day", flac="year", wm="WM/Year"),
+    "track": FileTags(mp3="TRCK", mp4="trkn", flac="tracknumber", wm="WM/TrackNumber"),
+    "bpm": FileTags(mp3="TBPM", mp4="tmpo", flac="bpm", wm="WM/BeatsPerMinute"),
+    "publisher": FileTags(
+        mp3="TPUB", mp4="\xa9pub", flac="publisher", wm="WM/Publisher"
+    ),
 }
 
 # endregion
@@ -379,6 +386,12 @@ def get_args():
         help="Order playlist files by length",
         action="store_true",
     )
+    orderby_group.add_argument(
+        "-H",
+        "--orderby-publisher",
+        help="Order playlist files by publisher",
+        action="store_true",
+    )
     parser.add_argument(
         "-U",
         "--url-chars",
@@ -539,13 +552,20 @@ def confirm(file, default="y"):
     :return: True if the answer is Y.
     :rtype: bool
     """
-    while (
-        answer := input(
-            "Add file {0} to playlist? {1}:".format(
-                file, "[Y/n]" if default == "y" else "[y/N]"
-            )
-        ).lower()
-    ) not in ("y", "n"):
+    printed_message = "Add file {0} to playlist".format(file)
+    artist = get_tag(file, tag_type(file, "artist"), "")
+    title = get_tag(file, tag_type(file, "title"), "")
+    if artist and title:
+        printed_message += " ({0} - {1})".format(artist, title)
+    printed_message += "? {0}:".format("[Y/n]" if default == "y" else "[y/N]")
+    while (answer := input(printed_message).lower()) not in ("y", "n"):
+        # Check if similar word
+        if answer in ("yes", "ye", "yep", "yeah"):
+            answer = "y"
+            break
+        elif answer in ("no", "nop", "nope"):
+            answer = "n"
+            break
         # Check if default
         if not answer:
             answer = default
@@ -626,46 +646,36 @@ def open_multimedia_file(path):
     return file
 
 
+def get_playlist_file(file):
+    """Get file path from playlist entry"""
+    if isinstance(file, PlaylistEntry):
+        return file.file
+    return file
+
+
 def get_track(file: PlaylistEntry):
     """Get file by track for sort"""
-    path = file.file
-    file = open_multimedia_file(path)
-    if file is None and not hasattr(file, "tags"):
-        return 0
-    if isinstance(file.tags, id3.ID3Tags):
-        tag = TAG_FILTER["track"].mp3
-    elif isinstance(file.tags, mp4.MP4Tags):
-        tag = TAG_FILTER["track"].mp4
-    elif isinstance(file.tags, (flac.VCFLACDict, _vorbis.VCommentDict)):
-        tag = TAG_FILTER["track"].flac
+    path = get_playlist_file(file)
+    tag = tag_type(path, "track")
     tags = get_tag(path, tag, "0")
-    if "/" in tags:
-        tags = tags.split("/")[0]
+    for sep in ("/", ",", "-", " ", ".", "_", ":", ";", "|", "\\"):
+        if sep in tags:
+            tags = tags.split(sep)[0].strip(punctuation)
+            break
     return int(tags) if tags.isdecimal() else 0
 
 
 def get_year(file: PlaylistEntry):
     """Get file by year for sort"""
-    path = file.file
-    file = open_multimedia_file(path)
-    if file is None and not hasattr(file, "tags"):
-        return "0000"
-    if isinstance(file.tags, id3.ID3Tags):
-        tag = TAG_FILTER["year"].mp3
-    elif isinstance(file.tags, mp4.MP4Tags):
-        tag = TAG_FILTER["year"].mp4
-    elif isinstance(file.tags, (flac.VCFLACDict, _vorbis.VCommentDict)):
-        tag = TAG_FILTER["year"].flac
+    path = get_playlist_file(file)
+    tag = tag_type(path, "year")
     tags = get_tag(path, tag, "0000")
     return tags
 
 
 def get_length(file):
     """Get file by length for sort"""
-    if isinstance(file, PlaylistEntry):
-        file = open_multimedia_file(file.file)
-    else:
-        file = open_multimedia_file(file)
+    file = open_multimedia_file(get_playlist_file(file))
     if file and hasattr(file, "info"):
         return file.info.length if hasattr(file.info, "length") else 0.1
     return 0.1
@@ -673,43 +683,38 @@ def get_length(file):
 
 def get_ctime(file: PlaylistEntry):
     """Get file by creation time for sort"""
-    if os.path.exists(file.file):
-        return getctime(file.file)
+    file = get_playlist_file(file)
+    if os.path.exists(file):
+        return getctime(file)
     return 0
 
 
 def get_size(file: PlaylistEntry):
     """Get file by size for sort"""
-    if os.path.exists(file.file):
-        return os.path.getsize(file.file)
+    file = get_playlist_file(file)
+    if os.path.exists(file):
+        return os.path.getsize(file)
     return 0
 
 
 def get_bpm(file):
     """Get file by BPM"""
-    if isinstance(file, PlaylistEntry):
-        path = file.file
-        file = open_multimedia_file(file.file)
-    else:
-        path = file
-        file = open_multimedia_file(file)
-    if file is None and not hasattr(file, "tags"):
-        return 0
-    tag = "TBPM" if isinstance(file.tags, id3.ID3Tags) else "tmpo"
-    if isinstance(file.tags, id3.ID3Tags):
-        tag = TAG_FILTER["title"].mp3
-    elif isinstance(file.tags, mp4.MP4Tags):
-        tag = TAG_FILTER["title"].mp4
-    elif isinstance(file.tags, (flac.VCFLACDict, _vorbis.VCommentDict)):
-        tag = TAG_FILTER["title"].flac
+    path = get_playlist_file(file)
+    tag = tag_type(path, "bpm")
     tags = get_tag(path, tag, "0")
     return int(tags) if tags.isdecimal() else 0
 
 
+def get_publisher(file):
+    """Get file by publisher"""
+    path = get_playlist_file(file)
+    tag = tag_type(path, "publisher")
+    tags = get_tag(path, tag)
+    return tags.lower() if tags else ""
+
+
 def find_pattern(pattern, path):
     """Find patter in a file and tags"""
-    global AUDIO_FORMAT
-
     # Create compiled pattern
     if not isinstance(pattern, re.Pattern):
         pattern = re.compile(pattern)
@@ -717,19 +722,11 @@ def find_pattern(pattern, path):
     if pattern.findall(path):
         return True
     # Check type of file
-    ext = os.path.splitext(path)[1].replace(".", "").lower()
-    if ext.lower() in AUDIO_FORMAT:
-        file = open_multimedia_file(path)
-        if isinstance(file.tags, id3.ID3Tags):
-            tag = TAG_FILTER["title"].mp3
-        elif isinstance(file.tags, mp4.MP4Tags):
-            tag = TAG_FILTER["title"].mp4
-        elif isinstance(file.tags, (flac.VCFLACDict, _vorbis.VCommentDict)):
-            tag = TAG_FILTER["title"].flac
-        # Check supports of tags add compiled pattern
-        title = get_tag(path, tag)
-        if title and pattern.findall(title):
-            return True
+    tag = tag_type(path, "title")
+    # Check supports of tags add compiled pattern
+    title = get_tag(path, tag)
+    if title and pattern.findall(title):
+        return True
     return False
 
 
@@ -798,21 +795,32 @@ def check_filter(file, playlist_filter: PlaylistFilter) -> bool:
     :return: bool
     """
     ret = False
-    # Check supports of ID3Tags or MP4Tags
-    temp_file = open_multimedia_file(file)
-    if temp_file is None or not hasattr(temp_file, "tags"):
-        return ret
-    if isinstance(temp_file.tags, id3.ID3Tags):
-        tag = TAG_FILTER[playlist_filter.key].mp3
-    elif isinstance(temp_file.tags, mp4.MP4Tags):
-        tag = TAG_FILTER[playlist_filter.key].mp4
-    elif isinstance(temp_file.tags, (flac.VCFLACDict, _vorbis.VCommentDict)):
-        tag = TAG_FILTER[playlist_filter.key].flac
+    # Check supports of tags
+    tag = tag_type(file, playlist_filter.key)
     tags = get_tag(file, tag)
     # Return True if filter match
     if tags and re.match(playlist_filter.value, tags, re.IGNORECASE):
         ret = True
     return ret
+
+
+def tag_type(file, tag):
+    """Get type of tags of multimedia file
+
+    :param file: multimedia file
+    :param tag: tag of multimedia file
+    :return: type of tags
+    """
+    file = open_multimedia_file(file)
+    tag_value = TAG_FILTER.get(tag, None)
+    if file and hasattr(file, "tags"):
+        if isinstance(file.tags, id3.ID3Tags):
+            tag_value = tag_value.mp3 if tag_value else None
+        elif isinstance(file.tags, mp4.MP4Tags):
+            tag_value = tag_value.mp4 if tag_value else None
+        elif isinstance(file.tags, (flac.VCFLACDict, _vorbis.VCommentDict)):
+            tag_value = tag_value.flac if tag_value else None
+    return tag_value
 
 
 def get_tag(file, tag, default=None) -> str:
@@ -823,56 +831,54 @@ def get_tag(file, tag, default=None) -> str:
     :param default: default value to return
     :return: str
     """
-    path = file
-    file = open_multimedia_file(path)
-    if not file or not hasattr(file, "tags"):
-        return default
-    tags = file.tags.get(tag, default)
-    if isinstance(file.tags, id3.ID3Tags):
-        ret = tags.text[0] if hasattr(tags, "text") and tags.text else default
-    elif isinstance(file.tags, mp4.MP4Tags):
-        if isinstance(tags, (list, tuple)) and tags:
-            ret = tags[0]
+    global AUDIO_FORMAT
+
+    ext = os.path.splitext(file)[1].replace(".", "").lower()
+    if ext in AUDIO_FORMAT:
+        path = file
+        file = open_multimedia_file(path)
+        if not file or not hasattr(file, "tags") or tag is None:
+            return default
+        tags = file.tags.get(tag, default)
+        if isinstance(file.tags, id3.ID3Tags):
+            ret = tags.text[0] if hasattr(tags, "text") and tags.text else default
+        elif isinstance(file.tags, mp4.MP4Tags):
+            if isinstance(tags, (list, tuple)) and tags:
+                ret = tags[0]
+            else:
+                ret = tags
+        elif isinstance(file.tags, (flac.VCFLACDict, _vorbis.VCommentDict)):
+            if isinstance(tags, (list, tuple)) and tags:
+                ret = tags[0]
+            else:
+                ret = tags
         else:
-            ret = tags
-    elif isinstance(file.tags, (flac.VCFLACDict, _vorbis.VCommentDict)):
-        if isinstance(tags, (list, tuple)) and tags:
-            ret = tags[0]
-        else:
-            ret = tags
-    else:
-        if isinstance(tags, (list, tuple)) and tags:
-            ret = tags[0]
-        else:
-            ret = tags
-    return str(ret)
+            if isinstance(tags, (list, tuple)) and tags:
+                ret = tags[0]
+            else:
+                ret = tags
+        return str(ret)
+    return default
 
 
 def make_extinf(file):
     """Compose EXTINF attribute"""
-    global AUDIO_FORMAT
-
     # String format EXTINF attribute: %seconds%,"%artist% - %title%"
     extinf_str = "{},{} - {}"
     # Check type of file
-    ext = os.path.splitext(file)[1].replace(".", "").lower()
-    if ext.lower() in AUDIO_FORMAT:
-        path = file
-        file = open_multimedia_file(path)
-        if isinstance(file.tags, id3.ID3Tags):
-            artist = TAG_FILTER["artist"].mp3
-            title = TAG_FILTER["title"].mp3
-        elif isinstance(file.tags, mp4.MP4Tags):
-            artist = TAG_FILTER["artist"].mp4
-            title = TAG_FILTER["title"].mp4
-        elif isinstance(file.tags, (flac.VCFLACDict, _vorbis.VCommentDict)):
-            artist = TAG_FILTER["artist"].flac
-            title = TAG_FILTER["title"].flac
-        artist_tags = get_tag(path, artist, "")
-        title_tags = get_tag(path, title, "")
-        length = int(file.info.length) if hasattr(file.info, "length") else -1
-        return extinf_str.format(length, artist_tags, title_tags).replace("\n", " ")
-    return "Unknown extra infos"
+    path = file
+    file = open_multimedia_file(path)
+    if not file or not hasattr(file, "info"):
+        return extinf_str.format(-1, "N/A", "N/A")
+    artist = tag_type(path, "artist")
+    title = tag_type(path, "title")
+    artist_tags = get_tag(path, artist, "")
+    title_tags = get_tag(path, title, "")
+    length = int(file.info.length) if hasattr(file.info, "length") else -1
+    extensions = PlaylistExtensions(length, artist_tags, title_tags)
+    return extinf_str.format(
+        extensions.length, extensions.artist, extensions.title
+    ).replace("\n", " ")
 
 
 def write_playlist(
@@ -928,6 +934,7 @@ def make_playlist(
     sortby_length=False,
     sortby_shuffle=False,
     sortby_bpm=False,
+    sortby_publisher=False,
     recursive=False,
     exclude_dirs=None,
     unique=False,
@@ -968,6 +975,7 @@ def make_playlist(
     :param sortby_length: sort by length, defaults to False
     :param sortby_shuffle: shuffle files, defaults to False
     :param sortby_bpm: sort by BPM, defaults to False
+    :param sortby_publisher: sort by publisher, defaults to False
     :param recursive: recursively search directories, defaults to False
     :param exclude_dirs: list of directories to exclude, defaults to None
     :param unique: keep only unique files, defaults to False
@@ -1133,6 +1141,8 @@ def make_playlist(
         filelist.files.sort(key=get_length, reverse=descending)
     elif sortby_bpm:
         filelist.files.sort(key=get_bpm, reverse=descending)
+    elif sortby_publisher:
+        filelist.files.sort(key=get_publisher, reverse=descending)
     elif sortby_shuffle:
         if descending:
             print("warning: descending flag is ignored with shuffle")
@@ -1179,6 +1189,7 @@ def main_cli():
                 sortby_size=args.orderby_size,
                 sortby_length=args.orderby_length,
                 sortby_bpm=args.orderby_bpm,
+                sortby_publisher=args.orderby_publisher,
                 sortby_shuffle=args.shuffle,
                 recursive=args.recursive,
                 exclude_dirs=args.exclude_dirs,
@@ -1225,6 +1236,7 @@ def main_cli():
         sortby_length=args.orderby_length,
         sortby_shuffle=args.shuffle,
         sortby_bpm=args.orderby_bpm,
+        sortby_publisher=args.orderby_publisher,
         recursive=args.recursive,
         exclude_dirs=args.exclude_dirs,
         unique=args.unique,

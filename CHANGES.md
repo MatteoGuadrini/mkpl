@@ -1,5 +1,17 @@
 # Release notes
 
+## 1.26.0
+Jun 14, 2026
+
+- Add **PlaylistExtensions** object
+- Add similar word into confirm function: `y, yep, yeah, nope`
+- Add **tag_type** function
+- Add _artist_ and _title_ info in interactive mode
+- Add more punctuation into **get_track** function
+- Add `orderby-publisher` argument
+- Add **get_publisher** function
+- Fix audio format check in some functions
+
 ## 1.25.0
 Apr 6, 2026
 
