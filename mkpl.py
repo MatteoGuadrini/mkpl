@@ -197,13 +197,20 @@ def get_args():
         metavar="FORMAT",
     )
     parser.add_argument(
-        "-p", "--pattern", help="Regular expression inclusion pattern", default=None
+        "-p",
+        "--pattern",
+        help="Regular expression inclusion pattern",
+        default=None,
+        nargs=argparse.ONE_OR_MORE,
+        action="append",
     )
     parser.add_argument(
         "-P",
         "--exclude-pattern",
         help="Regular expression exclusion pattern",
         default=None,
+        nargs=argparse.ONE_OR_MORE,
+        action="append",
     )
     parser.add_argument(
         "-f",
@@ -512,6 +519,18 @@ def get_args():
     elif arguments.max_length and arguments.length >= arguments.max_length:
         parser.error("minimum length is upper of maximum length")
 
+    # Check patterns
+    if arguments.pattern:
+        arguments.pattern = [
+            pattern for patterns in arguments.pattern for pattern in patterns
+        ]
+
+    # Check exclude patterns
+    if arguments.exclude_pattern:
+        arguments.exclude_pattern = [
+            pattern for patterns in arguments.exclude_pattern for pattern in patterns
+        ]
+
     # Check filter
     if arguments.filter:
         arguments.filter = [
@@ -715,9 +734,7 @@ def get_publisher(file):
 
 def find_pattern(pattern, path):
     """Find patter in a file and tags"""
-    # Create compiled pattern
-    if not isinstance(pattern, re.Pattern):
-        pattern = re.compile(pattern)
+    pattern = re.compile(pattern)
     # Check pattern into filename
     if pattern.findall(path):
         return True
@@ -1035,14 +1052,22 @@ def make_playlist(
                 file = str(file.resolve()) if absolute else str(file)
                 # Check file match pattern
                 if pattern:
+                    pattern_matched = False
                     # Check re pattern
-                    compiled_pattern = re.compile(pattern)
-                    if not find_pattern(compiled_pattern, file):
+                    for regexp in pattern:
+                        if find_pattern(regexp, file):
+                            pattern_matched = True
+                            break
+                    if not pattern_matched:
                         continue
                 if exclude_pattern:
+                    exclude_pattern_matched = False
                     # Check re pattern
-                    compiled_pattern = re.compile(exclude_pattern)
-                    if find_pattern(compiled_pattern, file):
+                    for regexp in exclude_pattern:
+                        if find_pattern(regexp, file):
+                            exclude_pattern_matched = True
+                            break
+                    if exclude_pattern_matched:
                         continue
                 # Check if in exclude dirs
                 if any([e_path in file for e_path in exclude_dirs]):
