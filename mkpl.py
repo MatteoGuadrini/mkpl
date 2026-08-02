@@ -29,7 +29,7 @@ import re
 import traceback
 from collections import namedtuple
 from filecmp import cmp
-from itertools import islice
+from itertools import islice, chain
 from os.path import abspath, basename, exists, getctime, getsize, isdir, join, normpath
 from pathlib import Path
 from random import shuffle
@@ -521,15 +521,11 @@ def get_args():
 
     # Check patterns
     if arguments.pattern:
-        arguments.pattern = [
-            pattern for patterns in arguments.pattern for pattern in patterns
-        ]
+        arguments.pattern = list(chain.from_iterable(arguments.pattern))
 
     # Check exclude patterns
     if arguments.exclude_pattern:
-        arguments.exclude_pattern = [
-            pattern for patterns in arguments.exclude_pattern for pattern in patterns
-        ]
+        arguments.exclude_pattern = list(chain.from_iterable(arguments.exclude_pattern))
 
     # Check filter
     if arguments.filter:
@@ -1052,13 +1048,11 @@ def make_playlist(
                 file = str(file.resolve()) if absolute else str(file)
                 # Check file match pattern
                 if pattern:
-                    pattern_matched = False
                     # Check re pattern
                     for regexp in pattern:
                         if find_pattern(regexp, file):
-                            pattern_matched = True
                             break
-                    if not pattern_matched:
+                    else:
                         continue
                 if exclude_pattern:
                     exclude_pattern_matched = False
@@ -1074,12 +1068,10 @@ def make_playlist(
                     continue
                 # Check filters
                 if filters:
-                    match_filter = False
                     for filter_ in filters:
                         if check_filter(file, filter_):
-                            match_filter = True
                             break
-                    if not match_filter:
+                    else:
                         continue
                 # Check if file is in playlist
                 if unique:
