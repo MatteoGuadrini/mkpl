@@ -136,6 +136,9 @@ TAG_FILTER = {
     "year": FileTags(mp3="TDOR", mp4="\xa9day", flac="year", wm="WM/Year"),
     "track": FileTags(mp3="TRCK", mp4="trkn", flac="tracknumber", wm="WM/TrackNumber"),
     "bpm": FileTags(mp3="TBPM", mp4="tmpo", flac="bpm", wm="WM/BeatsPerMinute"),
+    "comment": FileTags(
+        mp3="COMM", mp4="tm\xa9cmt", flac="comment", wm="WM/Description"
+    ),
     "publisher": FileTags(
         mp3="TPUB", mp4="\xa9pub", flac="publisher", wm="WM/Publisher"
     ),

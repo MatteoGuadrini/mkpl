@@ -48,8 +48,8 @@ $ pip install .
 |-------|------|-------------|-----------|
 | -f | --format | Select only a specific file format | Format (e.g., mp3, mkv) |
 | -i | --include | Include additional file formats | Format list (e.g., mp3 mp4) |
-| -p | --pattern | Include files matching regex pattern | Regular expression |
-| -P | --exclude-pattern | Exclude files matching regex pattern | Regular expression |
+| -p | --pattern | Include files matching regex pattern | Regular expression list |
+| -P | --exclude-pattern | Exclude files matching regex pattern | Regular expression list |
 
 ### File Size, BPM & Duration Filters
 
@@ -290,6 +290,7 @@ $ pip install .
 | year | mp3, mp4, flac, wma |
 | track | mp3, mp4, flac, wma |
 | bpm | mp3, mp4, flac, wma |
+| comment | mp3, mp4, flac, wma |
 | publisher | mp3, mp4, flac, wma |
 
 ## Use it like Python module
