@@ -107,6 +107,7 @@ __version__ = "1.26.0"
 __all__ = [
     "make_playlist",
     "write_playlist",
+    "sort_playlist",
     "Playlist",
     "PlaylistEntry",
     "PlaylistFilter",
@@ -932,6 +933,54 @@ def write_playlist(
             pl.write(file.file + "\n")
 
 
+def sort_playlist(
+    playlist: Playlist,
+    sortby_name=False,
+    sortby_date=False,
+    sortby_track=False,
+    sortby_year=False,
+    sortby_size=False,
+    sortby_length=False,
+    sortby_shuffle=False,
+    sortby_bpm=False,
+    sortby_publisher=False,
+    descending=False,
+):
+    """Sort playlist files
+
+    :param sortby_name: sort by name, defaults to False
+    :param sortby_date: sort by date, defaults to False
+    :param sortby_track: sort by track, defaults to False
+    :param sortby_year: sort by year, defaults to False
+    :param sortby_size: sort by size, defaults to False
+    :param sortby_length: sort by length, defaults to False
+    :param sortby_shuffle: shuffle files, defaults to False
+    :param sortby_bpm: sort by BPM, defaults to False
+    :param sortby_publisher: sort by publisher, defaults to False
+    :param descending: sort in descending order, defaults to False
+    """
+    if sortby_name:
+        playlist.files.sort(
+            key=lambda x: get_playlist_file(x).lower(), reverse=descending
+        )
+    elif sortby_date:
+        playlist.files.sort(key=get_ctime, reverse=descending)
+    elif sortby_track:
+        playlist.files.sort(key=get_track, reverse=descending)
+    elif sortby_year:
+        playlist.files.sort(key=get_year, reverse=descending)
+    elif sortby_size:
+        playlist.files.sort(key=get_size, reverse=descending)
+    elif sortby_length:
+        playlist.files.sort(key=get_length, reverse=descending)
+    elif sortby_shuffle:
+        shuffle(playlist.files)
+    elif sortby_bpm:
+        playlist.files.sort(key=get_bpm, reverse=descending)
+    elif sortby_publisher:
+        playlist.files.sort(key=get_publisher, reverse=descending)
+
+
 def make_playlist(
     directories,
     file_formats,
@@ -942,14 +991,6 @@ def make_playlist(
     image=False,
     infos=False,
     exclude_pattern=None,
-    sortby_name=False,
-    sortby_date=False,
-    sortby_track=False,
-    sortby_year=False,
-    sortby_size=False,
-    sortby_length=False,
-    sortby_shuffle=False,
-    sortby_bpm=False,
     sortby_publisher=False,
     recursive=False,
     exclude_dirs=None,
@@ -968,7 +1009,6 @@ def make_playlist(
     links=None,
     other_files=None,
     filters=None,
-    descending=False,
     other_playlists=None,
     verbose=False,
 ):
@@ -983,15 +1023,6 @@ def make_playlist(
     :param image: image of playlist, defaults to False
     :param infos: additional info of files, defaults to False
     :param exclude_pattern: list of path to exlude, defaults to None
-    :param sortby_name: sort by name, defaults to False
-    :param sortby_date: sort by date, defaults to False
-    :param sortby_track: sort by track, defaults to False
-    :param sortby_year: sort by year, defaults to False
-    :param sortby_size: sort by size, defaults to False
-    :param sortby_length: sort by length, defaults to False
-    :param sortby_shuffle: shuffle files, defaults to False
-    :param sortby_bpm: sort by BPM, defaults to False
-    :param sortby_publisher: sort by publisher, defaults to False
     :param recursive: recursively search directories, defaults to False
     :param exclude_dirs: list of directories to exclude, defaults to None
     :param unique: keep only unique files, defaults to False
@@ -1009,7 +1040,6 @@ def make_playlist(
     :param links: add additional links to playlist (http or https), defaults to None
     :param other_files: add additional files to playlist, defaults to None
     :param filters: filter by meatadata file attributes (year, title, genre, album, artist), defaults to None
-    :param descending: sort in descending order, defaults to False
     :param other_playlists: other playlists to include, defaults to None
     :param verbose: enable verbosity, defaults to False
     :return: Playlist object
@@ -1146,27 +1176,6 @@ def make_playlist(
                 for other_file in other_files
             ]
         )
-    # Check sort
-    if sortby_name:
-        filelist.files.sort()
-    elif sortby_date:
-        filelist.files.sort(key=get_ctime, reverse=descending)
-    elif sortby_track:
-        filelist.files.sort(key=get_track, reverse=descending)
-    elif sortby_year:
-        filelist.files.sort(key=get_year, reverse=descending)
-    elif sortby_size:
-        filelist.files.sort(key=get_size, reverse=descending)
-    elif sortby_length:
-        filelist.files.sort(key=get_length, reverse=descending)
-    elif sortby_bpm:
-        filelist.files.sort(key=get_bpm, reverse=descending)
-    elif sortby_publisher:
-        filelist.files.sort(key=get_publisher, reverse=descending)
-    elif sortby_shuffle:
-        if descending:
-            print("warning: descending flag is ignored with shuffle")
-        shuffle(filelist.files)
     return filelist
 
 
@@ -1202,15 +1211,6 @@ def main_cli():
                 encoding=args.encoding,
                 image=args.image,
                 infos=args.add_info,
-                sortby_name=args.orderby_name,
-                sortby_date=args.orderby_date,
-                sortby_track=args.orderby_track,
-                sortby_year=args.orderby_year,
-                sortby_size=args.orderby_size,
-                sortby_length=args.orderby_length,
-                sortby_bpm=args.orderby_bpm,
-                sortby_publisher=args.orderby_publisher,
-                sortby_shuffle=args.shuffle,
                 recursive=args.recursive,
                 exclude_dirs=args.exclude_dirs,
                 unique=args.unique,
@@ -1228,7 +1228,6 @@ def main_cli():
                 links=args.link,
                 other_files=args.file,
                 filters=args.filter,
-                descending=args.descending,
                 other_playlists=args.other_playlists,
                 verbose=args.verbose,
             )
@@ -1248,15 +1247,6 @@ def main_cli():
         encoding=args.encoding,
         image=args.image,
         infos=args.add_info,
-        sortby_name=args.orderby_name,
-        sortby_date=args.orderby_date,
-        sortby_track=args.orderby_track,
-        sortby_year=args.orderby_year,
-        sortby_size=args.orderby_size,
-        sortby_length=args.orderby_length,
-        sortby_shuffle=args.shuffle,
-        sortby_bpm=args.orderby_bpm,
-        sortby_publisher=args.orderby_publisher,
         recursive=args.recursive,
         exclude_dirs=args.exclude_dirs,
         unique=args.unique,
@@ -1274,7 +1264,6 @@ def main_cli():
         links=args.link,
         other_files=args.file,
         filters=args.filter,
-        descending=args.descending,
         other_playlists=args.other_playlists,
         verbose=args.verbose,
     )
@@ -1284,8 +1273,36 @@ def main_cli():
         join_playlist(playlist, *args.join)
 
     if playlist.files:
-        vprint(args.verbose, f"write playlist {args.playlist}")
+        # Sort playlist files
+        if any(
+            [
+                args.orderby_name,
+                args.orderby_date,
+                args.orderby_track,
+                args.orderby_year,
+                args.orderby_size,
+                args.orderby_length,
+                args.shuffle,
+                args.orderby_bpm,
+                args.orderby_publisher,
+            ]
+        ):
+            vprint(args.verbose, f"sort playlist files={len(playlist.files)}")
+            sort_playlist(
+                playlist,
+                sortby_name=args.orderby_name,
+                sortby_date=args.orderby_date,
+                sortby_track=args.orderby_track,
+                sortby_year=args.orderby_year,
+                sortby_size=args.orderby_size,
+                sortby_length=args.orderby_length,
+                sortby_shuffle=args.shuffle,
+                sortby_bpm=args.orderby_bpm,
+                sortby_publisher=args.orderby_publisher,
+                descending=args.descending,
+            )
         # Write playlist to file
+        vprint(args.verbose, f"write playlist {args.playlist}")
         write_playlist(args.playlist, args.open_mode, playlist, args.max_tracks)
     else:
         print(
