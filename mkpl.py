@@ -684,6 +684,14 @@ def get_track(file: PlaylistEntry):
     return int(tags) if tags.isdecimal() else 0
 
 
+def get_title(file: PlaylistEntry):
+    """Get file by title for sort"""
+    path = get_playlist_file(file)
+    tag = tag_type(path, "title")
+    tags = get_tag(path, tag, "")
+    return tags
+
+
 def get_year(file: PlaylistEntry):
     """Get file by year for sort"""
     path = get_playlist_file(file)
@@ -961,7 +969,8 @@ def sort_playlist(
     """
     if sortby_name:
         playlist.files.sort(
-            key=lambda x: get_playlist_file(x).lower(), reverse=descending
+            key=lambda x: get_title(x).lower() or get_playlist_file(x).lower(),
+            reverse=descending,
         )
     elif sortby_date:
         playlist.files.sort(key=get_ctime, reverse=descending)
