@@ -103,7 +103,7 @@ VIDEO_FORMAT = {
 }
 FILE_FORMAT = AUDIO_FORMAT.union(VIDEO_FORMAT)
 EXPLAIN_ERROR = False
-__version__ = "1.26.0"
+__version__ = "1.27.0"
 __all__ = [
     "make_playlist",
     "write_playlist",
@@ -1000,7 +1000,6 @@ def make_playlist(
     image=False,
     infos=False,
     exclude_pattern=None,
-    sortby_publisher=False,
     recursive=False,
     exclude_dirs=None,
     unique=False,

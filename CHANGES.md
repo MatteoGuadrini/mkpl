@@ -1,5 +1,13 @@
 # Release notes
 
+## 1.27.0
+Sep 06, 2026
+
+- Add **get_title** function
+- Add **sort_playlist** function
+- Add _comment_ to tag list filter
+- Make _pattern_ and _exclude pattern_ a list
+
 ## 1.26.0
 Jun 14, 2026
 
