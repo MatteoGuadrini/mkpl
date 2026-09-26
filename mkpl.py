@@ -161,6 +161,7 @@ def get_args():
     orderby_group = parser.add_mutually_exclusive_group()
     separator_group = parser.add_mutually_exclusive_group()
     media_group = parser.add_mutually_exclusive_group()
+    info_group = parser.add_mutually_exclusive_group()
 
     parser.add_argument(
         "playlist",
@@ -335,10 +336,16 @@ def get_args():
         help="Asks each file for confirmation",
         action="store_true",
     )
-    parser.add_argument(
+    info_group.add_argument(
         "-N",
         "--add-info",
         help="Add file information to playlist. See EXTINF attribute",
+        action="store_true",
+    )
+    info_group.add_argument(
+        "-K",
+        "--add-info-interactive",
+        help="Add file information to playlist, interactive. See EXTINF attribute",
         action="store_true",
     )
     parser.add_argument(
