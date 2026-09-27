@@ -108,6 +108,7 @@ $ pip install .
 | -x | --unix | Use Unix path separators |
 | -U | --url-chars | Apply URL encoding to paths |
 | -N | --add-info | Include file metadata (#EXTINF) |
+| -K | --add-info-interactive | Include file metadata (#EXTINF), interactive |
 
 ### Interactive & Utility Options
 
@@ -211,10 +212,25 @@ $ pip install .
     mkpl -d "new_collection" -r "my music.m3u" -t "My Collection" -g "UTF-8" -I "new_collection/cover.jpg"
     ```
 
-13. **Include track information (#EXTINF):**
+13. **Include track information (#EXTINF), automatically or interactive:**
 
     ```bash
     mkpl -d "HeavyMetal/Master of Puppets" -N "master"
+    cat "master.m3u"
+    #EXTM3U
+    #EXTINF:516,Metallica - Master of Puppets
+    HeavyMetal/Master Of Puppets/02 - Master Of Puppets.mp3
+    ```
+
+    ```bash
+    mkpl -d "HeavyMetal/Master of Puppets" -NK "master"
+    File: HeavyMetal/Master Of Puppets/02 - Master Of Puppets.mp3
+    Enter artist name []: Metallica
+    Enter title name: Master of Puppets
+    File: HeavyMetal/Master Of Puppets/01 - Battery.mp3
+    Enter artist name [Metallica]: 
+    Enter title name: Battery
+    File: HeavyMetal/Master Of Puppets/03 - The Thing That Should Not Be.mp3
     cat "master.m3u"
     #EXTM3U
     #EXTINF:516,Metallica - Master of Puppets
