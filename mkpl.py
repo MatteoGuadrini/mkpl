@@ -161,7 +161,6 @@ def get_args():
     orderby_group = parser.add_mutually_exclusive_group()
     separator_group = parser.add_mutually_exclusive_group()
     media_group = parser.add_mutually_exclusive_group()
-    info_group = parser.add_mutually_exclusive_group()
 
     parser.add_argument(
         "playlist",
@@ -336,13 +335,13 @@ def get_args():
         help="Asks each file for confirmation",
         action="store_true",
     )
-    info_group.add_argument(
+    parser.add_argument(
         "-N",
         "--add-info",
         help="Add file information to playlist. See EXTINF attribute",
         action="store_true",
     )
-    info_group.add_argument(
+    parser.add_argument(
         "-K",
         "--add-info-interactive",
         help="Add file information to playlist, interactive. See EXTINF attribute",
@@ -546,6 +545,11 @@ def get_args():
             for f in filter_
             if validate_filter(get_filter(f))
         ]
+    # Check if add-info and add-info-interactive are both enabled
+    if not arguments.add_info and arguments.add_info_interactive:
+        print(
+            "warning: add-info-interactive is enabled but add-info is disabled; add-info-interactive will be ignored"
+        )
 
     return arguments
 
@@ -893,21 +897,35 @@ def get_tag(file, tag, default=None) -> str:
     return default
 
 
-def make_extinf(file):
+def make_extinf(file, interactive=False):
     """Compose EXTINF attribute"""
     # String format EXTINF attribute: %seconds%,"%artist% - %title%"
     extinf_str = "{},{} - {}"
     # Check type of file
     path = file
     file = open_multimedia_file(path)
-    if not file or not hasattr(file, "info"):
-        return extinf_str.format(-1, "N/A", "N/A")
-    artist = tag_type(path, "artist")
-    title = tag_type(path, "title")
-    artist_tags = get_tag(path, artist, "")
-    title_tags = get_tag(path, title, "")
-    length = int(file.info.length) if hasattr(file.info, "length") else -1
-    extensions = PlaylistExtensions(length, artist_tags, title_tags)
+    length = (
+        int(file.info.length)
+        if file and hasattr(file, "info") and hasattr(file.info, "length")
+        else -1
+    )
+    if interactive:
+        # Ask user for EXTINF attribute
+        print(f"File: {path}")
+        last_artist = getattr(make_extinf, "last_artist", "")
+        artist = input(f"Enter artist name [{last_artist}]: ").strip() or last_artist
+        title = input("Enter title name: ").strip()
+        extensions = PlaylistExtensions(length, artist, title)
+        if artist:
+            make_extinf.last_artist = artist
+    else:
+        if not file or not hasattr(file, "info"):
+            return extinf_str.format(-1, "N/A", "N/A")
+        artist = tag_type(path, "artist")
+        title = tag_type(path, "title")
+        artist_tags = get_tag(path, artist, "")
+        title_tags = get_tag(path, title, "")
+        extensions = PlaylistExtensions(length, artist_tags, title_tags)
     return extinf_str.format(
         extensions.length, extensions.artist, extensions.title
     ).replace("\n", " ")
@@ -1006,6 +1024,7 @@ def make_playlist(
     pattern=False,
     image=False,
     infos=False,
+    interactive_infos=False,
     exclude_pattern=None,
     recursive=False,
     exclude_dirs=None,
@@ -1037,6 +1056,7 @@ def make_playlist(
     :param pattern: regular expression pattern to filter files, defaults to False
     :param image: image of playlist, defaults to False
     :param infos: additional info of files, defaults to False
+    :param interactive_infos: interactive mode for adding info, defaults to False
     :param exclude_pattern: list of path to exlude, defaults to None
     :param recursive: recursively search directories, defaults to False
     :param exclude_dirs: list of directories to exclude, defaults to None
@@ -1163,7 +1183,9 @@ def make_playlist(
                 entry = PlaylistEntry(
                     file,
                     image,
-                    make_extinf(file) if infos else infos,
+                    make_extinf(file, interactive=interactive_infos)
+                    if infos
+                    else infos,
                 )
                 filelist.files.append(entry)
                 vprint(verbose, f"add multimedia file {file}")
@@ -1186,7 +1208,9 @@ def make_playlist(
                 PlaylistEntry(
                     other_file,
                     image,
-                    make_extinf(other_file) if infos else infos,
+                    make_extinf(other_file, interactive=interactive_infos)
+                    if infos
+                    else infos,
                 )
                 for other_file in other_files
             ]
@@ -1226,6 +1250,7 @@ def main_cli():
                 encoding=args.encoding,
                 image=args.image,
                 infos=args.add_info,
+                interactive_infos=args.add_info_interactive,
                 recursive=args.recursive,
                 exclude_dirs=args.exclude_dirs,
                 unique=args.unique,
@@ -1262,6 +1287,7 @@ def main_cli():
         encoding=args.encoding,
         image=args.image,
         infos=args.add_info,
+        interactive_infos=args.add_info_interactive,
         recursive=args.recursive,
         exclude_dirs=args.exclude_dirs,
         unique=args.unique,
