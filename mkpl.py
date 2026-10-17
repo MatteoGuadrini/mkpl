@@ -869,6 +869,12 @@ def get_tag(file, tag, default=None) -> str:
     """
     global AUDIO_FORMAT
 
+    def is_list_or_tuple(tags):
+        if isinstance(tags, (list, tuple)):
+            return tags[0]
+        else:
+            return tags
+
     ext = os.path.splitext(file)[1].replace(".", "").lower()
     if ext in AUDIO_FORMAT:
         path = file
@@ -878,21 +884,9 @@ def get_tag(file, tag, default=None) -> str:
         tags = file.tags.get(tag, default)
         if isinstance(file.tags, id3.ID3Tags):
             ret = tags.text[0] if hasattr(tags, "text") and tags.text else default
-        elif isinstance(file.tags, mp4.MP4Tags):
-            if isinstance(tags, (list, tuple)) and tags:
-                ret = tags[0]
-            else:
-                ret = tags
-        elif isinstance(file.tags, (flac.VCFLACDict, _vorbis.VCommentDict)):
-            if isinstance(tags, (list, tuple)) and tags:
-                ret = tags[0]
-            else:
-                ret = tags
         else:
-            if isinstance(tags, (list, tuple)) and tags:
-                ret = tags[0]
-            else:
-                ret = tags
+            ret = is_list_or_tuple(tags) if tags else default
+
         return str(ret)
     return default
 
