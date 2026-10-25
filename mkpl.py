@@ -103,7 +103,7 @@ VIDEO_FORMAT = {
 }
 FILE_FORMAT = AUDIO_FORMAT.union(VIDEO_FORMAT)
 EXPLAIN_ERROR = False
-__version__ = "1.27.0"
+__version__ = "1.28.0"
 __all__ = [
     "make_playlist",
     "write_playlist",
