@@ -18,8 +18,26 @@ To install ``mkpl``, choose one of the following methods:
 
 ### Option 1: PyPI Installation (Recommended)
 
+To install with `pip`:
+
 ```console
-$ pip install make_playlist
+# Install make_playlist package (deprecated)
+pip install make_playlist
+# Use user-space
+pip install --user make_playlist
+```
+
+Use external tools like [`pipx`](https://pipx.pypa.io/stable/) and/or [`uv`](https://docs.astral.sh/uv/)
+(they create virtual environments for you); upgrading is done via a specific subcommand
+
+```console
+pipx install make_playlist && pipx upgrade-all || uv pip install make_playlist --upgrade
+```
+
+Deactivate the externally managed file, temporarily or permanently
+
+```console
+pip install make_playlist --break-system-packages || python3 -m pip config set global.break-system-packages true
 ```
 
 ### Option 2: From Source
@@ -108,6 +126,7 @@ $ pip install .
 | -x | --unix | Use Unix path separators |
 | -U | --url-chars | Apply URL encoding to paths |
 | -N | --add-info | Include file metadata (#EXTINF) |
+| -K | --add-info-interactive | Include file metadata (#EXTINF), interactive |
 
 ### Interactive & Utility Options
 
@@ -211,10 +230,25 @@ $ pip install .
     mkpl -d "new_collection" -r "my music.m3u" -t "My Collection" -g "UTF-8" -I "new_collection/cover.jpg"
     ```
 
-13. **Include track information (#EXTINF):**
+13. **Include track information (#EXTINF), automatically or interactive:**
 
     ```bash
     mkpl -d "HeavyMetal/Master of Puppets" -N "master"
+    cat "master.m3u"
+    #EXTM3U
+    #EXTINF:516,Metallica - Master of Puppets
+    HeavyMetal/Master Of Puppets/02 - Master Of Puppets.mp3
+    ```
+
+    ```bash
+    mkpl -d "HeavyMetal/Master of Puppets" -NK "master"
+    File: HeavyMetal/Master Of Puppets/02 - Master Of Puppets.mp3
+    Enter artist name []: Metallica
+    Enter title name: Master of Puppets
+    File: HeavyMetal/Master Of Puppets/01 - Battery.mp3
+    Enter artist name [Metallica]: 
+    Enter title name: Battery
+    File: HeavyMetal/Master Of Puppets/03 - The Thing That Should Not Be.mp3
     cat "master.m3u"
     #EXTM3U
     #EXTINF:516,Metallica - Master of Puppets
@@ -308,16 +342,28 @@ from make_playlist import make_playlist, write_playlist
 Basic example — create and write a playlist:
 
 ```python
-# Find multimedia files whose names start with a-f
+from make_playlist import make_playlist, write_playlist, sort_playlist
+
+# Generate playlist
 playlist = make_playlist(
-    '/Music/collections',
-    ('mp3', 'mp4', 'aac'),
-    pattern='^[a-f].*',
+    directories=["/path/to/music"],
+    extensions=["mp3", "flac"],
     recursive=True,
-    unique=True
+    filters=[("artist", "Metallica")],
+    add_info=True
 )
 
-write_playlist('/Music/AtoF.m3u', 'wt', playlist)
+# Sort playlist
+sort_playlist(playlist, sortby_name=True)
+
+# Write to file
+write_playlist(
+    "output.m3u",
+    "wt",
+    playlist,
+    title="Metallica Collection",
+    encoding="utf-8"
+)
 ```
 
 ### Important Notes
@@ -388,7 +434,10 @@ write_playlist('/Music/MoP.m3u', 'wt', playlist)
 See function docstrings for complete parameter documentation:
 
 ```python
+from make_playlist import make_playlist, write_playlist, sort_playlist
+
 help(make_playlist)
+help(sort_playlist)
 help(write_playlist)
 ```
    
@@ -410,16 +459,6 @@ They were born in 1990 to respond to the appeal of patients suffering from rare 
 Come today, we are organized to dare to listen to them and answers, every day of the year.
 
 [Adopt the future](https://www.ioadottoilfuturo.it/)
-
-
-## Treeware  
-
-This package is [Treeware](https://treeware.earth). If you use it in production, 
-then we ask that you [**buy the world a tree**](https://plant.treeware.earth/matteoguadrini/mkpl) to thank us for our work. 
-By contributing to the Treeware forest you’ll be creating employment for local families and restoring wildlife habitats.
-
-[![Buy us a tree](https://img.shields.io/badge/Treeware-%F0%9F%8C%B3-lightgreen?style=for-the-badge)](https://plant.treeware.earth/MatteoGuadrini/mkpl)
-
 
 ## Acknowledgments
 

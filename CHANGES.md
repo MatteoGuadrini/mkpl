@@ -1,5 +1,12 @@
 # Release notes
 
+## 1.28.0
+Oct 25, 2026
+
+- Add `add-info-interactive` argument
+- Add **is_list_or_tuple** local function into **get_tag** function
+- Increase verbosity into `verbose` mode
+
 ## 1.27.0
 Sep 06, 2026
 

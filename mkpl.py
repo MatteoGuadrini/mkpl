@@ -103,7 +103,7 @@ VIDEO_FORMAT = {
 }
 FILE_FORMAT = AUDIO_FORMAT.union(VIDEO_FORMAT)
 EXPLAIN_ERROR = False
-__version__ = "1.27.0"
+__version__ = "1.28.0"
 __all__ = [
     "make_playlist",
     "write_playlist",
@@ -342,6 +342,12 @@ def get_args():
         action="store_true",
     )
     parser.add_argument(
+        "-K",
+        "--add-info-interactive",
+        help="Add file information to playlist, interactive. See EXTINF attribute",
+        action="store_true",
+    )
+    parser.add_argument(
         "-C", "--count", help="Count elements into playlist", action="store_true"
     )
     parser.add_argument(
@@ -539,6 +545,11 @@ def get_args():
             for f in filter_
             if validate_filter(get_filter(f))
         ]
+    # Check if add-info and add-info-interactive are both enabled
+    if not arguments.add_info and arguments.add_info_interactive:
+        print(
+            "warning: add-info-interactive is enabled but add-info is disabled; add-info-interactive will be ignored"
+        )
 
     return arguments
 
@@ -858,6 +869,12 @@ def get_tag(file, tag, default=None) -> str:
     """
     global AUDIO_FORMAT
 
+    def is_list_or_tuple(tags):
+        if isinstance(tags, (list, tuple)):
+            return tags[0]
+        else:
+            return tags
+
     ext = os.path.splitext(file)[1].replace(".", "").lower()
     if ext in AUDIO_FORMAT:
         path = file
@@ -867,40 +884,42 @@ def get_tag(file, tag, default=None) -> str:
         tags = file.tags.get(tag, default)
         if isinstance(file.tags, id3.ID3Tags):
             ret = tags.text[0] if hasattr(tags, "text") and tags.text else default
-        elif isinstance(file.tags, mp4.MP4Tags):
-            if isinstance(tags, (list, tuple)) and tags:
-                ret = tags[0]
-            else:
-                ret = tags
-        elif isinstance(file.tags, (flac.VCFLACDict, _vorbis.VCommentDict)):
-            if isinstance(tags, (list, tuple)) and tags:
-                ret = tags[0]
-            else:
-                ret = tags
         else:
-            if isinstance(tags, (list, tuple)) and tags:
-                ret = tags[0]
-            else:
-                ret = tags
+            ret = is_list_or_tuple(tags) if tags else default
+
         return str(ret)
     return default
 
 
-def make_extinf(file):
+def make_extinf(file, interactive=False):
     """Compose EXTINF attribute"""
     # String format EXTINF attribute: %seconds%,"%artist% - %title%"
     extinf_str = "{},{} - {}"
     # Check type of file
     path = file
     file = open_multimedia_file(path)
-    if not file or not hasattr(file, "info"):
-        return extinf_str.format(-1, "N/A", "N/A")
-    artist = tag_type(path, "artist")
-    title = tag_type(path, "title")
-    artist_tags = get_tag(path, artist, "")
-    title_tags = get_tag(path, title, "")
-    length = int(file.info.length) if hasattr(file.info, "length") else -1
-    extensions = PlaylistExtensions(length, artist_tags, title_tags)
+    length = (
+        int(file.info.length)
+        if file and hasattr(file, "info") and hasattr(file.info, "length")
+        else -1
+    )
+    if interactive:
+        # Ask user for EXTINF attribute
+        print(f"File: {path}")
+        last_artist = getattr(make_extinf, "last_artist", "")
+        artist = input(f"Enter artist name [{last_artist}]: ").strip() or last_artist
+        title = input("Enter title name: ").strip()
+        extensions = PlaylistExtensions(length, artist, title)
+        if artist:
+            make_extinf.last_artist = artist
+    else:
+        if not file or not hasattr(file, "info"):
+            return extinf_str.format(-1, "N/A", "N/A")
+        artist = tag_type(path, "artist")
+        title = tag_type(path, "title")
+        artist_tags = get_tag(path, artist, "")
+        title_tags = get_tag(path, title, "")
+        extensions = PlaylistExtensions(length, artist_tags, title_tags)
     return extinf_str.format(
         extensions.length, extensions.artist, extensions.title
     ).replace("\n", " ")
@@ -999,6 +1018,7 @@ def make_playlist(
     pattern=False,
     image=False,
     infos=False,
+    interactive_infos=False,
     exclude_pattern=None,
     recursive=False,
     exclude_dirs=None,
@@ -1030,6 +1050,7 @@ def make_playlist(
     :param pattern: regular expression pattern to filter files, defaults to False
     :param image: image of playlist, defaults to False
     :param infos: additional info of files, defaults to False
+    :param interactive_infos: interactive mode for adding info, defaults to False
     :param exclude_pattern: list of path to exlude, defaults to None
     :param recursive: recursively search directories, defaults to False
     :param exclude_dirs: list of directories to exclude, defaults to None
@@ -1091,6 +1112,7 @@ def make_playlist(
                 if pattern:
                     # Check re pattern
                     for regexp in pattern:
+                        vprint(verbose, f"check pattern {regexp} in file {file}")
                         if find_pattern(regexp, file):
                             break
                     else:
@@ -1099,6 +1121,9 @@ def make_playlist(
                     exclude_pattern_matched = False
                     # Check re pattern
                     for regexp in exclude_pattern:
+                        vprint(
+                            verbose, f"check exclude pattern {regexp} in file {file}"
+                        )
                         if find_pattern(regexp, file):
                             exclude_pattern_matched = True
                             break
@@ -1110,45 +1135,79 @@ def make_playlist(
                 # Check filters
                 if filters:
                     for filter_ in filters:
+                        vprint(verbose, f"check filter {filter_} in file {file}")
                         if check_filter(file, filter_):
                             break
                     else:
                         continue
                 # Check if file is in playlist
                 if unique:
+                    vprint(verbose, f"check if file {file} is unique in playlist")
                     if file_in_playlist(
                         filelist, file, root=root if not absolute else None
                     ):
                         continue
                 # Check minimum BPM
                 if min_bpm and get_bpm(file) <= min_bpm:
+                    vprint(
+                        verbose, f"skip file {file} because BPM is lower than {min_bpm}"
+                    )
                     continue
                 # Check maximum BPM
                 if max_bpm and get_bpm(file) >= max_bpm:
+                    vprint(
+                        verbose,
+                        f"skip file {file} because BPM is higher than {max_bpm}",
+                    )
                     continue
                 # Check minimum file size
                 if min_size and size <= min_size:
+                    vprint(
+                        verbose,
+                        f"skip file {file} because size is smaller than {min_size}",
+                    )
                     continue
                 # Check maximum file size
                 if max_size and size >= max_size:
+                    vprint(
+                        verbose,
+                        f"skip file {file} because size is larger than {max_size}",
+                    )
                     continue
                 # Check minimum length
                 if min_length and get_length(file) <= min_length:
+                    vprint(
+                        verbose,
+                        f"skip file {file} because length is shorter than {min_length}",
+                    )
                     continue
                 # Check maximum length
                 if max_length and get_length(file) >= max_length:
+                    vprint(
+                        verbose,
+                        f"skip file {file} because length is longer than {max_length}",
+                    )
                     continue
                 if interactive:
                     if not confirm(file):
                         continue
                 # Substitute with Windows separator
                 if windows:
+                    vprint(
+                        verbose,
+                        f"substitute folder separator with Windows style for file {file}",
+                    )
                     file = unix_to_dos(file)
                 # Substitute with Unix separator
                 elif unix:
+                    vprint(
+                        verbose,
+                        f"substitute folder separator with Unix style for file {file}",
+                    )
                     file = unix_to_dos(file, viceversa=True)
                 # URL chars
                 if url_char:
+                    vprint(verbose, f"substitute URL chars for file {file}")
                     file = url_chars(file)
                 # Normalize file path
                 file = escape_newlines(file)
@@ -1156,12 +1215,15 @@ def make_playlist(
                 entry = PlaylistEntry(
                     file,
                     image,
-                    make_extinf(file) if infos else infos,
+                    make_extinf(file, interactive=interactive_infos)
+                    if infos
+                    else infos,
                 )
                 filelist.files.append(entry)
                 vprint(verbose, f"add multimedia file {file}")
     # Add link
     if links:
+        vprint(verbose, f"add links {','.join(links)}")
         filelist.files.extend(
             [
                 PlaylistEntry(
@@ -1174,12 +1236,15 @@ def make_playlist(
         )
     # Add other files
     if other_files:
+        vprint(verbose, f"add other files {','.join(other_files)}")
         filelist.files.extend(
             [
                 PlaylistEntry(
                     other_file,
                     image,
-                    make_extinf(other_file) if infos else infos,
+                    make_extinf(other_file, interactive=interactive_infos)
+                    if infos
+                    else infos,
                 )
                 for other_file in other_files
             ]
@@ -1206,7 +1271,9 @@ def main_cli():
     else:
         fn_make_playlist = make_playlist
     if args.split:
+        vprint(args.verbose, f"use split mode, directories={args.directories}")
         for directory in args.directories:
+            vprint(args.verbose, f"make playlist for directory {directory}")
             playlist_name = basename(normpath(directory))
             # Make multimedia list
             playlist = fn_make_playlist(
@@ -1219,6 +1286,7 @@ def main_cli():
                 encoding=args.encoding,
                 image=args.image,
                 infos=args.add_info,
+                interactive_infos=args.add_info_interactive,
                 recursive=args.recursive,
                 exclude_dirs=args.exclude_dirs,
                 unique=args.unique,
@@ -1255,6 +1323,7 @@ def main_cli():
         encoding=args.encoding,
         image=args.image,
         infos=args.add_info,
+        interactive_infos=args.add_info_interactive,
         recursive=args.recursive,
         exclude_dirs=args.exclude_dirs,
         unique=args.unique,
@@ -1319,6 +1388,7 @@ def main_cli():
 
     # Count files into playlist
     if args.count:
+        vprint(args.verbose, f"count files into playlist {args.playlist}")
         print(len(playlist.files))
 
 
