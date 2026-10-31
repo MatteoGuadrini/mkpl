@@ -1282,7 +1282,13 @@ def main_cli():
                 pattern=args.pattern,
                 exclude_pattern=args.exclude_pattern,
                 extension=args.enabled_extensions,
-                title=capwords(directory),
+                title=capwords(
+                    str(
+                        directory
+                        if directory != "."
+                        else abspath(directory).replace("/", " ").replace("\\", " ")
+                    )
+                ),
                 encoding=args.encoding,
                 image=args.image,
                 infos=args.add_info,
