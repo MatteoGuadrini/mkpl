@@ -917,8 +917,16 @@ def make_extinf(file, interactive=False):
             return extinf_str.format(-1, "N/A", "N/A")
         artist = tag_type(path, "artist")
         title = tag_type(path, "title")
-        artist_tags = get_tag(path, artist, "")
-        title_tags = get_tag(path, title, "")
+        artist_tags = (
+            get_tag(path, artist, "")
+            or Path(path).parent.name.replace("_", " ").replace("-", " ")
+            or "N/A"
+        )
+        title_tags = (
+            get_tag(path, title, "")
+            or Path(path).stem.replace("_", " ").replace("-", " ")
+            or "N/A"
+        )
         extensions = PlaylistExtensions(length, artist_tags, title_tags)
     return extinf_str.format(
         extensions.length, extensions.artist, extensions.title
