@@ -551,6 +551,10 @@ def get_args():
             "warning: add-info-interactive is enabled but add-info is disabled; add-info-interactive will be ignored"
         )
 
+    # Check timeout for cache
+    if arguments.cache and arguments.cache <= 0:
+        parser.error("cache timeout must be greater than zero")
+
     return arguments
 
 
@@ -1275,7 +1279,7 @@ def main_cli():
         vprint(args.verbose, f"use cache {cache.path}")
         # Clean the cache
         cache.clear_items()
-        fn_make_playlist = cache(make_playlist)
+        fn_make_playlist = cache.wrap(make_playlist)
     else:
         fn_make_playlist = make_playlist
     if args.split:
