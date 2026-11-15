@@ -103,7 +103,7 @@ VIDEO_FORMAT = {
 }
 FILE_FORMAT = AUDIO_FORMAT.union(VIDEO_FORMAT)
 EXPLAIN_ERROR = False
-__version__ = "1.28.0"
+__version__ = "1.29.0"
 __all__ = [
     "make_playlist",
     "write_playlist",
@@ -551,6 +551,10 @@ def get_args():
             "warning: add-info-interactive is enabled but add-info is disabled; add-info-interactive will be ignored"
         )
 
+    # Check timeout for cache
+    if arguments.cache and arguments.cache <= 0:
+        parser.error("cache timeout must be greater than zero")
+
     return arguments
 
 
@@ -917,8 +921,16 @@ def make_extinf(file, interactive=False):
             return extinf_str.format(-1, "N/A", "N/A")
         artist = tag_type(path, "artist")
         title = tag_type(path, "title")
-        artist_tags = get_tag(path, artist, "")
-        title_tags = get_tag(path, title, "")
+        artist_tags = (
+            get_tag(path, artist, "")
+            or Path(path).parent.name.replace("_", " ").replace("-", " ")
+            or "N/A"
+        )
+        title_tags = (
+            get_tag(path, title, "")
+            or Path(path).stem.replace("_", " ").replace("-", " ")
+            or "N/A"
+        )
         extensions = PlaylistExtensions(length, artist_tags, title_tags)
     return extinf_str.format(
         extensions.length, extensions.artist, extensions.title
@@ -1267,7 +1279,7 @@ def main_cli():
         vprint(args.verbose, f"use cache {cache.path}")
         # Clean the cache
         cache.clear_items()
-        fn_make_playlist = cache(make_playlist)
+        fn_make_playlist = cache.wrap(make_playlist)
     else:
         fn_make_playlist = make_playlist
     if args.split:
@@ -1282,7 +1294,13 @@ def main_cli():
                 pattern=args.pattern,
                 exclude_pattern=args.exclude_pattern,
                 extension=args.enabled_extensions,
-                title=capwords(directory),
+                title=capwords(
+                    str(
+                        directory
+                        if directory != "."
+                        else abspath(directory).replace("/", " ").replace("\\", " ")
+                    )
+                ),
                 encoding=args.encoding,
                 image=args.image,
                 infos=args.add_info,

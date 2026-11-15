@@ -1,5 +1,12 @@
 # Release notes
 
+## 1.29.0
+Nov 15, 2026
+
+- Fix directory separator character in title playlist
+- Add more options into **make_extinf** function
+- Add check of cache value
+
 ## 1.28.0
 Oct 25, 2026
 
